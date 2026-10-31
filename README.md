@@ -54,8 +54,9 @@ FM27's interface is Unity (IL2CPP), but the game itself, its database and
 simulation, lives in a native, anti-tamper protected module: `game_plugin.dll`.
 FMLibreEditor runs as a separate process and reads that module's heap data with
 `ReadProcessMemory`. To edit, it writes values back with `WriteProcessMemory`, and
-only into the game's heap. It never injects code, never patches the game's code and
-never allocates memory in the game.
+only into the game's heap. It never patches the game's code and never allocates
+memory in the game. On Windows it puts no code of its own in the game either; on macOS
+the game loads one small library of ours, the bridge (see [On macOS](#on-macos)).
 
 Before every write it checks four things:
 - the object still belongs to the same person;
