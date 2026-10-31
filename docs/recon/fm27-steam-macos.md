@@ -181,9 +181,9 @@ read 14 July 2026 there in a new game. The date itself is a variable of its own:
 at `0x56B1DB8` on arm64, the only such value in `__DATA` besides the database's timestamp. The
 Intel half had the same value at `0x5C69700`, at about the same place among the globals. The
 build profiles name these (`current_date`); without a profile the reader falls back to the
-cluster's field.
+cluster's field. When the game moved on a day, the variable read 15 July 2026, and the
+cluster's field stayed unset.
 
 ## Still to do
 
-- See the date variable move when the game moves on a day.
 - Measure the allocator's block sizes on macOS, for moves to lists without spare capacity.
