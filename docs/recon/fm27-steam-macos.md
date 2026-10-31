@@ -211,4 +211,4 @@ right away:
 - **Manchester United:** the 28 pointers fill their 224-byte block, so a move there is still
   refused.
 
-These sizes were measured on the arm64 half only, not under Rosetta.
+These sizes were measured on the arm64 half only. The Intel half, which Intel Macs and Rosetta run, was not measured.
