@@ -68,6 +68,10 @@ pub struct PlayerLayout {
     pub team: u64,
     /// Start of the person block; fields from here on move with the person-block shift.
     pub person_block: u64,
+    /// The block with the UID that contracts and captaincies point at, when it does not
+    /// start the person block (on macOS it ends it).
+    #[serde(default)]
+    pub identity: Option<u64>,
     /// Shifts of the person block seen across player classes (player-coaches use 0xF8).
     pub person_block_shifts: Vec<u64>,
     pub height: u64,
@@ -99,6 +103,11 @@ impl PlayerLayout {
     /// Where `offset` lands in an object whose person block is shifted by `shift`.
     pub fn at(&self, offset: u64, shift: u64) -> u64 {
         if offset >= self.person_block { offset + shift } else { offset }
+    }
+
+    /// Where the block that contracts and captaincies point at starts, before any shift.
+    pub fn identity(&self) -> u64 {
+        self.identity.unwrap_or(self.person_block)
     }
 
     /// One past the last byte of every direct player field, before any shift.
@@ -204,6 +213,10 @@ pub struct StaffLayout {
     pub potential_ability: u64,
     /// Start of the person block; fields from here on move with the person-block shift.
     pub person_block: u64,
+    /// The block with the UID that contracts point at, when it does not start the person
+    /// block (on macOS it ends it).
+    #[serde(default)]
+    pub identity: Option<u64>,
     /// Shifts of the person block seen across staff classes (the human manager uses 0x340).
     pub person_block_shifts: Vec<u64>,
     /// Attributes stored raw (0..100) by key; see [`crate::STAFF_ATTRIBUTE_GROUPS`].
@@ -216,6 +229,11 @@ impl StaffLayout {
     /// Where `offset` lands in an object whose person block is shifted by `shift`.
     pub fn at(&self, offset: u64, shift: u64) -> u64 {
         if offset >= self.person_block { offset + shift } else { offset }
+    }
+
+    /// Where the block that contracts point at starts, before any shift.
+    pub fn identity(&self) -> u64 {
+        self.identity.unwrap_or(self.person_block)
     }
 
     /// One past the last byte of every staff field, before any shift.
@@ -472,11 +490,17 @@ pub struct ArrayRvas {
     pub clubs: u64,
 }
 
+#[cfg(windows)]
 const LAYOUTS: &[&str] = &[include_str!("../../../profiles/fm27/layout.toml")];
+
+/// On macOS the game is built with clang, which lays some of its classes out otherwise.
+#[cfg(target_os = "macos")]
+const LAYOUTS: &[&str] = &[include_str!("../../../profiles/fm27/layout-macos.toml")];
 
 const BUILDS: &[&str] = &[
     include_str!("../../../profiles/fm27/gamepass-0.9.2355.0.toml"),
     include_str!("../../../profiles/fm27/steam-26227640.toml"),
+    include_str!("../../../profiles/fm27/steam-26227640-macos-x86_64.toml"),
 ];
 
 /// The built-in object layout for `edition`, if there is one.
@@ -497,15 +521,56 @@ fn parse<T: serde::de::DeserializeOwned>(text: &str) -> T {
 mod tests {
     use super::*;
 
+    const WINDOWS: &str = include_str!("../../../profiles/fm27/layout.toml");
+    const MACOS: &str = include_str!("../../../profiles/fm27/layout-macos.toml");
+
     #[test]
     fn attribute_groups_cover_the_layout() {
-        let layout = layout_for(27).expect("FM27 layout");
-        let mut grouped: Vec<&str> =
-            crate::ATTRIBUTE_GROUPS.iter().flat_map(|(_, keys)| keys.iter().copied()).collect();
-        grouped.sort_unstable();
-        let mut mapped: Vec<&str> = layout.player.attributes.keys().map(String::as_str).collect();
-        mapped.sort_unstable();
-        assert_eq!(grouped, mapped);
+        for text in [WINDOWS, MACOS] {
+            let layout: Layout = parse(text);
+            let mut grouped: Vec<&str> =
+                crate::ATTRIBUTE_GROUPS.iter().flat_map(|(_, keys)| keys.iter().copied()).collect();
+            grouped.sort_unstable();
+            let mut mapped: Vec<&str> = layout.player.attributes.keys().map(String::as_str).collect();
+            mapped.sort_unstable();
+            assert_eq!(grouped, mapped);
+        }
+    }
+
+    #[test]
+    fn the_mac_layout_follows_the_windows_one() {
+        let (windows, mac): (Layout, Layout) = (parse(WINDOWS), parse(MACOS));
+        assert_eq!(windows.player.identity(), windows.player.person_block);
+        assert_eq!(windows.staff.identity(), windows.staff.person_block);
+
+        // The player's own fields sit 8 bytes earlier, the person's 0x40, the identity block 0x100 later.
+        for (key, &offset) in &windows.player.attributes {
+            assert_eq!(mac.player.attributes[key], offset - 8, "{key}");
+        }
+        assert_eq!(
+            (mac.player.positions, mac.player.morale),
+            (windows.player.positions - 8, windows.player.morale - 8)
+        );
+        assert_eq!(mac.player.date_of_birth, windows.player.date_of_birth - 0x40);
+        assert_eq!(mac.player.international_caps, windows.player.international_caps - 0x40);
+        assert_eq!(mac.player.identity(), windows.player.identity() + 0x100);
+        assert_eq!(mac.player.uid - mac.player.identity(), windows.player.uid - windows.player.identity());
+        // Paul Ifill, a player-coach: his UID at 0x48C.
+        assert_eq!(mac.player.at(mac.player.uid, 0xF8), 0x48C);
+        assert_eq!(mac.player.at(mac.player.team, 0xF8), mac.player.team);
+
+        // Staff keep their own fields where they are; their identity block also ends the person.
+        assert_eq!(mac.staff.attributes, windows.staff.attributes);
+        assert_eq!(mac.staff.current_ability, windows.staff.current_ability);
+        assert_eq!(mac.staff.uid - mac.staff.identity(), windows.staff.uid - windows.staff.identity());
+        assert_eq!(mac.player.identity() - mac.player.person_block, mac.staff.identity() - mac.staff.person_block);
+
+        // The records the people point at are laid out alike.
+        assert_eq!(mac.contract.end(), windows.contract.end());
+        assert_eq!(mac.team.end(), windows.team.end());
+        assert_eq!(mac.club_finance.end(), windows.club_finance.end());
+        // macOS's allocator is not measured: no list grows past its capacity.
+        assert_eq!(mac.heap.block_size(36 * 8), None);
     }
 
     #[test]
@@ -521,7 +586,8 @@ mod tests {
 
     #[test]
     fn built_in_profiles_parse() {
-        let layout = layout_for(27).expect("FM27 layout");
+        assert!(layout_for(27).is_some());
+        let layout: Layout = parse(WINDOWS);
         assert_eq!(layout.player.uid, 0x294);
         assert_eq!(layout.player.at(layout.player.uid, 0xF8), 0x38C);
         assert_eq!(layout.player.at(layout.player.team, 0xF8), 0x130);
@@ -547,5 +613,12 @@ mod tests {
         assert_eq!(profile.storefront, Storefront::Steam);
         assert_eq!(profile.arrays.players, 0x570_37D0);
         assert_eq!(profile.edition, layout.edition);
+
+        // On macOS, the Intel half of the same build: told apart by its LC_UUID.
+        let uuid = [0x22, 0xCF, 0xE5, 0xC3, 0xB5, 0xCF, 0x3C, 0x00, 0x80, 0x43, 0x1E, 0xA1, 0x90, 0xA6, 0x9B, 0x89];
+        let profile = profile_for(PluginFingerprint::MachO { uuid }).expect("Steam build 26227640 on macOS profile");
+        assert_eq!(profile.storefront, Storefront::Steam);
+        assert_eq!(profile.arrays.players, 0x5C8_91C8);
+        assert_eq!((profile.arrays.staff, profile.arrays.clubs), (0x5C8_9210, 0x5C8_9380));
     }
 }

@@ -1,5 +1,3 @@
-use std::ffi::c_int;
-
 use mach2::kern_return::KERN_SUCCESS;
 use mach2::vm::mach_vm_region_recurse;
 use mach2::vm_prot::{VM_PROT_EXECUTE, VM_PROT_READ, VM_PROT_WRITE, vm_prot_t};
@@ -21,7 +19,9 @@ pub struct Region {
     pub user_tag: u32,
     /// How the pages are shared (`SM_*`).
     pub share_mode: u8,
-    /// Whether a file backs the pages: a module, or a file the process mapped.
+    /// Whether a file backs the pages: a module, or a file the process mapped. A module's data
+    /// pages that the process has written to count as its own memory instead, as the kernel
+    /// reports them.
     pub file_backed: bool,
     /// Whether this is a submap, such as the dyld shared cache of the system's libraries.
     pub submap: bool,
@@ -114,7 +114,6 @@ fn region_from(process: &Process, addr: u64) -> Option<Region> {
     if code != KERN_SUCCESS || size == 0 {
         return None;
     }
-    let submap = info.is_submap != 0;
     Some(Region {
         base,
         size,
@@ -122,19 +121,7 @@ fn region_from(process: &Process, addr: u64) -> Option<Region> {
         protect: info.protection,
         user_tag: info.user_tag,
         share_mode: info.share_mode,
-        file_backed: info.external_pager != 0 || (!submap && backed_by_file(process.pid(), base)),
-        submap,
+        file_backed: info.external_pager != 0,
+        submap: info.is_submap != 0,
     })
-}
-
-/// Whether a file backs the region that starts at `base`. The kernel's region info misses a
-/// module's data pages once the process has written to them, as they become its own copies;
-/// `proc_regionfilename` still names the module. When macOS gives no answer, this says yes,
-/// which keeps the region from being written.
-fn backed_by_file(pid: u32, base: u64) -> bool {
-    let mut path = [0u8; libc::MAXPATHLEN as usize];
-    unsafe { *libc::__error() = 0 };
-    let len = unsafe { libc::proc_regionfilename(pid as c_int, base, path.as_mut_ptr().cast(), path.len() as u32) };
-    // EINVAL is the answer for memory no file backs.
-    len > 0 || std::io::Error::last_os_error().raw_os_error() != Some(libc::EINVAL)
 }

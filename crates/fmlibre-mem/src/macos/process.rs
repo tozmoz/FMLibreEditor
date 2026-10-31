@@ -1,6 +1,9 @@
 use std::ffi::c_int;
+use std::ops::Range;
 use std::os::unix::ffi::OsStringExt;
 use std::path::PathBuf;
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use mach2::kern_return::KERN_SUCCESS;
 use mach2::mach_port::{mach_port_deallocate, mach_port_mod_refs};
@@ -10,6 +13,7 @@ use mach2::vm::{mach_vm_read_overwrite, mach_vm_write};
 use mach2::vm_types::mach_vm_size_t;
 
 use super::bridge::request_task;
+use super::module::list_modules;
 use super::region::region_at;
 use crate::error::{Error, Result};
 
@@ -57,12 +61,17 @@ pub fn is_current_process_elevated() -> bool {
     unsafe { libc::geteuid() == 0 }
 }
 
+/// How long the places of the modules are trusted before they are read again.
+const MODULES_FRESH: Duration = Duration::from_secs(30);
+
 /// A process opened through its task port, for reading memory, and for writing it only when
 /// opened with [`Process::open_read_write`].
 pub struct Process {
     task: mach_port_t,
     pid: u32,
     writable: bool,
+    /// Where the modules are mapped, and when that was read: a write never goes there.
+    modules: Mutex<Option<(Instant, Vec<Range<u64>>)>>,
 }
 
 // A task port is a number in this process's port space; Mach calls on it are thread-safe.
@@ -77,12 +86,16 @@ impl Drop for Process {
 
 impl Process {
     pub fn open_read(pid: u32) -> Result<Self> {
-        Ok(Self { task: task_port(pid)?, pid, writable: false })
+        Self::open(pid, false)
     }
 
     /// Opens `pid` for reading and also for writing its memory with [`Process::write_bytes`].
     pub fn open_read_write(pid: u32) -> Result<Self> {
-        Ok(Self { task: task_port(pid)?, pid, writable: true })
+        Self::open(pid, true)
+    }
+
+    fn open(pid: u32, writable: bool) -> Result<Self> {
+        Ok(Self { task: task_port(pid)?, pid, writable, modules: Mutex::new(None) })
     }
 
     pub fn pid(&self) -> u32 {
@@ -151,8 +164,9 @@ impl Process {
     /// Writes `data` at `addr`; fails unless every byte was written.
     ///
     /// Only heap data can be written: the whole range must lie in one region of
-    /// private, writable and non-executable memory that no file backs. Anything else,
-    /// such as a module's code or data, is refused before the kernel is asked.
+    /// private, writable and non-executable memory that no file backs, outside every
+    /// module. Anything else, such as a module's code or data, is refused before the
+    /// kernel is asked.
     pub fn write_bytes(&self, addr: u64, data: &[u8]) -> Result<()> {
         if !self.writable {
             return Err(Error::ReadOnly);
@@ -166,12 +180,31 @@ impl Process {
             Some(region) if region.holds_data() && end <= region.end() => {}
             _ => return Err(Error::NotWritable { addr, len }),
         }
+        // The kernel reports a module's data pages that the process has written to as the
+        // process's own memory, so the modules' places decide.
+        if self.in_a_module(addr..end)? {
+            return Err(Error::NotWritable { addr, len });
+        }
         let count = u32::try_from(len).map_err(|_| Error::NotWritable { addr, len })?;
         let code = unsafe { mach_vm_write(self.task, addr, data.as_ptr() as usize, count) };
         if code != KERN_SUCCESS {
             return Err(Error::Write { addr, len, code: code as u32 });
         }
         Ok(())
+    }
+}
+
+impl Process {
+    /// Whether `range` overlaps a module (the executable, a library or a bundle).
+    fn in_a_module(&self, range: Range<u64>) -> Result<bool> {
+        let mut modules = self.modules.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let fresh = modules.as_ref().is_some_and(|(read, _)| read.elapsed() < MODULES_FRESH);
+        if !fresh {
+            let places = list_modules(self)?.iter().map(|module| module.base..module.end()).collect();
+            *modules = Some((Instant::now(), places));
+        }
+        let (_, places) = modules.as_ref().expect("the places were just read");
+        Ok(places.iter().any(|place| range.start < place.end && place.start < range.end))
     }
 }
 

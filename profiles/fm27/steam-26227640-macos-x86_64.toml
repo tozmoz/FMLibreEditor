@@ -1,0 +1,17 @@
+# FM27 Launch Preview on Steam for macOS (app 4530370, build 26227640): the Intel half of the
+# universal game_plugin, which Apple silicon Macs run under Rosetta when the game is started
+# as Intel code. The arrays sit as close together as on Windows: staff 0x48 and clubs 0x1B8
+# after the players.
+name = "FM27 Steam build 26227640 (Launch Preview, macOS, Intel)"
+edition = 27
+storefront = "steam"
+
+# game_plugin as mapped in memory: its LC_UUID identifies the build and the architecture.
+[plugin]
+uuid = "22CFE5C3-B5CF-3C00-8043-1EA190A69B89"
+
+# RVAs in game_plugin of the (begin, end) pointer pairs of the entity arrays.
+[arrays]
+players = 0x5C891C8
+staff = 0x5C89210
+clubs = 0x5C89380
