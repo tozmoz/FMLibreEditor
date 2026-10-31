@@ -33,8 +33,9 @@ Game Pass and the Steam build, and on macOS, for the Steam build.
 > graphics packs installed in the game's graphics folder.
 >
 > **macOS (Steam build):** the app and the probe attach to the game through the bridge
-> described below, without turning System Integrity Protection off. They read and edit
-> with the object layout of the Windows builds, which has yet to be checked on a Mac save.
+> described below, without turning System Integrity Protection off, with the Mac build's
+> own object layout. Reading and editing were checked on a Mac save; moving a player is
+> refused there unless the new club's squad list has room already.
 
 ## Goals
 

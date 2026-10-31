@@ -4,7 +4,9 @@ Observed on 2026-10-31 on an Apple silicon Mac with macOS 27.0.1 and System Inte
 Protection on, from the Steam install under
 `~/Library/Application Support/Steam/steamapps/common/Football Manager 27/` (app 4530370,
 build 26227640, depot 4530373). Steam gives the Mac build the same build id as the Windows
-one. The game had not been started on this Mac yet, so nothing below comes from a save.
+one. The game had not been started on this Mac before; the layout below was then measured on
+a new save (Tyrone Demarcus at Arsenal, 14 July 2026), with the game started by Steam through
+the bridge's launcher.
 
 ## The app
 
@@ -82,11 +84,18 @@ What the test process showed on macOS 27:
 ## Heap-only writes
 
 `mach_vm_region_recurse` reports a module's `__DATA` page that the process has written to as
-private memory that no file backs: the copy-on-write copy is the process's own. The write
-guard would have let a write into `game_plugin`'s globals through. `proc_regionfilename`
-still names the module for such a page, and fails with `EINVAL` for heap memory, so a region
-counts as heap only when it says so; any other answer counts as a file. It names the next
-region for an address in a gap, so it is asked with the region's own base.
+private memory that no file backs: the copy-on-write copy is the process's own. So the write
+guard also refuses any range that overlaps a module, as dyld lists them (read again after
+30 seconds). `proc_regionfilename` was tried first: it names the module for such a page and
+fails with `EINVAL` for heap memory. Under Rosetta, though, it names
+`/usr/libexec/rosetta/runtime` for every region of the game, heap included, which would
+refuse every write.
+
+The game's objects live in memory from macOS's own allocator: the players' pool in
+`MALLOC_LARGE` regions (tag 3), the teams' lists in a `MALLOC_MEDIUM` one (tag 12). The size
+classes measured on Windows (`heap.block_sizes`) do not carry over, so on macOS a move only
+uses the room a list's capacity leaves. Most squad lists have none: moving Ben Davies to
+Juventus, Manchester United and five other clubs was refused.
 
 ## Steam's launch options
 
@@ -108,6 +117,13 @@ it starts the game as it is. Started that way, FM27 (pid 14183) loaded the bridg
 two libraries Steam names, `steamloader.dylib` and `gameoverlayrenderer.dylib`, and the probe
 attached to it with SIP on.
 
+Steam starts the launch option's program as **Intel code**: FM27, started through a launcher
+that simply `exec`'d it, ran under Rosetta, with the Intel half of `game_plugin` (UUID
+`22CFE5C3-…`), though Steam itself and the game are universal. The launcher now becomes the
+game with `posix_spawn`, `POSIX_SPAWN_SETEXEC` and the Mac's own architecture first: started
+as Intel code itself, it brought a stand-in for the game up natively, with the bridge and the
+other inserted library.
+
 Each Steam account keeps them in
 `~/Library/Application Support/Steam/userdata/<account>/config/localconfig.vdf`, under
 `UserLocalConfigStore/Software/Valve/Steam/apps/4530370/LaunchOptions`. Steam reads the file
@@ -115,9 +131,44 @@ when it starts and writes it back when it quits, so the editor changes it only w
 closed, keeps a `.fmlibre-backup` of the first version it changed, and edits the one value in
 place. Set up and taken out again on a copy of a real file, it came back byte for byte.
 
+## The object layout
+
+`calibrate` found the arrays where Windows has them relative to each other: players at
+`game_plugin+0x5C891C8` (38,007, the same as the Windows Steam test save), staff `0x48` and
+clubs `0x1B8` after them. With the Windows layout no name decoded, as clang lays classes with
+virtual bases out by the Itanium C++ ABI, not MSVC's. `profiles/fm27/layout-macos.toml` holds
+the Mac offsets:
+
+| | Windows | macOS |
+|---|---|---|
+| Player's own fields (positions, attributes, CA/PA, condition, morale, team, injuries) | | 8 bytes earlier: no vbptr |
+| Person (names, nation, personality, birth date, contract, caps) | after the identity block, `+0x2B0` | first, `+0x278`; its fields 0x40 earlier |
+| Identity block (UID; what contracts and captaincies point at) | `+0x288`, before the person | `+0x388`, after it |
+| Player-coach shift | `0xF8` | `0xF8` (Paul Ifill's UID at `+0x48C`) |
+| Staff's own fields (attributes, reputation, CA/PA) | | the same |
+| Staff person / identity block | `+0x128` / `+0x100` | `+0xF8` / `+0x208` |
+| Human manager shift | `0x340` | `0x340` (the save's own manager) |
+| In-game date, from the players pair | `+0x848` | `+0x908` |
+
+Contracts, clubs, club info, club finances, teams, nations and injuries are laid out as on
+Windows. Witnesses on the running game:
+
+- Lionel Messi: born 24 June 1987, 207 caps and 125 goals, 18 and 14 for the U21s, his
+  positions and attributes, a contract that ends on 31 December 2028 with squad number 10.
+- Tottenham Hotspur: 50,000 season tickets, founded 1882, supporter traits 18/14/7/14/7/14,
+  £65 tickets, corporate facilities 20, reputation 7650; captain Micky van de Ven and
+  vice-captain Pedro Porro, whose captaincies point at their identity blocks.
+- Injuries: David Wotherspoon's moderate calf muscle strain, among others.
+
+With the build profile of the Intel half, `calibrate` decoded 100% of the sampled players,
+staff and clubs. The probe then wrote, read back and restored right away: Messi's finishing,
+his ambition and his squad number; Pedro Porro as Tottenham's captain (the two captains
+swap); Mikel Arteta's tactical attribute; Tottenham's balance; and a swap of Ben Davies with
+Tom Heaton (14 writes).
+
 ## Still to do
 
-- Start the game with the bridge from Steam, load a save, and run `calibrate`: check that
-  the layout of `profiles/fm27/layout.toml` holds (clang lays out classes by the Itanium
-  C++ ABI, not MSVC's), and add a build profile for the arm64 `LC_UUID` with the RVAs found.
-- See whether the Steam overlay still loads next to the bridge.
+- Start the game natively from Steam with the new launcher, and add the build profile of the
+  arm64 `game_plugin` (UUID `9E8E47DE-…`); until then it is found by scanning, in under a
+  second.
+- Measure the allocator's block sizes on macOS, for moves to lists without spare capacity.

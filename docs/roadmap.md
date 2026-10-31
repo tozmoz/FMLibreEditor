@@ -102,8 +102,10 @@ before trusting them.
   - the app sets the bridge up and takes it out again, and gives the launch option to
     enter in Steam by hand while Steam runs;
   - a universal bridge and launcher, so that Intel builds of the game load it too.
-- [ ] macOS: check the object layout on a Mac save and add a build profile of the arm64
-  `game_plugin` (its `LC_UUID` and array RVAs); until then the arrays are found by scanning.
+  - the Mac build's own object layout (`layout-macos.toml`), checked on a save: reads,
+    edits, captaincies and swaps.
+- [ ] macOS: the build profile of the arm64 `game_plugin` (until then its arrays are found
+  by scanning), and the allocator's block sizes, for moves to full squad lists.
 - [ ] Epic; possibly Linux/Proton.
 
 ## Phase 6: Game Pass completeness (in progress)
