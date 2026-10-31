@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
+use std::fmt;
 
-use fmlibre_mem::PeImage;
-use serde::Deserialize;
+use fmlibre_mem::{Module, Process};
+use serde::{Deserialize, Deserializer};
 
 use crate::game::Storefront;
 
@@ -393,7 +394,7 @@ impl HeapLayout {
     }
 }
 
-/// Addresses that change with every build of `game_plugin.dll`.
+/// Addresses that change with every build of the game plugin.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BuildProfile {
@@ -405,21 +406,64 @@ pub struct BuildProfile {
     pub arrays: ArrayRvas,
 }
 
-/// Identifies a build of `game_plugin.dll` from its headers as mapped in memory.
+/// Identifies a build of the game plugin from its headers as mapped in memory.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct PluginFingerprint {
-    pub size_of_image: u32,
-    pub link_timestamp: u32,
+#[serde(untagged, deny_unknown_fields)]
+pub enum PluginFingerprint {
+    /// `game_plugin.dll` on Windows: two values of its PE header.
+    Pe { size_of_image: u32, link_timestamp: u32 },
+    /// `game_plugin` on macOS: its `LC_UUID`. The arm64 and the Intel half of the universal
+    /// binary have one each, so a build has a profile per architecture.
+    MachO {
+        #[serde(deserialize_with = "uuid_from_text")]
+        uuid: [u8; 16],
+    },
 }
 
 impl PluginFingerprint {
-    pub fn of(image: &PeImage) -> Self {
-        Self { size_of_image: image.size_of_image, link_timestamp: image.timestamp }
+    /// Reads the fingerprint of the game plugin `plugin` from the headers mapped in `process`.
+    #[cfg(windows)]
+    pub fn read(process: &Process, plugin: &Module) -> fmlibre_mem::Result<Self> {
+        let image = fmlibre_mem::PeImage::read(process, plugin.base)?;
+        Ok(Self::Pe { size_of_image: image.size_of_image, link_timestamp: image.timestamp })
+    }
+
+    /// Reads the fingerprint of the game plugin `plugin` from the headers mapped in `process`.
+    #[cfg(target_os = "macos")]
+    pub fn read(process: &Process, plugin: &Module) -> fmlibre_mem::Result<Self> {
+        let image = fmlibre_mem::MachImage::read(process, plugin.base)?;
+        let uuid = image.uuid.ok_or(fmlibre_mem::Error::InvalidMachO { base: plugin.base, reason: "no LC_UUID" })?;
+        Ok(Self::MachO { uuid })
     }
 }
 
-/// RVAs in `game_plugin.dll` of the `(begin, end)` pairs of the entity arrays.
+impl fmt::Display for PluginFingerprint {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PluginFingerprint::Pe { size_of_image, link_timestamp } => {
+                write!(f, "size of image {size_of_image:#x}, link timestamp {link_timestamp:#010x}")
+            }
+            PluginFingerprint::MachO { uuid } => {
+                let hex = |bytes: &[u8]| bytes.iter().map(|b| format!("{b:02X}")).collect::<String>();
+                let (a, b, c, d, e) = (&uuid[..4], &uuid[4..6], &uuid[6..8], &uuid[8..10], &uuid[10..]);
+                write!(f, "UUID {}-{}-{}-{}-{}", hex(a), hex(b), hex(c), hex(d), hex(e))
+            }
+        }
+    }
+}
+
+/// A UUID as macOS writes it, e.g. "9E8E47DE-F704-314C-917D-C32D12637678".
+fn uuid_from_text<'de, D: Deserializer<'de>>(deserializer: D) -> Result<[u8; 16], D::Error> {
+    let text = String::deserialize(deserializer)?;
+    let hex: String = text.chars().filter(|&c| c != '-').collect();
+    let bytes: Option<Vec<u8>> = (0..hex.len())
+        .step_by(2)
+        .map(|i| hex.get(i..i + 2).and_then(|pair| u8::from_str_radix(pair, 16).ok()))
+        .collect();
+    bytes.and_then(|bytes| bytes.try_into().ok()).ok_or_else(|| serde::de::Error::custom(format!("not a UUID: {text}")))
+}
+
+/// RVAs in the game plugin of the `(begin, end)` pairs of the entity arrays.
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ArrayRvas {
@@ -465,6 +509,17 @@ mod tests {
     }
 
     #[test]
+    fn fingerprints_parse() {
+        let pe: PluginFingerprint = toml::from_str("size_of_image = 0x10\nlink_timestamp = 0x20").expect("PE");
+        assert_eq!(pe, PluginFingerprint::Pe { size_of_image: 0x10, link_timestamp: 0x20 });
+        let mach_o: PluginFingerprint =
+            toml::from_str(r#"uuid = "9E8E47DE-F704-314C-917D-C32D12637678""#).expect("Mach-O");
+        assert_eq!(mach_o.to_string(), "UUID 9E8E47DE-F704-314C-917D-C32D12637678");
+        assert!(toml::from_str::<PluginFingerprint>(r#"uuid = "9E8E47DE-F704""#).is_err());
+        assert!(toml::from_str::<PluginFingerprint>("size_of_image = 1\nlink_timestamp = 2\nuuid = 3").is_err());
+    }
+
+    #[test]
     fn built_in_profiles_parse() {
         let layout = layout_for(27).expect("FM27 layout");
         assert_eq!(layout.player.uid, 0x294);
@@ -480,14 +535,14 @@ mod tests {
         assert_eq!(layout.heap.block_size(18 * 8), None);
         assert_eq!(layout.heap.block_size(65 * 8), None);
 
-        let fingerprint = PluginFingerprint { size_of_image: 0x1943_6000, link_timestamp: 0x6ADF_B161 };
+        let fingerprint = PluginFingerprint::Pe { size_of_image: 0x1943_6000, link_timestamp: 0x6ADF_B161 };
         let profile = profile_for(fingerprint).expect("Game Pass 0.9.2355.0 profile");
         assert_eq!(profile.storefront, Storefront::GamePass);
         assert_eq!(profile.arrays.players, 0x568_1DC0);
         assert_eq!(profile.edition, layout.edition);
 
         // The same version on Steam, packaged differently: another fingerprint and other RVAs.
-        let fingerprint = PluginFingerprint { size_of_image: 0x19E6_9000, link_timestamp: 0x6ADF_B11C };
+        let fingerprint = PluginFingerprint::Pe { size_of_image: 0x19E6_9000, link_timestamp: 0x6ADF_B11C };
         let profile = profile_for(fingerprint).expect("Steam build 26227640 profile");
         assert_eq!(profile.storefront, Storefront::Steam);
         assert_eq!(profile.arrays.players, 0x570_37D0);

@@ -1,7 +1,7 @@
 use std::fmt;
 use std::sync::OnceLock;
 
-use fmlibre_mem::{Module, PeImage, Process, find_processes, list_modules};
+use fmlibre_mem::{Module, Process, find_processes, list_modules};
 
 use crate::calibrate::{EntityArrays, calibrate};
 use crate::clubs::{ClubDetails, ClubSummary, full_finance_class, read_club_details, read_clubs};
@@ -66,10 +66,10 @@ impl Coded for SessionError {
 
     fn params(&self) -> Vec<(&'static str, String)> {
         match self {
-            SessionError::NoSuchProcess(pid) => vec![("pid", pid.to_string())],
+            SessionError::NoSuchProcess(pid) => vec![("pid", pid.to_string()), ("exe", GAME_EXE.to_owned())],
             SessionError::SeveralRunning(pids) => {
                 let pids: Vec<String> = pids.iter().map(u32::to_string).collect();
-                vec![("count", pids.len().to_string()), ("pids", pids.join(", "))]
+                vec![("count", pids.len().to_string()), ("pids", pids.join(", ")), ("exe", GAME_EXE.to_owned())]
             }
             SessionError::Memory(err) => err.params(),
             SessionError::UnsupportedEdition(Some(edition)) => vec![("edition", edition.to_string())],
@@ -123,11 +123,11 @@ impl Session {
     /// Identifies the build behind `process` and locates its entity arrays. Only reads memory.
     pub fn connect(process: Process, source: ArraySource) -> Result<Self, SessionError> {
         let game = GameInfo::inspect(&process)?;
-        let plugin = list_modules(process.pid())?
+        let plugin = list_modules(&process)?
             .into_iter()
             .find(|m| m.name.eq_ignore_ascii_case(GAME_PLUGIN))
             .ok_or(SessionError::PluginNotLoaded)?;
-        let fingerprint = PluginFingerprint::of(&PeImage::read(&process, plugin.base)?);
+        let fingerprint = PluginFingerprint::read(&process, &plugin)?;
         let profile = profile_for(fingerprint);
         let edition = profile.as_ref().map(|p| p.edition).or(game.edition);
         let layout = edition.and_then(layout_for).ok_or(SessionError::UnsupportedEdition(edition))?;
