@@ -200,10 +200,13 @@ captain = 0x88            # Tottenham: Micky van de Ven, as on Windows
 vice_captain = 0x90       # Tottenham: Pedro Porro
 reputation = 0xA8         # Tottenham: 7650
 
-# On macOS the game's lists come from macOS's own allocator, whose block sizes are not
-# measured: without them a move only uses the room a list's capacity leaves.
+# The game brings its own allocator to macOS: it carves the chunks it gets from malloc into
+# blocks of the same size classes as on Windows (blocks of 8 bytes too, which malloc never
+# hands out). Measured natively with probe `squads`: 837 of the 853 team lists of 145 to
+# 512 bytes had their class's slack zeroed after their capacity. The other 16 had grown
+# past their length and held old data there, at their class's spacing.
 [heap]
-block_sizes = []
+block_sizes = [144, 160, 192, 224, 256, 288, 320, 384, 448, 512]
 
 # Tottenham Hotspur (UID 728): 50,000 season tickets, founded 1882, supporter traits
 # 18/14/7/14/7/14, £65 tickets, corporate facilities 20.

@@ -91,11 +91,10 @@ fails with `EINVAL` for heap memory. Under Rosetta, though, it names
 `/usr/libexec/rosetta/runtime` for every region of the game, heap included, which would
 refuse every write.
 
-The game's objects live in memory from macOS's own allocator: the players' pool in
-`MALLOC_LARGE` regions (tag 3), the teams' lists in a `MALLOC_MEDIUM` one (tag 12). The size
-classes measured on Windows (`heap.block_sizes`) do not carry over, so on macOS a move only
-uses the room a list's capacity leaves. Most squad lists have none: moving Ben Davies to
-Juventus, Manchester United and five other clubs was refused.
+The game's objects live in memory it gets from macOS's allocator: the players' pool in
+`MALLOC_LARGE` regions (tag 3); the teams' lists, under Rosetta, in a `MALLOC_MEDIUM` one
+(tag 12), and natively in `MALLOC_SMALL` ones (tag 2) of 4 MiB. The lists themselves come
+from the game's own allocator (see [below](#the-games-allocator)).
 
 ## Steam's launch options
 
@@ -184,6 +183,32 @@ build profiles name these (`current_date`); without a profile the reader falls b
 cluster's field. When the game moved on a day, the variable read 15 July 2026, and the
 cluster's field stayed unset.
 
-## Still to do
+## The game's allocator
 
-- Measure the allocator's block sizes on macOS, for moves to lists without spare capacity.
+Before it was measured, the Mac layout let no list grow past its capacity, and moves to
+most clubs were refused: moving Ben Davies to Juventus, Manchester United and five other
+clubs failed. Natively, the 4,096 team lists with a buffer sat in 21 `MALLOC_SMALL` regions,
+but not in malloc's blocks: lists of one pointer sit 8 bytes apart, while malloc's blocks are
+16-byte aligned and at least 16 bytes long. The game carves the chunks it gets from malloc
+into blocks of its own size classes, the same as on Windows. `squads` groups the lists by
+capacity, which decides the block:
+
+- **Spacing:** buffers of one capacity are spaced by their class on shared pages. That is
+  144 bytes for 17 and 18 pointers, 160 for 19 and 20, 192 for 21 to 24, and so on up to 512.
+- **Zeroed blocks:** after the capacity, the rest of the class's block is zero. This held
+  for 837 of the 853 lists from 145 to 512 bytes.
+- **Old data:** the other 16 had grown past their length (13 players with room for 26, 25
+  with room for 50, …). They held old data after their capacity, at their class's spacing.
+  The editor leaves such a block at the list's capacity.
+
+So `layout-macos.toml` takes Windows' `heap.block_sizes`. Moves then worked, each undone
+right away:
+
+- **Juventus:** Ben Davies joined their 34 players, whose list sits in a 288-byte block.
+- **FC Bayern München:** 22 players in a 192-byte block. During the move the list read 23 of
+  23, with him in the slot after the old capacity.
+- **After the undo:** both blocks were byte for byte as before.
+- **Manchester United:** the 28 pointers fill their 224-byte block, so a move there is still
+  refused.
+
+These sizes were measured on the arm64 half only, not under Rosetta.

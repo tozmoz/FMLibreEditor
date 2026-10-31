@@ -101,11 +101,13 @@ before trusting them.
     the game has written to it;
   - the app sets the bridge up and takes it out again, and gives the launch option to
     enter in Steam by hand while Steam runs;
-  - a universal bridge and launcher, so that Intel builds of the game load it too.
+  - a universal bridge and launcher, so that Intel builds of the game load it too;
   - the Mac build's own object layout (`layout-macos.toml`), checked on a save: reads,
-    edits, captaincies and swaps.
-- [ ] macOS: the build profile of the arm64 `game_plugin` (until then its arrays are found
-  by scanning), and the allocator's block sizes, for moves to full squad lists.
+    edits, captaincies, swaps and moves;
+  - build profiles for both halves of the universal `game_plugin`, with the in-game date
+    the Mac build keeps apart;
+  - the game's own allocator, with the same size classes as on Windows, so a move can use
+    the room a full squad list's block has past its capacity.
 - [ ] Epic; possibly Linux/Proton.
 
 ## Phase 6: Game Pass completeness (in progress)

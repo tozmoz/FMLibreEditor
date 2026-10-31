@@ -737,8 +737,9 @@ fn holders(process: &Process, modules: &[Module], addr: u64, max: usize) -> Resu
 }
 
 /// Reads the player list of every team (team + 0x38: begin, end, capacity) and reports,
-/// per list length, the spacing of list buffers that share a 64 KiB page: a slab
-/// allocator puts blocks of one size class at multiples of that size.
+/// per capacity, the spacing of list buffers that share a 64 KiB page (a slab allocator
+/// puts blocks of one size class at multiples of that size), and whether the rest of the
+/// block the layout's heap gives them is zero.
 fn squads(session: &Session) -> Result<()> {
     let process = &session.process;
     let mut lists: Vec<(u64, u64, u64)> = Vec::new(); // (begin, length, capacity)
@@ -887,16 +888,19 @@ fn squads(session: &Session) -> Result<()> {
         println!("  two teams: {}", examples.join(", "));
     }
 
-    // GCD of the distances between lists of the same length on the same 64 KiB page.
-    let mut by_length: std::collections::BTreeMap<u64, Vec<u64>> = std::collections::BTreeMap::new();
-    for &(begin, len, _) in &lists {
-        by_length.entry(len).or_default().push(begin);
+    // Per capacity, which decides the block: the GCD of the distances between lists on the
+    // same 64 KiB page, the block the layout's heap gives, and how many words after the
+    // capacity are zero (at most 8), with how many lists have each count.
+    let mut by_capacity: std::collections::BTreeMap<u64, Vec<u64>> = std::collections::BTreeMap::new();
+    for &(begin, _, capacity) in &lists {
+        by_capacity.entry(capacity).or_default().push(begin);
     }
     fn gcd(a: u64, b: u64) -> u64 {
         if b == 0 { a } else { gcd(b, a % b) }
     }
-    println!("length  lists  spacing (bytes, gcd on shared pages)  zeroed slack after the end (slots)");
-    for (len, mut begins) in by_length {
+    let (mut zeroed, mut other) = (0, 0);
+    println!("capacity  lists  spacing (bytes, gcd on shared pages)  block  zero words after the capacity: lists");
+    for (capacity, mut begins) in by_capacity {
         begins.sort_unstable();
         let mut g = 0;
         for pair in begins.windows(2) {
@@ -904,22 +908,30 @@ fn squads(session: &Session) -> Result<()> {
                 g = gcd(g, pair[1] - pair[0]);
             }
         }
-        // How many words after the end are zero, at most 8, for the first few lists.
-        let slack: Vec<String> = begins
-            .iter()
-            .take(6)
-            .map(|&b| {
-                let after = process.read_bytes(b + len * 8, 64).unwrap_or_default();
-                after.as_chunks::<8>().0.iter().take_while(|w| u64::from_le_bytes(**w) == 0).count().to_string()
-            })
-            .collect();
+        let block = session.layout.heap.block_size(capacity * 8);
+        let mut zeros: std::collections::BTreeMap<u64, usize> = std::collections::BTreeMap::new();
+        for &begin in &begins {
+            let after = process.read_bytes(begin + capacity * 8, 64).unwrap_or_default();
+            let count = after.as_chunks::<8>().0.iter().take_while(|w| u64::from_le_bytes(**w) == 0).count() as u64;
+            *zeros.entry(count).or_default() += 1;
+            match block {
+                Some(block) if count * 8 >= block - capacity * 8 => zeroed += 1,
+                Some(_) => other += 1,
+                None => {}
+            }
+        }
+        let zeros: Vec<String> = zeros.iter().map(|(count, lists)| format!("{count}: {lists}")).collect();
         println!(
-            "{len:>6}  {:>5}  {:>6}  {}",
+            "{capacity:>8}  {:>5}  {:>6}  {:>5}  {}",
             begins.len(),
             if g == 0 { "-".to_owned() } else { g.to_string() },
-            slack.join(" ")
+            block.map_or("-".to_owned(), |block| block.to_string()),
+            zeros.join(", ")
         );
     }
+    println!(
+        "lists in a block the layout's heap knows: {zeroed} with the rest of it zero, {other} with other data there"
+    );
     Ok(())
 }
 

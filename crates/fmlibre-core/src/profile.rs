@@ -573,8 +573,8 @@ mod tests {
         assert_eq!(mac.contract.end(), windows.contract.end());
         assert_eq!(mac.team.end(), windows.team.end());
         assert_eq!(mac.club_finance.end(), windows.club_finance.end());
-        // macOS's allocator is not measured: no list grows past its capacity.
-        assert_eq!(mac.heap.block_size(36 * 8), None);
+        // The game's own allocator, with the same size classes on both systems.
+        assert_eq!(mac.heap.block_sizes, windows.heap.block_sizes);
     }
 
     #[test]
