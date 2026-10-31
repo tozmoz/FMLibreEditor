@@ -125,8 +125,10 @@ team = 0x10
 senior_team = 0x18
 job = 0x26
 
-# Relative to the players (begin, end) pair, as on Windows; the static data between them
-# is laid out differently, so the date sits 0xC0 further (14 July 2026 on the test save).
+# Relative to the players (begin, end) pair, as on Windows; the static data between them is
+# laid out differently, so this sits 0xC0 further. It read the date in a new game, but an
+# unset date (1 January 1900) right after loading a save: the build profiles name the date
+# itself, a variable of its own away from the arrays.
 [cluster]
 current_date = 0x908
 

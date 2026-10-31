@@ -150,8 +150,11 @@ impl Session {
 
     /// The current in-game date, when it can be read and looks like a real date.
     pub fn game_date(&self) -> Option<FmDate> {
-        let players = self.arrays.players.as_ref()?;
-        let raw = self.process.read_u32(self.plugin.base + players.pair_rva + self.layout.cluster.current_date).ok()?;
+        let rva = match self.profile.as_ref().and_then(|profile| profile.current_date) {
+            Some(rva) => rva,
+            None => self.arrays.players.as_ref()?.pair_rva + self.layout.cluster.current_date,
+        };
+        let raw = self.process.read_u32(self.plugin.base + rva).ok()?;
         FmDate::from_raw(raw as u16, (raw >> 16) as u16).filter(|date| (2000..=2200).contains(&date.year))
     }
 

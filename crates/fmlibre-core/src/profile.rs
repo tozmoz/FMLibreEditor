@@ -422,6 +422,9 @@ pub struct BuildProfile {
     pub package_version: Option<String>,
     pub plugin: PluginFingerprint,
     pub arrays: ArrayRvas,
+    /// RVA in the game plugin of the in-game date, where it is not next to the arrays at
+    /// [`ClusterLayout::current_date`]: on macOS it is a variable of its own.
+    pub current_date: Option<u64>,
 }
 
 /// Identifies a build of the game plugin from its headers as mapped in memory.
@@ -501,6 +504,7 @@ const BUILDS: &[&str] = &[
     include_str!("../../../profiles/fm27/gamepass-0.9.2355.0.toml"),
     include_str!("../../../profiles/fm27/steam-26227640.toml"),
     include_str!("../../../profiles/fm27/steam-26227640-macos-x86_64.toml"),
+    include_str!("../../../profiles/fm27/steam-26227640-macos-arm64.toml"),
 ];
 
 /// The built-in object layout for `edition`, if there is one.
@@ -620,5 +624,14 @@ mod tests {
         assert_eq!(profile.storefront, Storefront::Steam);
         assert_eq!(profile.arrays.players, 0x5C8_91C8);
         assert_eq!((profile.arrays.staff, profile.arrays.clubs), (0x5C8_9210, 0x5C8_9380));
+
+        // Its arm64 half, which Apple silicon runs natively: other RVAs, and the date apart.
+        let uuid = [0x9E, 0x8E, 0x47, 0xDE, 0xF7, 0x04, 0x31, 0x4C, 0x91, 0x7D, 0xC3, 0x2D, 0x12, 0x63, 0x76, 0x78];
+        let profile = profile_for(PluginFingerprint::MachO { uuid }).expect("the arm64 half's profile");
+        assert_eq!(profile.arrays.players, 0x56D_2E18);
+        assert_eq!(profile.current_date, Some(0x56B_1DB8));
+        // On Windows the date sits with the arrays.
+        let fingerprint = PluginFingerprint::Pe { size_of_image: 0x19E6_9000, link_timestamp: 0x6ADF_B11C };
+        assert_eq!(profile_for(fingerprint).and_then(|profile| profile.current_date), None);
     }
 }

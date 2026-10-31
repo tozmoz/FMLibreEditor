@@ -148,7 +148,7 @@ the Mac offsets:
 | Staff's own fields (attributes, reputation, CA/PA) | | the same |
 | Staff person / identity block | `+0x128` / `+0x100` | `+0xF8` / `+0x208` |
 | Human manager shift | `0x340` | `0x340` (the save's own manager) |
-| In-game date, from the players pair | `+0x848` | `+0x908` |
+| In-game date | `+0x848` from the players pair | a variable of its own (below) |
 
 Contracts, clubs, club info, club finances, teams, nations and injuries are laid out as on
 Windows. Witnesses on the running game:
@@ -166,9 +166,24 @@ his ambition and his squad number; Pedro Porro as Tottenham's captain (the two c
 swap); Mikel Arteta's tactical attribute; Tottenham's balance; and a swap of Ben Davies with
 Tom Heaton (14 writes).
 
+## Natively, on Apple silicon
+
+Started again from Steam through the native-first launcher, FM27 (pid 17731) ran natively,
+with the arm64 half of `game_plugin` (UUID `9E8E47DE-F704-314C-917D-C32D12637678`). With no
+profile yet, `calibrate` found its arrays by scanning, at `0x56D2E18`, `0x56D2E60` and
+`0x56D2FD0`, 100% decoded with the same layout, which clang lays out alike for both
+architectures. The reads and the restored writes above passed again (the swap took 10
+writes this time).
+
+The in-game date is not with the arrays, though. At `+0x908` from the players pair the arm64
+half held an unset date (1 January 1900) right after the save was loaded; the Intel half had
+read 14 July 2026 there in a new game. The date itself is a variable of its own: 14 July 2026
+at `0x56B1DB8` on arm64, the only such value in `__DATA` besides the database's timestamp. The
+Intel half had the same value at `0x5C69700`, at about the same place among the globals. The
+build profiles name these (`current_date`); without a profile the reader falls back to the
+cluster's field.
+
 ## Still to do
 
-- Start the game natively from Steam with the new launcher, and add the build profile of the
-  arm64 `game_plugin` (UUID `9E8E47DE-…`); until then it is found by scanning, in under a
-  second.
+- See the date variable move when the game moves on a day.
 - Measure the allocator's block sizes on macOS, for moves to lists without spare capacity.
