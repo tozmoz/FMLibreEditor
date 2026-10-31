@@ -74,36 +74,39 @@ Integrity Protection is turned off, macOS lets no other app attach to it. What t
 does allow is loading extra libraries named in `DYLD_INSERT_LIBRARIES` (Steam's overlay uses
 the same door), so FMLibreEditor comes with a small one, the bridge (`crates/fmlibre-bridge`).
 
-A Steam launch option has the game load the bridge when Steam starts it. The bridge hooks
-nothing, patches nothing and reads none of the game's data. It only answers the editor of the
+Steam on macOS runs a launch option as a program, with the game among its arguments, so the
+launch option names a small launcher, `fmlibre-launch`, that comes with the bridge. The
+launcher puts the bridge in `DYLD_INSERT_LIBRARIES` (in front of the libraries Steam names
+there) and then turns into the game, so Steam keeps following the process it started. The
+bridge hooks nothing, patches nothing and reads none of the game's data. It only answers the editor of the
 same user with the game's task port, macOS's handle to a process's memory. From there the
 editor works as it does on Windows: it reads with `mach_vm_read_overwrite`, writes with
 `mach_vm_write` into the game's heap only, and makes the same four checks before every write.
 
 The connect panel of the app sets the bridge up (**Set up the bridge**) or takes it out
-again. Setting up copies the bridge to
-`~/Library/Application Support/FMLibreEditor/libfmlibre_bridge.dylib` and adds it to FM27's
+again. Setting up copies the bridge and the launcher to
+`~/Library/Application Support/FMLibreEditor/` and puts the launcher in front of FM27's
 launch options in Steam, which only works while Steam is closed; Steam keeps the launch
 options to itself while it runs. With Steam open, set the launch option yourself: right-click
 Football Manager 27 in Steam, then **Properties › General › Launch Options**, and enter
 
 ```text
-DYLD_INSERT_LIBRARIES="/Users/<you>/Library/Application Support/FMLibreEditor/libfmlibre_bridge.dylib" %command%
+'/Users/<you>/Library/Application Support/FMLibreEditor/fmlibre-launch' %command%
 ```
 
-The panel shows the line with your own folder in it. Launch options you already have stay;
-the bridge goes in front of them, or into the list of another tool's libraries.
+The panel shows the line with your own folder in it. Launch options you already have stay,
+behind the launcher; another tool's launcher among them is started in turn.
 
-> **Before you delete the bridge library by hand,** take the launch option out: macOS does
-> not start the game while it is told to load a library that is not there. **Remove the
-> bridge** in the app does both, in the right order.
+> **Before you delete these files by hand,** take the launch option out: Steam cannot start
+> the game through a launcher that is not there. **Remove the bridge** in the app does both,
+> in the right order. Without the bridge library, the launcher starts the game as it is.
 
 ## Repository layout
 
 | Path | Contents |
 |---|---|
 | `crates/fmlibre-mem` | Process access on Windows and macOS: processes, modules, memory regions, PE and Mach-O headers, guarded writes |
-| `crates/fmlibre-bridge` | macOS: the library the game loads to hand its memory to the editor |
+| `crates/fmlibre-bridge` | macOS: the library the game loads to hand its memory to the editor, and the launcher Steam starts the game through |
 | `crates/fmlibre-core` | Football Manager logic: game detection, calibration, decoders, editable fields |
 | `crates/fmlibre-probe` | Command-line probe |
 | `profiles/` | Object layouts per edition and addresses per game build |
@@ -194,8 +197,9 @@ Only `set`, `move`, `swap`, `heal --heal` and `captain` write to the game.
 If Windows denies access, run the probe from an administrator terminal.
 
 On macOS, `fmlibre-probe bridge` shows whether the game loads the bridge;
-`fmlibre-probe bridge setup` installs the bridge built next to the probe and sets the
-launch option (quit Steam first), and `fmlibre-probe bridge remove` takes both out again.
+`fmlibre-probe bridge setup` installs the bridge and the launcher built next to the probe
+and sets the launch option (quit Steam first), and `fmlibre-probe bridge remove` takes them
+out again.
 Then start FM27 from Steam: the other commands work as on Windows, with `game_plugin` in
 place of `game_plugin.dll` in addresses.
 

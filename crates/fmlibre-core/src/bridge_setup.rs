@@ -1,10 +1,14 @@
-//! Setting the game up on macOS so the editor can reach it: the bridge library goes to a fixed
-//! place, and a Steam launch option has the game load it (see `fmlibre_mem::bridge`).
+//! Setting the game up on macOS so the editor can reach it (see `fmlibre_mem::bridge`): the
+//! bridge library and its launcher go to a fixed place, and a Steam launch option has Steam
+//! start the game through the launcher, which has the game load the bridge.
+//!
+//! Steam on macOS runs no shell for a launch option. It starts the option's first word as a
+//! program, with the rest as its arguments and `%command%` standing for the game's app bundle,
+//! so FM27's launch option is `"…/fmlibre-launch" %command%`.
 //!
 //! The launch option lives in each Steam account's `localconfig.vdf`, which Steam reads when
 //! it starts and writes back when it quits, so it is only changed while Steam is not running.
-//! A launch option the player already has stays: the bridge is added in front of it, and next
-//! to any library another tool has the game load.
+//! A launch option the player already has stays, behind the launcher.
 
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -17,18 +21,24 @@ pub const STEAM_APP_ID: u32 = 4_530_370;
 /// File name of the bridge library.
 pub const BRIDGE_FILE: &str = "libfmlibre_bridge.dylib";
 
+/// File name of the program Steam starts the game through.
+pub const LAUNCHER_FILE: &str = "fmlibre-launch";
+
 /// The process of the Steam client on macOS.
 const STEAM_EXE: &str = "steam_osx";
 
-/// The variable that names the libraries the game loads at start.
-const INSERT: &str = "DYLD_INSERT_LIBRARIES=";
+/// The first launch option of the bridge put the variable in front of `%command%`, as a shell
+/// would take it. Steam fails to start the game with it ("OS Error 260"), so setting up again
+/// or removing takes it out.
+const SHELL_STYLE: &str = "DYLD_INSERT_LIBRARIES=";
 
 /// Where things are, from the user's home folder.
 #[derive(Debug, Clone)]
 pub struct Places {
-    /// Where the bridge is installed: outside the app, which macOS may run from a temporary
-    /// copy and which updates replace.
+    /// Where the bridge and its launcher are installed: outside the app, which macOS may run
+    /// from a temporary copy and which updates replace.
     pub bridge: PathBuf,
+    pub launcher: PathBuf,
     /// Steam's folder of user data, with a folder per account.
     pub steam_users: PathBuf,
 }
@@ -36,16 +46,21 @@ pub struct Places {
 impl Places {
     pub fn of(home: &Path) -> Self {
         let support = home.join("Library/Application Support");
-        Self { bridge: support.join("FMLibreEditor").join(BRIDGE_FILE), steam_users: support.join("Steam/userdata") }
+        let folder = support.join("FMLibreEditor");
+        Self {
+            bridge: folder.join(BRIDGE_FILE),
+            launcher: folder.join(LAUNCHER_FILE),
+            steam_users: support.join("Steam/userdata"),
+        }
     }
 }
 
 /// How far the bridge is set up.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BridgeStatus {
-    /// Whether the bridge library is in place.
+    /// Whether the bridge library and its launcher are in place.
     pub installed: bool,
-    /// The launch option that loads the bridge.
+    /// The launch option that starts the game with the bridge.
     pub launch_option: String,
     /// Each Steam account on this Mac, and whether FM27 loads the bridge when it starts the game.
     pub accounts: Vec<Account>,
@@ -74,7 +89,7 @@ pub enum SetupError {
     SteamRunning,
     /// No Steam account on this Mac has a `localconfig.vdf`.
     NoSteamAccount,
-    /// The bridge library to install is missing from the app.
+    /// The bridge library or its launcher is missing from the app.
     NoLibrary(PathBuf),
     /// A `localconfig.vdf` is not in the shape the editor knows; it was left alone.
     UnknownConfig(PathBuf),
@@ -91,7 +106,7 @@ impl fmt::Display for SetupError {
                 )
             }
             SetupError::NoSteamAccount => write!(f, "found no Steam account on this Mac; start Steam and sign in once"),
-            SetupError::NoLibrary(path) => write!(f, "the bridge library is missing: {}", path.display()),
+            SetupError::NoLibrary(path) => write!(f, "a file of the bridge is missing: {}", path.display()),
             SetupError::UnknownConfig(path) => {
                 write!(f, "{} is not in a shape FMLibreEditor knows, so it was left alone", path.display())
             }
@@ -124,9 +139,9 @@ impl crate::Coded for SetupError {
     }
 }
 
-/// The launch option that has the game load the bridge at `bridge`.
-pub fn launch_option(bridge: &Path) -> String {
-    format!("{INSERT}{} %command%", quoted(bridge))
+/// The launch option that has Steam start the game through the launcher at `launcher`.
+pub fn launch_option(launcher: &Path) -> String {
+    format!("{} %command%", quoted(launcher))
 }
 
 /// Whether the Steam client is running.
@@ -141,24 +156,30 @@ pub fn status(places: &Places) -> BridgeStatus {
         .map(|config| {
             let launch_options =
                 std::fs::read_to_string(&config).ok().and_then(|text| Vdf::parse(&text)?.launch_options(STEAM_APP_ID));
-            let loads_bridge = launch_options.as_deref().is_some_and(|options| loads(options, &places.bridge));
+            let loads_bridge = launch_options.as_deref().is_some_and(|options| loads(options, places));
             Account { config, launch_options, loads_bridge }
         })
         .collect();
     BridgeStatus {
-        installed: places.bridge.is_file(),
-        launch_option: launch_option(&places.bridge),
+        installed: places.bridge.is_file() && places.launcher.is_file(),
+        launch_option: launch_option(&places.launcher),
         accounts,
         steam_running: steam_running(),
     }
 }
 
-/// Installs the bridge `library` and adds it to FM27's launch options for every Steam account.
-/// While Steam runs, only the library is installed, for a launch option set in Steam by hand.
-pub fn set_up(places: &Places, library: &Path) -> Result<BridgeStatus, SetupError> {
-    let bytes = std::fs::read(library).map_err(|_| SetupError::NoLibrary(library.to_owned()))?;
-    // A new file in place of the old: a game still running keeps the library it loaded.
-    write_new(&places.bridge, &bytes)?;
+/// Installs the bridge library and its launcher from the folder `from`, and has FM27 start
+/// through the launcher for every Steam account. While Steam runs, only the files are
+/// installed, for a launch option set in Steam by hand.
+pub fn set_up(places: &Places, from: &Path) -> Result<BridgeStatus, SetupError> {
+    let read = |name| {
+        let path = from.join(name);
+        std::fs::read(&path).map_err(|_| SetupError::NoLibrary(path))
+    };
+    let (bridge, launcher) = (read(BRIDGE_FILE)?, read(LAUNCHER_FILE)?);
+    // New files in place of the old: a game still running keeps the library it loaded.
+    write_new(&places.bridge, &bridge, false)?;
+    write_new(&places.launcher, &launcher, true)?;
 
     if steam_running() {
         return Err(SetupError::SteamRunning);
@@ -171,7 +192,7 @@ pub fn set_up(places: &Places, library: &Path) -> Result<BridgeStatus, SetupErro
         let text = std::fs::read_to_string(&config).map_err(|err| SetupError::Io(config.clone(), err))?;
         let vdf = Vdf::parse(&text).ok_or_else(|| SetupError::UnknownConfig(config.clone()))?;
         let current = vdf.launch_options(STEAM_APP_ID);
-        let wanted = with_bridge(current.as_deref(), &places.bridge);
+        let wanted = with_bridge(current.as_deref(), places);
         if current.as_deref() == Some(wanted.as_str()) {
             continue;
         }
@@ -179,13 +200,13 @@ pub fn set_up(places: &Places, library: &Path) -> Result<BridgeStatus, SetupErro
             .set_launch_options(STEAM_APP_ID, Some(&wanted))
             .ok_or_else(|| SetupError::UnknownConfig(config.clone()))?;
         keep_backup(&config)?;
-        write_new(&config, changed.as_bytes())?;
+        write_new(&config, changed.as_bytes(), false)?;
     }
     Ok(status(places))
 }
 
-/// Takes the bridge out of FM27's launch options, and removes the library once no launch
-/// option names it: the game does not start when a library it is told to load is missing.
+/// Takes the launcher out of FM27's launch options, and removes the files once no launch
+/// option names them: Steam cannot start the game through a launcher that is not there.
 pub fn remove(places: &Places) -> Result<BridgeStatus, SetupError> {
     if steam_running() {
         return Err(SetupError::SteamRunning);
@@ -198,7 +219,7 @@ pub fn remove(places: &Places) -> Result<BridgeStatus, SetupError> {
         let Some(current) = vdf.launch_options(STEAM_APP_ID) else {
             continue;
         };
-        let rest = without_bridge(&current, &places.bridge);
+        let rest = without_bridge(&current, places);
         if rest == current {
             continue;
         }
@@ -207,15 +228,17 @@ pub fn remove(places: &Places) -> Result<BridgeStatus, SetupError> {
             .set_launch_options(STEAM_APP_ID, rest.as_deref())
             .ok_or_else(|| SetupError::UnknownConfig(config.clone()))?;
         keep_backup(&config)?;
-        write_new(&config, changed.as_bytes())?;
+        write_new(&config, changed.as_bytes(), false)?;
     }
     if status(places).accounts.iter().any(|account| account.loads_bridge) {
         return Ok(status(places));
     }
-    match std::fs::remove_file(&places.bridge) {
-        Ok(()) => {}
-        Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
-        Err(err) => return Err(SetupError::Io(places.bridge.clone(), err)),
+    for file in [&places.launcher, &places.bridge] {
+        match std::fs::remove_file(file) {
+            Ok(()) => {}
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
+            Err(err) => return Err(SetupError::Io(file.clone(), err)),
+        }
     }
     Ok(status(places))
 }
@@ -234,8 +257,10 @@ fn configs(steam_users: &Path) -> Vec<PathBuf> {
     found
 }
 
-/// Writes `bytes` to a new file that then takes the place of `path`.
-fn write_new(path: &Path, bytes: &[u8]) -> Result<(), SetupError> {
+/// Writes `bytes` to a new file that then takes the place of `path`; a program is made executable.
+fn write_new(path: &Path, bytes: &[u8], program: bool) -> Result<(), SetupError> {
+    use std::os::unix::fs::PermissionsExt;
+
     let io = |err| SetupError::Io(path.to_owned(), err);
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir).map_err(io)?;
@@ -244,6 +269,9 @@ fn write_new(path: &Path, bytes: &[u8]) -> Result<(), SetupError> {
     temporary.push(".fmlibre-new");
     let temporary = PathBuf::from(temporary);
     std::fs::write(&temporary, bytes).map_err(io)?;
+    if program {
+        std::fs::set_permissions(&temporary, std::fs::Permissions::from_mode(0o755)).map_err(io)?;
+    }
     std::fs::rename(&temporary, path).map_err(io)
 }
 
@@ -258,45 +286,34 @@ fn keep_backup(config: &Path) -> Result<(), SetupError> {
     Ok(())
 }
 
-/// `path` in double quotes, for the shell Steam runs the launch options in.
+/// `path` in single quotes, as Steam quotes the game's path for `%command%` when it splits a
+/// launch option into words: `'Sid Meier'\''s Civilization VII'`.
 fn quoted(path: &Path) -> String {
-    let text =
-        path.to_string_lossy().replace('\\', "\\\\").replace('"', "\\\"").replace('$', "\\$").replace('`', "\\`");
-    format!("\"{text}\"")
+    format!("'{}'", path.to_string_lossy().replace('\'', "'\\''"))
 }
 
-/// Whether the launch options `options` load the bridge at `bridge`.
-fn loads(options: &str, bridge: &Path) -> bool {
-    options.contains(INSERT) && options.contains(&quoted(bridge))
+/// Whether the launch options `options` start the game through the launcher.
+fn loads(options: &str, places: &Places) -> bool {
+    options.contains(&quoted(&places.launcher))
 }
 
-/// The launch options `current` with the bridge at `bridge` added.
-fn with_bridge(current: Option<&str>, bridge: &Path) -> String {
-    let current = current.unwrap_or("").trim();
-    if loads(current, bridge) {
-        return current.to_owned();
-    }
-    let path = quoted(bridge);
-    if let Some(at) = current.find(INSERT) {
-        // Another tool's library: the shell joins `"ours":theirs` into one list.
-        let at = at + INSERT.len();
-        return format!("{}{path}:{}", &current[..at], &current[at..]);
-    }
-    let rest = match current {
+/// The launch options `current` with the launcher in front.
+fn with_bridge(current: Option<&str>, places: &Places) -> String {
+    let rest = without_bridge(current.unwrap_or(""), places);
+    let rest = match rest.as_str() {
         "" => "%command%".to_owned(),
-        options if options.contains("%command%") => options.to_owned(),
+        options if options.contains("%command%") => rest,
         // Options without %command% are arguments, which Steam adds after the game.
         options => format!("%command% {options}"),
     };
-    format!("{INSERT}{path} {rest}")
+    format!("{} {rest}", quoted(&places.launcher))
 }
 
-/// The launch options `current` without the bridge at `bridge`.
-fn without_bridge(current: &str, bridge: &Path) -> String {
-    let path = quoted(bridge);
-    let alone = format!("{INSERT}{path} ");
-    let listed = format!("{path}:");
-    current.replacen(&alone, "", 1).replacen(&listed, "", 1).trim().to_owned()
+/// The launch options `current` without the launcher, nor the bridge's first, shell-style option.
+fn without_bridge(current: &str, places: &Places) -> String {
+    let launcher = format!("{} ", quoted(&places.launcher));
+    let shell_style = format!("{SHELL_STYLE}\"{}\" ", places.bridge.display());
+    current.replacen(&launcher, "", 1).replacen(&shell_style, "", 1).trim().to_owned()
 }
 
 /// A Steam KeyValues text, with the places of its keys and values, so that it can be changed
@@ -505,7 +522,12 @@ fn escape(text: &str) -> String {
 mod tests {
     use super::*;
 
+    const LAUNCHER: &str = "/Users/me/Library/Application Support/FMLibreEditor/fmlibre-launch";
     const BRIDGE: &str = "/Users/me/Library/Application Support/FMLibreEditor/libfmlibre_bridge.dylib";
+
+    fn places() -> Places {
+        Places::of(Path::new("/Users/me"))
+    }
 
     fn config(app_block: &str) -> String {
         format!(
@@ -516,31 +538,35 @@ mod tests {
     }
 
     #[test]
-    fn the_launch_option_quotes_the_path() {
-        assert_eq!(launch_option(Path::new(BRIDGE)), format!("DYLD_INSERT_LIBRARIES=\"{BRIDGE}\" %command%"));
-        assert_eq!(quoted(Path::new("/a \"b\" $c")), r#""/a \"b\" \$c""#);
+    fn the_launch_option_starts_the_launcher() {
+        let places = places();
+        assert_eq!(places.launcher, Path::new(LAUNCHER));
+        assert_eq!(places.bridge, Path::new(BRIDGE));
+        assert_eq!(launch_option(&places.launcher), format!("'{LAUNCHER}' %command%"));
+        assert_eq!(quoted(Path::new("/a/Sid Meier's")), r"'/a/Sid Meier'\''s'");
     }
 
     #[test]
-    fn the_bridge_joins_what_is_there() {
-        let bridge = Path::new(BRIDGE);
-        let ours = format!("DYLD_INSERT_LIBRARIES=\"{BRIDGE}\"");
-        assert_eq!(with_bridge(None, bridge), format!("{ours} %command%"));
-        assert_eq!(with_bridge(Some("-windowed"), bridge), format!("{ours} %command% -windowed"));
-        assert_eq!(with_bridge(Some("FOO=1 %command% -x"), bridge), format!("{ours} FOO=1 %command% -x"));
-        // Next to another tool's library, in the same list.
-        let other = "DYLD_INSERT_LIBRARIES=\"/Applications/Other.app/plugin.dylib\" %command%";
-        let joined = with_bridge(Some(other), bridge);
-        assert_eq!(
-            joined,
-            format!("DYLD_INSERT_LIBRARIES=\"{BRIDGE}\":\"/Applications/Other.app/plugin.dylib\" %command%")
-        );
-        assert!(loads(&joined, bridge));
+    fn the_launcher_goes_in_front_of_what_is_there() {
+        let places = places();
+        let ours = format!("'{LAUNCHER}'");
+        assert_eq!(with_bridge(None, &places), format!("{ours} %command%"));
+        assert_eq!(with_bridge(Some("-windowed"), &places), format!("{ours} %command% -windowed"));
+        // In front of another tool's launcher, which then runs the game.
+        let other = "\"/Applications/Other.app/launch\" %command%";
+        let joined = with_bridge(Some(other), &places);
+        assert_eq!(joined, format!("{ours} {other}"));
+        assert!(loads(&joined, &places));
         // Set up twice, changed once; taken out, as it was.
-        assert_eq!(with_bridge(Some(&joined), bridge), joined);
-        assert_eq!(without_bridge(&joined, bridge), other);
-        assert_eq!(without_bridge(&with_bridge(Some("-windowed"), bridge), bridge), "%command% -windowed");
-        assert_eq!(without_bridge(&with_bridge(None, bridge), bridge), "%command%");
+        assert_eq!(with_bridge(Some(&joined), &places), joined);
+        assert_eq!(without_bridge(&joined, &places), other);
+        assert_eq!(without_bridge(&with_bridge(Some("-windowed"), &places), &places), "%command% -windowed");
+        assert_eq!(without_bridge(&with_bridge(None, &places), &places), "%command%");
+        // The first, shell-style launch option of the bridge, which Steam cannot start, gives way.
+        let shell_style = format!("DYLD_INSERT_LIBRARIES=\"{BRIDGE}\" %command%");
+        assert!(!loads(&shell_style, &places));
+        assert_eq!(with_bridge(Some(&shell_style), &places), format!("{ours} %command%"));
+        assert_eq!(without_bridge(&shell_style, &places), "%command%");
     }
 
     #[test]
@@ -591,20 +617,27 @@ mod tests {
         std::fs::create_dir_all(&account).expect("account folder");
         let config_text = config("");
         std::fs::write(account.join("localconfig.vdf"), &config_text).expect("config");
-        let library = home.join("bundle").join(BRIDGE_FILE);
-        std::fs::create_dir_all(library.parent().expect("parent")).expect("bundle folder");
-        std::fs::write(&library, b"bridge").expect("library");
+        let bundle = home.join("bundle");
+        std::fs::create_dir_all(&bundle).expect("bundle folder");
+        std::fs::write(bundle.join(BRIDGE_FILE), b"bridge").expect("library");
+        assert!(matches!(set_up(&places, &bundle), Err(SetupError::NoLibrary(path)) if path.ends_with(LAUNCHER_FILE)));
+        std::fs::write(bundle.join(LAUNCHER_FILE), b"launcher").expect("launcher");
 
         // These run only while Steam is closed, which the test cannot arrange.
         if !steam_running() {
-            let status = set_up(&places, &library).expect("set up");
+            use std::os::unix::fs::PermissionsExt;
+
+            let status = set_up(&places, &bundle).expect("set up");
             assert!(status.ready(), "{status:?}");
             assert_eq!(std::fs::read(&places.bridge).expect("installed"), b"bridge");
+            let mode = std::fs::metadata(&places.launcher).expect("launcher installed").permissions().mode();
+            assert_eq!(mode & 0o777, 0o755);
             assert_eq!(status.accounts[0].launch_options.as_deref(), Some(status.launch_option.as_str()));
             assert!(account.join("localconfig.vdf.fmlibre-backup").is_file());
 
             let status = remove(&places).expect("remove");
             assert!(!status.installed && !status.ready());
+            assert!(!places.launcher.exists() && !places.bridge.exists());
             // The block opened for FM27 stays, empty, as Steam keeps them.
             let text = std::fs::read_to_string(account.join("localconfig.vdf")).expect("config");
             let empty_block = "\"apps\"\n\t\t\t\t{\n\t\t\t\t\t\"4530370\"\n\t\t\t\t\t{\n\t\t\t\t\t}\n";

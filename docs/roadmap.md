@@ -95,13 +95,13 @@ before trusting them.
   release from here on is checked on both Game Pass and Steam.
 - [x] macOS, the Steam build (see the [macOS notes](recon/fm27-steam-macos.md)):
   - memory access through a task port that the game hands over: a small bridge library,
-    which a Steam launch option has the game load, the way Steam loads its overlay. System
-    Integrity Protection stays on;
+    which the game loads as it does Steam's overlay, through a launcher that a Steam launch
+    option names. System Integrity Protection stays on;
   - the same guarded, heap-only writes as on Windows: a module's data is refused even once
     the game has written to it;
   - the app sets the bridge up and takes it out again, and gives the launch option to
     enter in Steam by hand while Steam runs;
-  - a universal bridge, so that Intel builds of the game load it too.
+  - a universal bridge and launcher, so that Intel builds of the game load it too.
 - [ ] macOS: check the object layout on a Mac save and add a build profile of the arm64
   `game_plugin` (its `LC_UUID` and array RVAs); until then the arrays are found by scanning.
 - [ ] Epic; possibly Linux/Proton.

@@ -77,9 +77,7 @@ What the test process showed on macOS 27:
   removing it takes the launch option out first.
 - SIP strips the `DYLD_*` variables from the environment of protected programs, and so
   from what they start: `DYLD_INSERT_LIBRARIES=... arch -x86_64 game` loses it on the way,
-  `arch -x86_64 -e DYLD_INSERT_LIBRARIES=... game` does not. Steam runs launch options in a
-  shell (its logs quote the game's path for one), where `VAR=value %command%` sets the
-  variable for the game itself.
+  `arch -x86_64 -e DYLD_INSERT_LIBRARIES=... game` does not.
 
 ## Heap-only writes
 
@@ -92,6 +90,24 @@ region for an address in a gap, so it is asked with the region's own base.
 
 ## Steam's launch options
 
+Steam on macOS starts a game's app bundle (`'…/fm.app'` in its logs). It runs **no shell** for
+a launch option: it replaces `%command%` with the bundle's path, in single quotes, splits the
+option into words and starts the first word as a program. The first launch option of the
+bridge, `DYLD_INSERT_LIBRARIES="…" %command%`, which a shell would take, made it fail:
+
+```text
+Failed running GameID 4530370: "DYLD_INSERT_LIBRARIES="…/libfmlibre_bridge.dylib" '…/fm.app'" (OS Error 260)
+```
+
+Error 260 is Cocoa's "no such file": the variable was taken for the program. So the launch
+option is `'…/fmlibre-launch' %command%`, quoted the way Steam quotes the game. The launcher
+is a small program of `fmlibre-bridge`: it finds the bundle's executable from its
+`Info.plist`, puts the bridge in front of the libraries `DYLD_INSERT_LIBRARIES` already names,
+and `exec`s the game, which keeps the process id Steam follows. Without the bridge beside it,
+it starts the game as it is. Started that way, FM27 (pid 14183) loaded the bridge next to the
+two libraries Steam names, `steamloader.dylib` and `gameoverlayrenderer.dylib`, and the probe
+attached to it with SIP on.
+
 Each Steam account keeps them in
 `~/Library/Application Support/Steam/userdata/<account>/config/localconfig.vdf`, under
 `UserLocalConfigStore/Software/Valve/Steam/apps/4530370/LaunchOptions`. Steam reads the file
@@ -102,7 +118,6 @@ place. Set up and taken out again on a copy of a real file, it came back byte fo
 ## Still to do
 
 - Start the game with the bridge from Steam, load a save, and run `calibrate`: check that
-  Steam passes `DYLD_INSERT_LIBRARIES` on, that the layout of `profiles/fm27/layout.toml`
-  holds (clang lays out classes by the Itanium C++ ABI, not MSVC's), and add a build profile
-  for the arm64 `LC_UUID` with the RVAs found.
+  the layout of `profiles/fm27/layout.toml` holds (clang lays out classes by the Itanium
+  C++ ABI, not MSVC's), and add a build profile for the arm64 `LC_UUID` with the RVAs found.
 - See whether the Steam overlay still loads next to the bridge.

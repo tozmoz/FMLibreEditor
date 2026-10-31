@@ -32,7 +32,7 @@ pub struct BridgeAccount {
 mod imp {
     use std::path::PathBuf;
 
-    use fmlibre_core::bridge_setup::{self, BRIDGE_FILE, BridgeStatus, Places};
+    use fmlibre_core::bridge_setup::{self, BRIDGE_FILE, BridgeStatus, LAUNCHER_FILE, Places};
     use tauri::{AppHandle, Manager};
 
     use super::{BridgeAccount, BridgeInfo};
@@ -71,12 +71,13 @@ mod imp {
         Ok(Places::of(&home))
     }
 
-    /// The bridge library that came with the app: among its resources once bundled, next to
-    /// the executable while developing.
-    fn library(app: &AppHandle) -> PathBuf {
-        let bundled = app.path().resource_dir().map(|dir| dir.join(BRIDGE_FILE));
-        let beside = std::env::current_exe().ok().and_then(|exe| Some(exe.parent()?.join(BRIDGE_FILE)));
-        [bundled.ok(), beside].into_iter().flatten().find(|path| path.is_file()).unwrap_or_else(|| BRIDGE_FILE.into())
+    /// The folder with the bridge and its launcher that came with the app: its resources once
+    /// bundled, the executable's folder while developing.
+    fn files(app: &AppHandle) -> PathBuf {
+        let bundled = app.path().resource_dir().ok();
+        let beside = std::env::current_exe().ok().and_then(|exe| Some(exe.parent()?.to_owned()));
+        let complete = |dir: &PathBuf| dir.join(BRIDGE_FILE).is_file() && dir.join(LAUNCHER_FILE).is_file();
+        [bundled.clone(), beside].into_iter().flatten().find(complete).or(bundled).unwrap_or_default()
     }
 
     pub fn status(app: &AppHandle) -> Option<BridgeInfo> {
@@ -85,7 +86,7 @@ mod imp {
 
     pub fn set_up(app: &AppHandle) -> Result<BridgeInfo, Failure> {
         let places = places(app)?;
-        bridge_setup::set_up(&places, &library(app)).map(Into::into).map_err(|err| Failure::coded(&err))
+        bridge_setup::set_up(&places, &files(app)).map(Into::into).map_err(|err| Failure::coded(&err))
     }
 
     pub fn remove(app: &AppHandle) -> Result<BridgeInfo, Failure> {

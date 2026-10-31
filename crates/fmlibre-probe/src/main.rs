@@ -59,13 +59,13 @@ struct Cli {
 #[cfg(target_os = "macos")]
 #[derive(Subcommand)]
 enum BridgeAction {
-    /// Install the bridge library and add it to FM27's Steam launch options.
+    /// Install the bridge and its launcher, and have Steam start FM27 through the launcher.
     Setup {
-        /// The bridge library to install; by default libfmlibre_bridge.dylib next to the probe.
-        #[arg(long)]
-        library: Option<PathBuf>,
+        /// The folder with libfmlibre_bridge.dylib and fmlibre-launch; by default the probe's own.
+        #[arg(long, value_name = "FOLDER")]
+        from: Option<PathBuf>,
     },
-    /// Take the bridge out of FM27's Steam launch options and remove the library.
+    /// Take the launcher out of FM27's Steam launch options and remove the bridge.
     Remove,
 }
 
@@ -1653,24 +1653,19 @@ fn bridge(action: Option<BridgeAction>) -> Result<()> {
     let places = Places::of(Path::new(&home));
     let status = match action {
         None => bridge_setup::status(&places),
-        Some(BridgeAction::Setup { library }) => {
-            let library = match library {
-                Some(library) => library,
-                None => std::env::current_exe()?
-                    .parent()
-                    .context("the probe has no folder")?
-                    .join(bridge_setup::BRIDGE_FILE),
+        Some(BridgeAction::Setup { from }) => {
+            let from = match from {
+                Some(from) => from,
+                None => std::env::current_exe()?.parent().context("the probe has no folder")?.to_owned(),
             };
-            bridge_setup::set_up(&places, &library)?
+            bridge_setup::set_up(&places, &from)?
         }
         Some(BridgeAction::Remove) => bridge_setup::remove(&places)?,
     };
     let yes_no = |yes: bool| if yes { "yes" } else { "no" };
-    println!(
-        "Bridge library   {} ({})",
-        places.bridge.display(),
-        if status.installed { "installed" } else { "missing" }
-    );
+    let found = |path: &Path| if path.is_file() { "installed" } else { "missing" };
+    println!("Bridge library   {} ({})", places.bridge.display(), found(&places.bridge));
+    println!("Launcher         {} ({})", places.launcher.display(), found(&places.launcher));
     println!("Steam running    {}", yes_no(status.steam_running));
     if status.accounts.is_empty() {
         println!("Steam accounts   none found in {}", places.steam_users.display());
