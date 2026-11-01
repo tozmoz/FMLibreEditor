@@ -1120,6 +1120,7 @@ mod tests {
         position_ratings[12] = 18; // ST
         let mut player = PlayerSummary {
             uid: 1,
+            id: None,
             name: "A".to_owned(),
             full_name: None,
             date_of_birth: None,

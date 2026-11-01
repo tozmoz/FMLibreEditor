@@ -174,6 +174,12 @@ changes many at once, and undo.
     [transfer notes](recon/fm27-transfers.md).
   - [ ] Transfers agreed for a later date.
 - Wave 2, new memory research:
+  - [x] Season statistics, as FMRTE's Stats tab: a Season tab in a player's profile with his appearances,
+    minutes, goals, assists, expected goals and the data hub's counts (passes, duels, pressures, distance)
+    for each competition, split into league, cups, continental and international, each value per 90 minutes
+    with its percentile among the players of his league and position. The game keeps a `GAME_COMP_STATS`
+    object for each competition, found by its class name; read-only. Checked on the Mac Steam build against
+    FMRTE's figures for Arda Güler: see the [season notes](recon/fm27-season-stats.md). Not on Windows yet.
   - [ ] Traits (preferred moves).
   - [x] Move a member of staff to another club, keeping the job and the contract, and change a job. A club
     keeps its staff in three department lists (medical, coaching, scouting); a move takes them out of the

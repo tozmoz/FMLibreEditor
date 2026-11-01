@@ -20,7 +20,9 @@ mod medical;
 mod players;
 mod profile;
 mod relations;
+mod rtti;
 mod scan;
+mod season;
 mod session;
 mod squad;
 mod staff;
@@ -52,6 +54,10 @@ pub use profile::{
 };
 pub use relations::{HOMEGROWN_RULES, Relation, RelationPlan, RelationSet, Tie, TieTarget};
 pub use scan::{ArrayCandidate, ScanOptions, VtableCount, scan_object_arrays};
+pub use season::{
+    Competition, CompetitionKind, PositionGroup, SeasonComparison, SeasonIndex, SeasonLine, SeasonStats, SeasonTeam,
+    read_season,
+};
 pub use session::{ArraySource, Session, SessionError, find_game};
 pub use squad::{CaptainPlan, CaptainRole, CaptainSet, ClubTeam, Loan, SquadMember};
 pub use staff::{

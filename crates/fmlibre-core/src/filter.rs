@@ -235,6 +235,7 @@ mod tests {
         position_ratings[12] = st;
         PlayerSummary {
             uid: 1,
+            id: None,
             name: name.to_owned(),
             full_name: None,
             date_of_birth: None,

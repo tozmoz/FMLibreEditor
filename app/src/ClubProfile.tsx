@@ -1,4 +1,4 @@
-import { useContext, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useContext, useEffect, useId, useState, type ReactNode } from "react";
 import { EditableValue } from "./EditControls";
 import { freezeMoney, frozenClubs } from "./editing";
 import { describeError, formatNumber, formatPounds } from "./format";
@@ -14,6 +14,7 @@ import { ClubLogo, PICTURE_SIZE } from "./Picture";
 import {
   Fact,
   ProfileFrame,
+  ProfileTabs,
   RatingGroup,
   RatingList,
   ReputationMeter,
@@ -83,7 +84,20 @@ export function ClubProfile({ club, version, tab, onTab, onClose }: ClubProfileP
           </EditableValue>
         </div>
       }
-      tabs={details && <ClubTabs tab={shown} base={base} locked={locked} onSelect={onTab} />}
+      tabs={
+        details && (
+          <ProfileTabs
+            tabs={TABS}
+            tab={shown}
+            names={text.tabs}
+            label={text.tabsLabel}
+            base={base}
+            // The Squad tab is out of reach while the club is edited.
+            locked={(id) => (locked && id === "squad" ? text.squadLocked : undefined)}
+            onSelect={onTab}
+          />
+        )
+      }
       wide={details !== undefined && shown === "squad"}
       loaded={loaded}
       onClose={onClose}
@@ -96,70 +110,6 @@ export function ClubProfile({ club, version, tab, onTab, onClose }: ClubProfileP
           <ClubBody details={details} panel={panel} />
         ))}
     </ProfileFrame>
-  );
-}
-
-interface ClubTabsProps {
-  tab: ClubTab;
-  /** The start of the ids of the tabs, which the panel they open names itself by (see `PanelIds`). */
-  base: string;
-  /** Whether the club is being edited. */
-  locked: boolean;
-  onSelect: (tab: ClubTab) => void;
-}
-
-/** The tabs under the header. The arrow keys move between them, as in any tab list. */
-function ClubTabs({ tab, base, locked, onSelect }: ClubTabsProps) {
-  const buttons = useRef<Partial<Record<ClubTab, HTMLButtonElement | null>>>({});
-  // The Squad tab is out of reach while the club is edited.
-  const offered = TABS.filter((id) => !(locked && id === "squad"));
-
-  const keyDown = (event: KeyboardEvent) => {
-    const at = offered.indexOf(tab);
-    const target =
-      event.key === "ArrowRight"
-        ? offered[(at + 1) % offered.length]
-        : event.key === "ArrowLeft"
-          ? offered[(at - 1 + offered.length) % offered.length]
-          : event.key === "Home"
-            ? offered[0]
-            : event.key === "End"
-              ? offered[offered.length - 1]
-              : undefined;
-    if (target !== undefined) {
-      event.preventDefault();
-      onSelect(target);
-      buttons.current[target]?.focus();
-    }
-  };
-
-  return (
-    <div className="profile-tabs" role="tablist" aria-label={text.tabsLabel} onKeyDown={keyDown}>
-      {TABS.map((id) => {
-        const unavailable = locked && id === "squad";
-        return (
-          <button
-            key={id}
-            ref={(button) => {
-              buttons.current[id] = button;
-            }}
-            type="button"
-            role="tab"
-            id={`${base}-${id}`}
-            className="profile-tab"
-            aria-selected={id === tab}
-            aria-controls={`${base}-panel`}
-            // Only the tab that is open is a Tab stop; the arrow keys reach the other.
-            tabIndex={id === tab ? 0 : -1}
-            disabled={unavailable}
-            title={unavailable ? text.squadLocked : undefined}
-            onClick={() => onSelect(id)}
-          >
-            {text.tabs[id]}
-          </button>
-        );
-      })}
-    </div>
   );
 }
 

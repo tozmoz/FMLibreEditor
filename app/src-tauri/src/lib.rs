@@ -1,17 +1,17 @@
 mod bridge;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use fmlibre_core::{
     ArraySource, CaptainRole, CaptainSet, Change, ClubDetails, ClubFilter, ClubIndex, ClubMove, Coded, EditError,
     Entity, EntityArrays, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsCounts, GraphicsIndex,
     HOMEGROWN_RULES, Healed, Kind, Lifted, Listed, Loan, MoveError, MovePlan, MoveTerms, Nation, Operation, Paid,
-    Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, RelationSet, STAFF_JOBS,
-    SearchIndex, Session, SessionError, Skipped, StaffChange, StaffDetails, StaffFilter, StaffIndex, StaffPlan, Target,
-    Tie, TieTarget, find_game, nations, sort_players,
+    Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, PositionGroup, RelationSet,
+    STAFF_JOBS, SearchIndex, SeasonComparison, SeasonIndex, SeasonLine, Session, SessionError, Skipped, StaffChange,
+    StaffDetails, StaffFilter, StaffIndex, StaffPlan, Target, Tie, TieTarget, find_game, nations, sort_players,
 };
 use fmlibre_mem::{Process, find_processes, is_current_process_elevated, list_modules};
 use serde::{Deserialize, Serialize};
@@ -24,7 +24,8 @@ const GRAPHICS_FOLDER: &str = "FMLIBRE_GRAPHICS";
 
 /// The connected game, the people read from it and the changes written this session.
 struct Connection {
-    session: Session,
+    /// Shared, so that the season's statistics can be read without holding the connection (see `player_season`).
+    session: Arc<Session>,
     players: PlayerIndex,
     staff: StaffIndex,
     clubs: ClubIndex,
@@ -38,6 +39,9 @@ struct Connection {
     /// The clubs whose money is frozen, with the least their balance may be: what it was when it was frozen, or more
     /// once the club earned more (see `hold_frozen`).
     frozen: BTreeMap<u32, i64>,
+    /// The season's statistics of every player, read the first time a player's are asked for; `None` inside when this
+    /// build's cannot be read.
+    season: Arc<OnceLock<Option<SeasonIndex>>>,
 }
 
 /// How often the balances of frozen clubs are looked at.
@@ -53,14 +57,15 @@ struct PendingMass {
 impl Connection {
     /// Reads every list. A reload keeps the change log; a mass edit previewed before is dropped,
     /// since its people may have moved.
-    fn load(session: Session, log: Vec<LoggedChange>, frozen: BTreeMap<u32, i64>) -> Result<Self, Failure> {
+    fn load(session: Arc<Session>, log: Vec<LoggedChange>, frozen: BTreeMap<u32, i64>) -> Result<Self, Failure> {
         let players = PlayerIndex::new(session.players()?);
         let staff = session.staff()?;
         let human_clubs = staff.iter().filter(|member| member.is_human).filter_map(|member| member.club_uid).collect();
         let staff = StaffIndex::new(staff);
         let clubs = ClubIndex::new(session.clubs()?);
         let next_id = log.iter().filter_map(|logged| logged.batch).max().unwrap_or(0) + 1;
-        Ok(Self { session, players, staff, clubs, human_clubs, log, mass: None, next_id, frozen })
+        let season = Arc::default();
+        Ok(Self { session, players, staff, clubs, human_clubs, log, mass: None, next_id, frozen, season })
     }
 
     /// What the window shows about the connection; `load_ms` is how long reading took.
@@ -1068,6 +1073,14 @@ fn not_found(entity: Entity, uid: u32) -> Failure {
     Failure::new("app.notFound", format!("No {entity} with id {uid}")).with("entity", entity).with("uid", uid)
 }
 
+/// The season's statistics of this build are not placed, or were not found.
+fn no_season() -> Failure {
+    Failure::new(
+        "season.unavailable",
+        "FMLibreEditor cannot read the season's statistics of this build of the game yet.",
+    )
+}
+
 /// A profile could not be read whole, as the game changed it meanwhile.
 fn data_changed() -> Failure {
     Failure::new("app.dataChanged", "This data has changed in the game; reload and try again.")
@@ -1102,7 +1115,8 @@ async fn connect(state: State<'_, AppState>) -> Result<ConnectionInfo, Failure> 
     let connection = tauri::async_runtime::spawn_blocking(|| -> Result<Connection, Failure> {
         let pid = find_game(None)?;
         let process = Process::open_read_write(pid).or_else(|_| Process::open_read(pid))?;
-        Connection::load(Session::connect(process, ArraySource::ProfileFirst)?, Vec::new(), BTreeMap::new())
+        let session = Session::connect(process, ArraySource::ProfileFirst)?;
+        Connection::load(Arc::new(session), Vec::new(), BTreeMap::new())
     })
     .await??;
 
@@ -1189,6 +1203,43 @@ fn search_clubs(
     let connection = guard.as_ref().ok_or_else(not_connected)?;
     let filter = filter.unwrap_or_default();
     Ok(page(&connection.clubs, &query, limit, |c| filter.matches(c), |_| {}))
+}
+
+/// A player's season: his statistics in each competition, and the players of his league he is compared with.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PlayerSeason {
+    lines: Vec<SeasonLine>,
+    comparison: Option<SeasonComparison>,
+}
+
+/// The season's statistics of the player with `uid`. The first call reads every player's, which takes a second or two,
+/// outside the connection's lock so that the lists stay usable meanwhile; calls made during it wait for that read.
+/// Only reads memory.
+#[tauri::command]
+async fn player_season(state: State<'_, AppState>, uid: u32) -> Result<PlayerSeason, Failure> {
+    let (session, season) = {
+        let guard = state.0.lock()?;
+        let connection = guard.as_ref().ok_or_else(not_connected)?;
+        (connection.session.clone(), connection.season.clone())
+    };
+    let reader = season.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        reader.get_or_init(|| session.season());
+    })
+    .await?;
+    let season = season.get().and_then(Option::as_ref).ok_or_else(no_season)?;
+
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    let player = connection.players.get(uid).ok_or_else(|| not_found(Entity::Player, uid))?;
+    let id = player.id.ok_or_else(no_season)?;
+    let comparison = PositionGroup::of(&player.position_ratings).and_then(|group| {
+        let groups: HashMap<u32, PositionGroup> =
+            connection.players.iter().filter_map(|p| Some((p.id?, PositionGroup::of(&p.position_ratings)?))).collect();
+        season.comparison(id, group, |person| groups.get(&person).copied())
+    });
+    Ok(PlayerSeason { lines: season.lines(id), comparison })
 }
 
 /// The full profile of the club with `uid`. Only reads memory.
@@ -1843,6 +1894,7 @@ pub fn run() {
             player_details,
             staff_details,
             club_details,
+            player_season,
             list_nations,
             freeze_money,
             frozen_clubs,

@@ -1,7 +1,8 @@
+import { useEffect, useId } from "react";
 import { CompareToggle } from "./Comparison";
 import { AbilityEditGroup, EditableValue, EditInput, PositionEditGroup } from "./EditControls";
 import { formatPounds } from "./format";
-import { ATTRIBUTE_LABELS, fieldLabel, profileText, type AttributeKey } from "./labels";
+import { ATTRIBUTE_LABELS, fieldLabel, profileText, seasonText, type AttributeKey } from "./labels";
 import { MedicalGroup } from "./MedicalGroup";
 import { MoveButton } from "./MoveDialog";
 import { ClubLogo, NationFlag, PersonFace, PICTURE_SIZE, WithPicture } from "./Picture";
@@ -17,30 +18,45 @@ import {
   LOWER_IS_BETTER,
   personalityRows,
   ProfileFrame,
+  ProfileTabs,
   RatingGroup,
   ReputationBars,
   useProfileDetails,
   WageFact,
+  type PanelIds,
   type RatingRow,
 } from "./ProfileParts";
+import { SeasonTab } from "./SeasonTab";
 import type { Contract, PlayerDetails, PlayerSummary } from "./types";
 import type { Comparison } from "./useComparison";
 import { useEditableField, useProfileEditing } from "./useProfileEditing";
+
+/** The tabs of the profile: what the player is, and his season. */
+export type PlayerTab = "profile" | "season";
+
+const TABS: readonly PlayerTab[] = ["profile", "season"];
+
+/** The tab saved before the language was switched; the profile when there is none. */
+export const readPlayerTab = (value: unknown): PlayerTab => (value === "season" ? "season" : "profile");
 
 interface PlayerProfileProps {
   /** The row that was picked; its fields fill the header while the full profile loads. */
   player: PlayerSummary;
   /** Changes when the game data is read again, so the profile is too. */
   version: number;
+  /** The open tab. The list keeps it, so that the next player picked opens on it too. */
+  tab: PlayerTab;
+  onTab: (tab: PlayerTab) => void;
   onClose: () => void;
   /** The players picked for a comparison: the header has the button that adds this player to it, or takes them out. */
   comparison: Comparison;
 }
 
 /** The profile of one player. Mount it with `key={uid}` so a new player starts at the top. */
-export function PlayerProfile({ player, version, onClose, comparison }: PlayerProfileProps) {
+export function PlayerProfile({ player, version, tab, onTab, onClose, comparison }: PlayerProfileProps) {
   const loaded = useProfileDetails<PlayerDetails>("player_details", player.uid, version);
   const editing = useProfileEditing("player", player.uid);
+  const base = useId();
   const details = loaded?.details;
   const info = details ?? player;
   const vitals = [
@@ -48,6 +64,17 @@ export function PlayerProfile({ player, version, onClose, comparison }: PlayerPr
     details && details.heightCm > 0 && profileText.height(details.heightCm),
     `${profileText.uid} ${info.uid}`,
   ];
+
+  // The player is edited on the Profile, which has the inputs: editing starts there, and the Season tab is not offered
+  // until it is done.
+  const locked = editing.stage !== "view";
+  useEffect(() => {
+    if (locked) {
+      onTab("profile");
+    }
+  }, [locked, onTab]);
+  const shown = locked ? "profile" : tab;
+  const panel: PanelIds = { id: `${base}-panel`, labelledBy: `${base}-${shown}` };
 
   return (
     <ProfileFrame
@@ -76,6 +103,20 @@ export function PlayerProfile({ player, version, onClose, comparison }: PlayerPr
       vitals={vitals}
       currentAbility={info.currentAbility}
       potentialAbility={info.potentialAbility}
+      tabs={
+        details && (
+          <ProfileTabs
+            tabs={TABS}
+            tab={shown}
+            names={seasonText.tabs}
+            label={seasonText.tabsLabel}
+            base={base}
+            locked={(id) => (locked && id === "season" ? seasonText.locked : undefined)}
+            onSelect={onTab}
+          />
+        )
+      }
+      wide={details !== undefined && shown === "season"}
       loaded={loaded}
       onClose={onClose}
       editing={editing}
@@ -97,15 +138,20 @@ export function PlayerProfile({ player, version, onClose, comparison }: PlayerPr
         </>
       }
     >
-      {details && <ProfileBody details={details} />}
+      {details &&
+        (shown === "season" ? (
+          <SeasonTab uid={info.uid} version={version} panel={panel} />
+        ) : (
+          <ProfileBody details={details} panel={panel} />
+        ))}
     </ProfileFrame>
   );
 }
 
-function ProfileBody({ details }: { details: PlayerDetails }) {
+function ProfileBody({ details, panel }: { details: PlayerDetails; panel: PanelIds }) {
   const goalkeeper = isGoalkeeper(details);
   return (
-    <>
+    <div className="profile-panel" role="tabpanel" id={panel.id} aria-labelledby={panel.labelledBy}>
       <AbilityEditGroup entity="player" />
 
       <div className="profile-columns">
@@ -137,7 +183,7 @@ function ProfileBody({ details }: { details: PlayerDetails }) {
       {details.contract && <ContractGroup contract={details.contract} />}
       <CareerGroup details={details} />
       <TiesGroup details={details} />
-    </>
+    </div>
   );
 }
 

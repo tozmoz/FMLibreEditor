@@ -167,6 +167,7 @@ fmlibre-probe bans 29120248 --lift --restore         # lift a player's bans and 
 fmlibre-probe ties 2000138835                        # secondary nationalities and homegrown status, numbered
 fmlibre-probe tie-set 2000138835 0 --nation 765 --restore   # point tie 0 at England and back: this writes too
 fmlibre-probe teams 680                              # a club's teams: kinds, captains, players' fitness and morale
+fmlibre-probe season 2000077193                      # a player's statistics this season, by competition (macOS)
 fmlibre-probe captain 680 43425040 --restore         # make a player captain (--vice: vice-captain) and back
 fmlibre-probe scan                                   # find arrays of game objects in game_plugin.dll
 fmlibre-probe refs 0x1a5a5396990 --span 0x3c8        # every pointer into an object (holders, lists, squads too)

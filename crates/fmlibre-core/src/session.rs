@@ -11,6 +11,7 @@ use crate::details::{PlayerDetails, read_player_details};
 use crate::game::{GAME_EXE, GAME_PLUGIN, GameInfo};
 use crate::players::{PlayerSummary, read_players};
 use crate::profile::{BuildProfile, Layout, PluginFingerprint, layout_for, profile_for};
+use crate::season::{SeasonIndex, read_season};
 use crate::staff::{StaffDetails, StaffSummary, read_staff, read_staff_details};
 
 #[derive(Debug)]
@@ -166,6 +167,12 @@ impl Session {
             let array = self.arrays.clubs.as_ref()?;
             full_finance_class(&self.process, &self.plugin, array, &self.layout)
         })
+    }
+
+    /// Reads the season's statistics of every player; `None` where this build's are not placed or found. Takes a
+    /// second or two (see `season.rs`). Only reads memory.
+    pub fn season(&self) -> Option<SeasonIndex> {
+        read_season(&self.process, &self.plugin, &self.layout)
     }
 
     /// The current in-game date, when it can be read and looks like a real date.

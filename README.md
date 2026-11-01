@@ -28,6 +28,8 @@ How to install and use it: [docs/INSTALL.md](docs/INSTALL.md).
 - Heal injuries, lift bans, raise morale and fitness, set captains, for one player or a whole team.
 - Transfer, swap or release players, and move staff between clubs.
 - Mass edit many at once, with a preview; undo any change.
+- See a player's season: each competition's figures, per 90 minutes, with percentiles against the
+  players of his league and position (macOS for now).
 - English, Turkish and Spanish; logos, flags and faces from your graphics packs.
 
 The game shows a change once you press **Continue** in FM.

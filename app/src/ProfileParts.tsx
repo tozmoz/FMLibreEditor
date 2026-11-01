@@ -1,4 +1,12 @@
-import { Fragment, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+} from "react";
 import { Ability } from "./Ability";
 import { call } from "./api";
 import { EditableValue, EditBar, EditButton, EditInput } from "./EditControls";
@@ -19,6 +27,73 @@ export type Loaded<T> = { details: T; error?: undefined } | { details?: undefine
 export interface PanelIds {
   id: string;
   labelledBy: string;
+}
+
+interface ProfileTabsProps<T extends string> {
+  tabs: readonly T[];
+  tab: T;
+  /** The name of each tab, and of the tab list for assistive technology. */
+  names: Record<T, string>;
+  label: string;
+  /** The start of the ids of the tabs, which the panel they open names itself by (see `PanelIds`). */
+  base: string;
+  /** Why a tab cannot be opened now, as its hover text; `undefined` for one that can. */
+  locked?: (tab: T) => string | undefined;
+  onSelect: (tab: T) => void;
+}
+
+/** The tabs under the header of a profile. The arrow keys move between them, as in any tab list. */
+export function ProfileTabs<T extends string>({ tabs, tab, names, label, base, locked, onSelect }: ProfileTabsProps<T>) {
+  const buttons = useRef<Partial<Record<T, HTMLButtonElement | null>>>({});
+  const offered = tabs.filter((id) => locked?.(id) === undefined);
+
+  const keyDown = (event: ReactKeyboardEvent) => {
+    const at = offered.indexOf(tab);
+    const target =
+      event.key === "ArrowRight"
+        ? offered[(at + 1) % offered.length]
+        : event.key === "ArrowLeft"
+          ? offered[(at - 1 + offered.length) % offered.length]
+          : event.key === "Home"
+            ? offered[0]
+            : event.key === "End"
+              ? offered[offered.length - 1]
+              : undefined;
+    if (target !== undefined) {
+      event.preventDefault();
+      onSelect(target);
+      buttons.current[target]?.focus();
+    }
+  };
+
+  return (
+    <div className="profile-tabs" role="tablist" aria-label={label} onKeyDown={keyDown}>
+      {tabs.map((id) => {
+        const why = locked?.(id);
+        return (
+          <button
+            key={id}
+            ref={(button) => {
+              buttons.current[id] = button;
+            }}
+            type="button"
+            role="tab"
+            id={`${base}-${id}`}
+            className="profile-tab"
+            aria-selected={id === tab}
+            aria-controls={`${base}-panel`}
+            // Only the tab that is open is a Tab stop; the arrow keys reach the others.
+            tabIndex={id === tab ? 0 : -1}
+            disabled={why !== undefined}
+            title={why}
+            onClick={() => onSelect(id)}
+          >
+            {names[id]}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 /** Loads a profile with `command`, and again when `version` changes: the game data was read again. */

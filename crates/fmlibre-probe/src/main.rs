@@ -4,7 +4,7 @@
 //! Pass) and to map where the game keeps its data. Only `set` writes to the game, one
 //! field at a time, through the same checks as the app.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Instant;
@@ -12,11 +12,11 @@ use std::time::Instant;
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use fmlibre_core::{
-    ATTRIBUTE_GROUPS, ArrayCandidate, ArraySource, AttributeBound, CaptainRole, ClubIndex, Entity, Field, FmDate,
-    GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsIndex, Kind, Loan, MoveTerms, PERSONALITY, POSITIONS, Picture,
-    PlayerFilter, PlayerIndex, PlayerOrder, PlayerSort, STAFF_ATTRIBUTE_GROUPS, SUPPORTER_MIX, SUPPORTER_TRAITS, Scale,
-    ScanOptions, Session, SessionError, StaffIndex, Target, Tie, TieTarget, find_game, job_name, nations,
-    scan_object_arrays, sort_players,
+    ATTRIBUTE_GROUPS, ArrayCandidate, ArraySource, AttributeBound, CaptainRole, ClubIndex, CompetitionKind, Entity,
+    Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsIndex, Kind, Loan, MoveTerms, PERSONALITY, POSITIONS,
+    Picture, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSort, PositionGroup, STAFF_ATTRIBUTE_GROUPS, SUPPORTER_MIX,
+    SUPPORTER_TRAITS, Scale, ScanOptions, SeasonStats, Session, SessionError, StaffIndex, Target, Tie, TieTarget,
+    find_game, job_name, nations, scan_object_arrays, sort_players,
 };
 #[cfg(target_os = "macos")]
 use fmlibre_mem::MachImage;
@@ -84,6 +84,15 @@ enum Command {
     Player {
         /// The player's unique ID.
         uid: u32,
+    },
+    /// Show a player's statistics this season, a line per competition, and the players his league numbers are
+    /// compared with.
+    Season {
+        /// The player's unique ID.
+        uid: u32,
+        /// Also list every competition the game keeps statistics for.
+        #[arg(long)]
+        competitions: bool,
     },
     /// List staff (managers, coaches, scouts...), the human manager first, then best first.
     Staff {
@@ -706,6 +715,9 @@ fn run(cli: Cli) -> Result<()> {
             calibrate(&Session::connect(process, source)?)
         }
         Command::Player { uid } => player(&Session::connect(process, ArraySource::ProfileFirst)?, uid),
+        Command::Season { uid, competitions } => {
+            season(&Session::connect(process, ArraySource::ProfileFirst)?, uid, competitions)
+        }
         Command::Staff { text, limit } => {
             staff(&Session::connect(process, ArraySource::ProfileFirst)?, text.as_deref(), limit)
         }
@@ -1945,6 +1957,63 @@ fn parse_iso_date(text: &str) -> Result<FmDate> {
     };
     ensure!((1..=12).contains(&date.month) && (1..=31).contains(&date.day), "not a date: {text}");
     Ok(date)
+}
+
+fn season(session: &Session, uid: u32, competitions: bool) -> Result<()> {
+    let index = PlayerIndex::new(session.players()?);
+    let player = index.get(uid).with_context(|| format!("no player with UID {uid}"))?;
+    let id = player.id.context("this build's layout does not place the players' ids")?;
+    let started = Instant::now();
+    let season = session.season().context("found no season statistics in this build")?;
+    println!(
+        "{} (UID {uid}, id {id}): read {} competitions' statistics in {:.1} s",
+        player.name,
+        season.competitions().len(),
+        started.elapsed().as_secs_f64()
+    );
+    if competitions {
+        for c in season.competitions() {
+            println!("    {} ({}): domestic {}, league {}", c.name, c.full_name, c.domestic, c.league);
+        }
+    }
+    let lines = season.lines(id);
+    let mut all = SeasonStats::default();
+    for line in &lines {
+        let s = &line.stats;
+        let team = line.team.as_ref().map_or("-", |team| team.name.as_str());
+        println!(
+            "  {:<28} {:<12} {:<18} {:>2} apps ({} sub) {:>4} min {} G {} A  xG {:.2} xA {:.2}  rating {:.2}",
+            line.competition,
+            format!("{:?}", line.kind),
+            team,
+            s.appearances,
+            s.substitute,
+            s.minutes,
+            s.goals,
+            s.assists,
+            s.expected_goals,
+            s.expected_assists,
+            f64::from(s.rating_tenths) / 10.0 / f64::from(s.rated.max(1)),
+        );
+        if line.kind != CompetitionKind::International {
+            all.add(s);
+        }
+    }
+    println!("  club competitions: {all:#?}");
+    let group = PositionGroup::of(&player.position_ratings).context("no position ratings")?;
+    let groups: HashMap<u32, PositionGroup> =
+        index.iter().filter_map(|p| Some((p.id?, PositionGroup::of(&p.position_ratings)?))).collect();
+    match season.comparison(id, group, |person| groups.get(&person).copied()) {
+        Some(c) => println!(
+            "  compared with {} {:?} players in the {} with {}+ minutes",
+            c.pool.len(),
+            c.group,
+            c.competition,
+            c.min_minutes
+        ),
+        None => println!("  too few players to compare with"),
+    }
+    Ok(())
 }
 
 fn player(session: &Session, uid: u32) -> Result<()> {

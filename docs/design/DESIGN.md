@@ -443,7 +443,8 @@ A page of the yearbook that opens beside the row.
 - **Head:** the name in Display type, the full name and vitals in muted small print, CA and PA as Large Figures at the right with their abbreviations in muted uppercase, and the actions above them (Compare and Move as outline buttons, Edit as the ink-filled main action, close as an icon button). A 2px ink rule closes the head.
 - **Groups:** a Group Head under a 3px ink rule, then label and value rows (27px, hairline between, muted label, value right-aligned). A 1 to 20 value is Rating type in its band's ink.
 - **Other parts:** the pitch map (band-coloured markers, ineffective positions barely visible), the legend, the supporter-mix bar (12px, 2px gaps), progress bars (6px, ink fill on hairline).
-- **Profile tabs** (a club's General and Squad): muted text over a hairline; the open tab gets a 3px ink underline.
+- **Profile tabs** (a club's General and Squad, a player's Profile and Season): muted text over a hairline; the open tab gets a 3px ink underline.
+- **Season tab:** a segmented switch of the competitions shown (all club competitions, league, cups, continental, international); the season's line as four figures to a row, a muted uppercase label over a Large Figure (22px) and a note, parted by hairlines; then the groups two to a row, each value's row giving the season's figure, the value per 90 or the rate in bold, and its percentile as a 56×6 bar in its band's ink (under 25, 25 to 49, 50 to 74, 75 and over) with the number. A ↓ marks a value where less is better. Cards are drawn as cards, 10×14, in the yellow and red they are on the pitch, the one place those two appear. The competitions follow in an almanac table. Two figures and one group to a row where the profile is narrower than 640px.
 
 ### Edit Mode and the Highlighter
 Every change waits in highlighter until it is applied.

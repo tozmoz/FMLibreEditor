@@ -16,6 +16,10 @@ use crate::text::{Memo, display_name, is_name_like, read_fm_string, read_name_en
 #[serde(rename_all = "camelCase")]
 pub struct PlayerSummary {
     pub uid: u32,
+    /// The game's own id of the person, which the season's statistics name him by; `None` where the layout does not
+    /// place it.
+    #[serde(skip)]
+    pub id: Option<u32>,
     /// Display name: the common name if set, otherwise first and last name.
     pub name: String,
     /// Full birth name, when FM stores one.
@@ -133,6 +137,7 @@ pub fn read_players(
         let u64_at = |offset: u64| u64::from_le_bytes(buf[at(offset)..at(offset) + 8].try_into().expect("8 bytes"));
 
         let uid = u32_at(p.uid);
+        let id = p.id.map(u32_at);
         let full_name = read_fm_string(process, u64_at(p.full_name));
         let mut name_part = |offset| names.get(u64_at(offset), |entry| read_name_entry(process, entry));
         let (common, first, last) = (name_part(p.common_name), name_part(p.first_name), name_part(p.last_name));
@@ -162,6 +167,7 @@ pub fn read_players(
         let listing = if has_contract { contract_buf[c.listing as usize] } else { 0 };
         players.push(PlayerSummary {
             uid,
+            id,
             name,
             full_name,
             date_of_birth,
