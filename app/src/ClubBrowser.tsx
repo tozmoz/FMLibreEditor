@@ -1,3 +1,4 @@
+import { EntityLink } from "./ProfileTabs";
 import { useState } from "react";
 import { ClubProfile, readTab, type ClubTab } from "./ClubProfile";
 import { clubListText, profileText } from "./labels";
@@ -72,7 +73,7 @@ function ClubCells({ club: c }: { club: ClubSummary }) {
       <td className="col-name" title={c.name}>
         <WithPicture picture={<ClubLogo uid={c.uid} name={c.name} size={PICTURE_SIZE.clubRowLogo} />}>
           <div className="name">
-            <span className="name-text">{c.name}</span>
+            <span className="name-text"><EntityLink entity="club" uid={c.uid}>{c.name}</EntityLink></span>
             {c.women && <span className="tag women">{clubListText.women}</span>}
           </div>
           {c.shortName && c.shortName !== c.name && <div className="sub">{c.shortName}</div>}

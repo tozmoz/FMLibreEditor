@@ -1,5 +1,7 @@
+import { EntityLink } from "./ProfileTabs";
 import { useContext, useEffect, useState } from "react";
 import { AttributeActions } from "./AttributeActions";
+import roleHighlights from "./roleHighlights.json";
 import { ClauseList } from "./ClauseList";
 import { CompareToggle } from "./Comparison";
 import { AbilityEditGroup, EditableValue, EditInput, PersonalEditGroup, PositionEditGroup } from "./EditControls";
@@ -65,7 +67,7 @@ export function PlayerProfile({ player, version, onClose, comparison }: PlayerPr
             <span className="muted">{profileText.freeAgent}</span>
           ) : (
             <WithPicture inline picture={<ClubLogo uid={info.clubUid} name={info.club} size={PICTURE_SIZE.textLogo} />}>
-              {info.club}
+              <EntityLink entity="club" uid={info.clubUid}>{info.club}</EntityLink>
             </WithPicture>
           )}
           {info.nation && (
@@ -109,22 +111,42 @@ export function PlayerProfile({ player, version, onClose, comparison }: PlayerPr
 
 function ProfileBody({ details }: { details: PlayerDetails }) {
   const goalkeeper = isGoalkeeper(details);
+  const groupFor: Record<string,string> = {gk:"Goalkeeper",dc:"DefenderCentral",dl:"FullBack",dr:"FullBack",wbl:"WingBack",wbr:"WingBack",dm:"DefensiveMidfielder",mc:"MidfielderCentral",ml:"WideMidfielder",mr:"WideMidfielder",aml:"Winger",amr:"Winger",amc:"AttackingMidfielderCentral",st:"Striker"};
+  const best = Object.keys(groupFor).reduce((a,b) => (details.positionRatings[b]??0)>(details.positionRatings[a]??0) ? b : a,"gk");
+  const [group,setGroup] = useState(groupFor[best]);
+  const [roleIndex,setRoleIndex] = useState(0);
+  const [phase,setPhase] = useState("InPossession");
+  const [showHighlights,setShowHighlights] = useState(true);
+  const catalog = roleHighlights as unknown as Record<string,{name:string;phases:Record<string,Record<string,string>>}[]>;
+  const roles = catalog[group].filter(role => Object.keys(role.phases[phase]??{}).length>0);
+  const highlights = showHighlights ? roles[roleIndex]?.phases[phase]??{} : {};
+  const changeGroup = (value:string) => {setGroup(value);setRoleIndex(0);};
   return (
     <>
       <AbilityEditGroup entity="player" />
       <PersonalEditGroup />
 
       <AttributeActions uid={details.uid} />
+      <section className="profile-group role-highlights">
+        <h3>Attribute highlights</h3>
+        <div className="highlight-controls">
+          <label><input type="checkbox" checked={showHighlights} onChange={e=>setShowHighlights(e.target.checked)} /> Highlight role attributes</label>
+          <label>Position <select value={group} onChange={e=>changeGroup(e.target.value)}>{Object.keys(catalog).map(key=><option key={key} value={key}>{key.replace(/([a-z])([A-Z])/g,"$1 $2")}</option>)}</select></label>
+          <label>Phase <select value={phase} onChange={e=>{setPhase(e.target.value);setRoleIndex(0);}}><option value="InPossession">In possession</option><option value="OutOfPossession">Out of possession</option></select></label>
+          <label>Role <select value={roleIndex} onChange={e=>setRoleIndex(Number(e.target.value))}>{roles.map((role,index)=><option key={role.name} value={index}>{role.name}</option>)}</select></label>
+        </div>
+        <p className="highlight-legend"><span className="key-legend">Key</span> <span className="preferred-legend">Preferred</span> · Role reference highlights; independent of RCA costs.</p>
+      </section>
 
       <div className="profile-pair">
         <div className="profile-columns">
           {goalkeeper ? (
-            <RatingGroup title={profileText.goalkeeping} rows={attributeRows(details, GOALKEEPING)} />
+            <RatingGroup title={profileText.goalkeeping} rows={attributeRows(details, GOALKEEPING, highlights)} />
           ) : (
-            <RatingGroup title={profileText.technical} rows={attributeRows(details, TECHNICAL)} />
+            <RatingGroup title={profileText.technical} rows={attributeRows(details, TECHNICAL, highlights)} />
           )}
-          <RatingGroup title={profileText.mental} rows={attributeRows(details, MENTAL)} />
-          <RatingGroup title={profileText.physical} rows={attributeRows(details, PHYSICAL)} />
+          <RatingGroup title={profileText.mental} rows={attributeRows(details, MENTAL, highlights)} />
+          <RatingGroup title={profileText.physical} rows={attributeRows(details, PHYSICAL, highlights)} />
         </div>
 
         <div className="profile-columns">
@@ -153,9 +175,9 @@ function ProfileBody({ details }: { details: PlayerDetails }) {
   );
 }
 
-function attributeRows(details: PlayerDetails, keys: readonly AttributeKey[]): RatingRow[] {
+function attributeRows(details: PlayerDetails, keys: readonly AttributeKey[], highlights: Record<string,string> = {}): RatingRow[] {
   return keys.map((key) =>
-    attributeRow(key, ATTRIBUTE_LABELS[key], details.attributes[key], { lowerIsBetter: LOWER_IS_BETTER.has(key) }),
+    ({...attributeRow(key, ATTRIBUTE_LABELS[key], details.attributes[key], { lowerIsBetter: LOWER_IS_BETTER.has(key) }), highlight: highlights[key] === "key" ? "key" as const : highlights[key] === "preferred" ? "preferred" as const : undefined}),
   );
 }
 

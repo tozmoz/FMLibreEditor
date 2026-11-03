@@ -287,6 +287,7 @@ function ReviewList({ id, changes }: { id: string; changes: Pending[] }) {
 
 /** Current and potential ability as inputs, above the attributes; there only while the person is being edited. */
 export function AbilityEditGroup({ entity }: { entity: Entity }) {
+  const session = useEditSession();
   const editing = useEditableField("current_ability");
   if (!editing) {
     return null;
@@ -303,7 +304,14 @@ export function AbilityEditGroup({ entity }: { entity: Entity }) {
             </dd>
           </div>
         ))}
+        {entity === "player" && <div className="stat"><dt>Estimated RCA</dt><dd title="Estimate using the most familiar position; full multi-position handling is not verified.">{session?.rca ? `${session.rca.value} (${session.rca.position})` : "Unavailable"}</dd></div>}
       </dl>
+      {entity === "player" && <>
+        <label><input type="checkbox" checked={session?.matchRca ?? false} disabled={session?.busy || !session?.rca} onChange={e => session?.setMatchRca(e.target.checked)} /> Keep CA matched to estimated RCA</label>
+        <p>Updates pending CA; changes are written when you click Apply. Uses the most familiar position.</p>
+        {session?.rca?.exceedsPa && <p role="status">Estimated RCA exceeds PA. PA will stay unchanged.</p>}
+        {session?.matchRca && !session.rca && <p role="status">Complete valid attributes before applying matched CA.</p>}
+      </>}
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import { EntityLink } from "./ProfileTabs";
 // What puts players into a comparison and opens it: the Compare button in the header of a player's profile, and the
 // tray under the player list with the players picked so far (see `useComparison`).
 
@@ -85,7 +86,7 @@ export function ComparisonTray({ comparison }: { comparison: Comparison }) {
           {players.map((player, index) => (
             <li key={player.uid} className="compare-chip">
               <span className="compare-chip-name" title={player.name}>
-                {player.name}
+                <EntityLink entity="player" uid={player.uid}>{player.name}</EntityLink>
               </span>
               <button
                 type="button"

@@ -4341,3 +4341,26 @@ button.danger:hover:not(:disabled) {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* Role importance stays distinct from numeric attribute colour bands. */
+.ratings .stat.role-key { border-left: 3px solid #43d69a; background: #43d69a18; padding-left: 8px; }
+.ratings .stat.role-preferred { border-left: 3px solid #66aaff; background: #66aaff16; padding-left: 8px; }
+.ratings .stat.role-key dt::after { content: " [K]"; color: #43d69a; }
+.ratings .stat.role-preferred dt::after { content: " [P]"; color: #66aaff; }
+.highlight-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.highlight-controls label { display: inline-flex; align-items: center; gap: 6px; }
+.highlight-legend { font-size: .85em; opacity: .9; }
+.key-legend { color: #43d69a; }
+.preferred-legend { color: #66aaff; }
+
+.entity-link { background: none; border: 0; padding: 0; color: var(--link, #85b7ff); font: inherit; text-align: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.entity-link:hover { filter: brightness(1.2); }
+.entity-link:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.entity-tabs { display:flex; gap:5px; overflow-x:auto; flex-shrink:0; padding:7px; border-bottom:1px solid var(--border-strong); }
+.entity-tab { display:flex; flex-shrink:0; border:1px solid var(--border-strong); border-radius:5px; }
+.entity-tab button { white-space:nowrap; border:0; }
+.entity-tab.active, .entity-tabs > .active { outline:2px solid var(--link, #85b7ff); outline-offset:-2px; }
+.browser-workspace, .entity-tab-panel { min-height:0; flex:1; display:flex; }
+.browser-workspace[hidden], .entity-tab-panel[hidden] { display:none; }
+.browser-workspace > .views { flex:1; }
+.entity-tab-panel > .profile { flex:1 !important; width:100% !important; max-width:none; }

@@ -1,3 +1,4 @@
+import { ProfileTabs } from "./ProfileTabs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { call, inTauri } from "./api";
 import { BridgeSetup } from "./BridgeSetup";
@@ -60,6 +61,7 @@ function App() {
   const [dataVersion, setDataVersion] = useState(0);
   // What connecting froze again of what was frozen in the save before, until the notice that says so is dismissed.
   const [refrozen, setRefrozen] = useState<Refrozen | null>(null);
+  const [profileTab,setProfileTab] = useState<string|null>(null);
   const [view, setView] = useState<View>(() => restored("view", readView));
   useSnapshot("view", () => view);
   const { log, error: logError, reload: reloadLog, clear: clearLog } = useChangeLog();
@@ -90,6 +92,7 @@ function App() {
       // A new connection has an empty change log, and its field tables may differ.
       forgetFieldTables();
       clearLog();
+      setProfileTab(null);
       setConnection(connected);
       setRefrozen(again ?? null);
       setDataVersion((v) => v + 1);
@@ -173,8 +176,8 @@ function App() {
 
   // With edits pending in the open profile, leaving for another view asks first.
   const show = (id: View) => {
-    if (id !== view) {
-      askToLeave(() => setView(id));
+    if (id !== view || profileTab !== null) {
+      askToLeave(() => {setView(id);setProfileTab(null);});
     }
   };
 
@@ -245,12 +248,14 @@ function App() {
         {connection ? (
           // All the lists stay mounted, so each keeps its search and selection while another is shown.
           <EditorContext.Provider value={editor}>
+            <ProfileTabs version={dataVersion} active={profileTab} onActive={setProfileTab}>
             <div className="views">
-              <PlayerBrowser version={dataVersion} active={view === "players"} />
-              <StaffBrowser version={dataVersion} active={view === "staff"} />
-              <ClubBrowser version={dataVersion} active={view === "clubs"} />
+              <PlayerBrowser version={dataVersion} active={view === "players" && profileTab === null} />
+              <StaffBrowser version={dataVersion} active={view === "staff" && profileTab === null} />
+              <ClubBrowser version={dataVersion} active={view === "clubs" && profileTab === null} />
               {view === "changes" && <ChangesView log={log} error={logError} reload={reloadLog} onUndone={edited} />}
             </div>
+            </ProfileTabs>
           </EditorContext.Provider>
         ) : (
           checked && (

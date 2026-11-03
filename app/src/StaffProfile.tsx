@@ -1,3 +1,4 @@
+import { EntityLink } from "./ProfileTabs";
 import { Fragment, useContext, useEffect, useId, useState, type ReactNode } from "react";
 import { AbilityEditGroup, EditInput } from "./EditControls";
 import { changeStaffJob, staffJobs } from "./editing";
@@ -50,7 +51,7 @@ export function HumanBadge() {
  */
 export function employerOf(member: StaffSummary): ReactNode {
   if (member.club !== null) {
-    return member.club;
+    return <EntityLink entity="club" uid={member.clubUid}>{member.club}</EntityLink>;
   }
   return member.job === null ? <span className="muted">{profileText.unemployed}</span> : null;
 }
@@ -62,7 +63,7 @@ function employerLine(member: StaffSummary): ReactNode {
   }
   return (
     <WithPicture inline picture={<ClubLogo uid={member.clubUid} name={member.club} size={PICTURE_SIZE.textLogo} />}>
-      {member.club}
+      <EntityLink entity="club" uid={member.clubUid}>{member.club}</EntityLink>
     </WithPicture>
   );
 }

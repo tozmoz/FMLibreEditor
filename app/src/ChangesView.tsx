@@ -1,3 +1,4 @@
+import { EntityLink } from "./ProfileTabs";
 // The Changes view: everything written to the game this session, newest first, with an Undo for each change. A mass
 // edit is one row, with an Undo of the whole mass edit and a toggle that opens its changes. One mass edit can log
 // thousands of changes, so the list, and the changes of a mass edit that is open, are shown a page at a time.
@@ -530,7 +531,7 @@ function ChangeRow({ change, field, failure, undoing, onUndo, inBatch }: ChangeR
       </td>
       <td className="col-person">
         <div className="name">
-          {change.name}
+          <EntityLink entity={change.entity} uid={change.uid}>{change.name}</EntityLink>
           <span className="tag kind">{text.kinds[change.entity]}</span>
         </div>
         <div className="sub uid">

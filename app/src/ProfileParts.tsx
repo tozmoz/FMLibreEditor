@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Ability } from "./Ability";
 import { call } from "./api";
 import { EditableValue, EditBar, EditButton, EditInput } from "./EditControls";
@@ -95,10 +95,11 @@ export function ProfileFrame(props: ProfileFrameProps) {
   const closeProfile = editing ? () => editing.guardClose(onClose) : onClose;
   const onEscape = editing ? () => editing.escape(onClose) : onClose;
   const panelWidth = usePanelWidth(wide ? "wide" : "profile");
+  const frame = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !event.isComposing) {
+      if (event.key === "Escape" && !event.isComposing && !frame.current?.closest("[hidden]")) {
         onEscape();
       }
     };
@@ -110,6 +111,7 @@ export function ProfileFrame(props: ProfileFrameProps) {
   return (
     <SessionContext.Provider value={editing?.session ?? null}>
       <section
+        ref={frame}
         className={["profile", editing?.stage === "edit" && "editing", wide && "wide"].filter(Boolean).join(" ")}
         role="dialog"
         aria-label={name}
@@ -195,6 +197,7 @@ export function bornText(person: { dateOfBirth: FmDate | null; age: number | nul
 }
 
 export interface RatingRow {
+  highlight?: "key" | "preferred";
   key: string;
   /** The key of the editable field behind the row, e.g. "attribute.finishing"; while editing, its value is an input. */
   field?: string;
@@ -266,7 +269,7 @@ export function RatingList({ rows }: { rows: RatingRow[] }) {
 function RatingItem({ row }: { row: RatingRow }) {
   const editing = useEditableField(row.field);
   return (
-    <div className="stat" title={row.title}>
+    <div className={`stat${row.highlight ? ` role-${row.highlight}` : ""}`} title={[row.title, row.highlight === "key" ? "Key role attribute" : row.highlight === "preferred" ? "Preferred role attribute" : ""].filter(Boolean).join(" · ")}>
       <dt>{row.label}</dt>
       {editing && row.field ? (
         <dd className="edit-cell">

@@ -11,6 +11,7 @@ import {
   useState,
   type RefObject,
 } from "react";
+import { estimateRca, matchedRcaDraft, type RcaEstimate } from "./rca";
 import { inputState, summarize, type InputState, type Pending, type Typed } from "./editDraft";
 import { applyEdits, readValues } from "./editing";
 import { fieldTable } from "./fieldTables";
@@ -35,6 +36,9 @@ export const EditorContext = createContext<EditorState>({ editable: false, readO
 
 /** The inputs of the profile being edited (header and body), for the components that draw them. */
 export interface EditSession {
+  rca: RcaEstimate | null;
+  matchRca: boolean;
+  setMatchRca: (enabled: boolean) => void;
   entity: Entity;
   /** Whether the field with this key can be edited here. */
   has: (key: string) => boolean;
@@ -124,7 +128,8 @@ export function useProfileEditing(entity: Entity, uid: number): ProfileEditing {
   const [fields, setFields] = useState<EditField[]>([]);
   // The values the game had when editing began or when the changes were last written, as stored.
   const [start, setStart] = useState<FieldValues>({});
-  const [typed, setTyped] = useState<Typed>({});
+  const [userTyped, setTyped] = useState<Typed>({});
+  const [matchRca, setMatchRca] = useState(false);
   // The changes the game refused, with its reasons, until their inputs are typed into again.
   const [refused, setRefused] = useState<Partial<Record<string, string>>>({});
   const [reviewing, setReviewing] = useState(false);
@@ -144,9 +149,12 @@ export function useProfileEditing(entity: Entity, uid: number): ProfileEditing {
 
   const editing = stage === "edit";
   const byKey = useMemo(() => new Map(fields.map((field) => [field.key, field] as const)), [fields]);
+  const rca = useMemo(() => entity === "player" ? estimateRca(fields, start, userTyped) : null, [entity, fields, start, userTyped]);
+  const typed = useMemo(() => matchedRcaDraft(userTyped, matchRca, rca), [matchRca, rca, userTyped]);
   const { changes, invalid } = useMemo(() => summarize(fields, start, typed), [fields, start, typed]);
 
   const type = useCallback((key: string, text: string) => {
+    if (key === "current_ability") setMatchRca(false);
     setTyped((old) => ({ ...old, [key]: text }));
     setRefused((old) => (old[key] === undefined ? old : without(old, key)));
   }, []);
@@ -157,6 +165,7 @@ export function useProfileEditing(entity: Entity, uid: number): ProfileEditing {
     }
     return {
       entity,
+      rca, matchRca, setMatchRca,
       busy: applying,
       has: (key) => byKey.has(key) && start[key] !== undefined,
       input: (key) => {
@@ -166,7 +175,7 @@ export function useProfileEditing(entity: Entity, uid: number): ProfileEditing {
       },
       type,
     };
-  }, [editing, entity, applying, byKey, start, typed, refused, type]);
+  }, [editing, entity, applying, byKey, start, typed, refused, type, rca, matchRca]);
 
   // While changes are pending, picking another row or view asks first (see `askToLeave`).
   const guarded = editing && (changes.length > 0 || applying);
@@ -191,6 +200,7 @@ export function useProfileEditing(entity: Entity, uid: number): ProfileEditing {
   const stop = (keepReport: boolean, focus = true) => {
     setStage("view");
     setTyped({});
+    setMatchRca(false);
     setRefused({});
     setReviewing(false);
     setConfirm(null);
@@ -216,6 +226,7 @@ export function useProfileEditing(entity: Entity, uid: number): ProfileEditing {
       setFields(table);
       setStart(values);
       setTyped({});
+    setMatchRca(false);
       setRefused({});
       setReviewing(false);
       setConfirm(null);
@@ -239,7 +250,7 @@ export function useProfileEditing(entity: Entity, uid: number): ProfileEditing {
   }, [applying]);
 
   const apply = async () => {
-    if (!editing || applying || changes.length === 0 || invalid.length > 0) {
+    if (!editing || applying || changes.length === 0 || invalid.length > 0 || (matchRca && rca === null)) {
       return;
     }
     setApplying(true);
@@ -293,6 +304,7 @@ export function useProfileEditing(entity: Entity, uid: number): ProfileEditing {
 
   const discard = () => {
     setTyped({});
+    setMatchRca(false);
     setRefused({});
     setReport(null);
     setConfirm(null);

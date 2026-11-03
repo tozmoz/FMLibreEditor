@@ -1,3 +1,4 @@
+import { EntityLink } from "./ProfileTabs";
 // The Nationality and homegrown group of a player's profile: his secondary nationalities, and the nations and clubs
 // he was trained in, which decide whether he counts as homegrown under a competition's rules (as the game's
 // eligibility page shows them). The button under it opens the dialog that changes them: each change is written at
@@ -38,7 +39,7 @@ function TieLine({ tie, rule = true }: { tie: Tie; rule?: boolean }) {
     );
   return (
     <WithPicture inline picture={picture}>
-      {tieName(tie)}
+      {tie.tie === "trainedAtClub" ? <EntityLink entity="club" uid={tie.targetUid}>{tieName(tie)}</EntityLink> : tieName(tie)}
       {rule && tie.rule !== null && <span className="tie-rule">{` · ${ruleLabel(tie.rule)}`}</span>}
     </WithPicture>
   );

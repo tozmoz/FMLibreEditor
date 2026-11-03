@@ -1,3 +1,4 @@
+import { EntityLink } from "./ProfileTabs";
 // The Squad tab of a club's profile: the players of each of its teams with the values a squad screen shows, the actions
 // on a whole team (heal everyone, lift every ban, give everyone the best morale, rest everyone) and the captains. What it writes is
 // logged like any change, and undone from the Changes view, or at once from the line under the buttons.
@@ -585,7 +586,7 @@ function SquadRow({ player, role, editable, busy, onCaptain }: SquadRowProps) {
     <tr className={player.playsHere ? undefined : "away"}>
       <td className="col-name" title={fullName === null ? player.name : `${player.name}\n${fullName}`}>
         <div className="squad-name">
-          <span className="name">{player.name}</span>
+          <span className="name"><EntityLink entity="player" uid={player.uid}>{player.name}</EntityLink></span>
           {role !== null && (
             <abbr className={`role-badge ${role}`} title={fieldLabel("club", ROLE_FIELD[role])}>
               {role === "captain" ? text.captainShort : text.viceCaptainShort}

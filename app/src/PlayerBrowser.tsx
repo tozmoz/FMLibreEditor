@@ -1,3 +1,4 @@
+import { EntityLink } from "./ProfileTabs";
 import { useState } from "react";
 import { Ability } from "./Ability";
 import { ComparisonTray } from "./Comparison";
@@ -103,7 +104,7 @@ export function PlayerBrowser({ version, active }: { version: number; active: bo
         <>
           {/* The hover text has what a long name, nation or club is cut to. */}
           <td className="col-name" title={p.fullName && p.fullName !== p.name ? `${p.name}\n${p.fullName}` : p.name}>
-            <div className="name">{p.name}</div>
+            <div className="name"><EntityLink entity="player" uid={p.uid}>{p.name}</EntityLink></div>
             {p.fullName && p.fullName !== p.name && <div className="sub">{p.fullName}</div>}
           </td>
           <td className="num col-age">{p.age ?? profileText.none}</td>
@@ -113,7 +114,7 @@ export function PlayerBrowser({ version, active }: { version: number; active: bo
           </td>
           <td className="col-club" title={p.club ?? undefined}>
             <WithPicture picture={<ClubLogo uid={p.clubUid} name={p.club} size={PICTURE_SIZE.rowLogo} />}>
-              {p.club ?? <span className="muted">{profileText.freeAgent}</span>}
+              <EntityLink entity="club" uid={p.clubUid}>{p.club ?? <span className="muted">{profileText.freeAgent}</span>}</EntityLink>
             </WithPicture>
           </td>
           <td className="date col-contract">{formatDate(p.contractExpires) || profileText.none}</td>

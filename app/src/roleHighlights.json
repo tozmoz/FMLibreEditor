@@ -1,0 +1,1849 @@
+{
+  "Goalkeeper": [
+    {
+      "name": "Goalkeeper",
+      "phases": {
+        "InPossession": {
+          "aerial_reach": "key",
+          "command_of_area": "key",
+          "communication": "key",
+          "handling": "key",
+          "reflexes": "key",
+          "agility": "key",
+          "concentration": "key",
+          "positioning": "key",
+          "kicking": "preferred",
+          "one_on_ones": "preferred",
+          "throwing": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "eccentricity": "preferred"
+        },
+        "OutOfPossession": {
+          "aerial_reach": "key",
+          "command_of_area": "key",
+          "communication": "key",
+          "handling": "key",
+          "reflexes": "key",
+          "agility": "key",
+          "concentration": "key",
+          "positioning": "key",
+          "one_on_ones": "preferred",
+          "rushing_out": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Ball Playing Goalkeeper",
+      "phases": {
+        "InPossession": {
+          "aerial_reach": "key",
+          "command_of_area": "key",
+          "communication": "key",
+          "handling": "key",
+          "kicking": "key",
+          "reflexes": "key",
+          "agility": "key",
+          "concentration": "key",
+          "positioning": "key",
+          "eccentricity": "preferred",
+          "one_on_ones": "preferred",
+          "throwing": "preferred",
+          "anticipation": "preferred",
+          "composure": "preferred",
+          "decisions": "preferred",
+          "passing": "preferred"
+        }
+      }
+    },
+    {
+      "name": "No Nonsense Goalkeeper",
+      "phases": {
+        "InPossession": {
+          "aerial_reach": "key",
+          "command_of_area": "key",
+          "communication": "key",
+          "handling": "key",
+          "reflexes": "key",
+          "agility": "key",
+          "concentration": "key",
+          "positioning": "key",
+          "one_on_ones": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "eccentricity": "preferred",
+          "passing": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Line Holding Keeper",
+      "phases": {
+        "OutOfPossession": {
+          "aerial_reach": "key",
+          "command_of_area": "key",
+          "communication": "key",
+          "handling": "key",
+          "reflexes": "key",
+          "agility": "key",
+          "concentration": "key",
+          "positioning": "key",
+          "one_on_ones": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "rushing_out": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Sweeper Keeper",
+      "phases": {
+        "OutOfPossession": {
+          "aerial_reach": "key",
+          "command_of_area": "key",
+          "communication": "key",
+          "handling": "key",
+          "one_on_ones": "key",
+          "reflexes": "key",
+          "rushing_out": "key",
+          "anticipation": "key",
+          "decisions": "key",
+          "agility": "key",
+          "eccentricity": "preferred",
+          "concentration": "preferred",
+          "positioning": "preferred",
+          "acceleration": "preferred"
+        }
+      }
+    }
+  ],
+  "DefenderCentral": [
+    {
+      "name": "Centre Back",
+      "phases": {
+        "InPossession": {
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "positioning": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "aggression": "preferred",
+          "bravery": "preferred",
+          "composure": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "pace": "preferred",
+          "passing": "preferred"
+        },
+        "OutOfPossession": {
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "positioning": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "aggression": "preferred",
+          "bravery": "preferred",
+          "composure": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "pace": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Ball Playing Centre Back",
+      "phases": {
+        "InPossession": {
+          "heading": "key",
+          "marking": "key",
+          "passing": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "composure": "key",
+          "positioning": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "first_touch": "preferred",
+          "technique": "preferred",
+          "aggression": "preferred",
+          "bravery": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "vision": "preferred",
+          "pace": "preferred"
+        }
+      }
+    },
+    {
+      "name": "No Nonsense Centre Back",
+      "phases": {
+        "InPossession": {
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "positioning": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "aggression": "preferred",
+          "bravery": "preferred",
+          "concentration": "preferred",
+          "pace": "preferred",
+          "composure": "preferred",
+          "passing": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Wide Centre Back",
+      "phases": {
+        "InPossession": {
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "positioning": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "dribbling": "preferred",
+          "aggression": "preferred",
+          "bravery": "preferred",
+          "composure": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "work_rate": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred",
+          "passing": "preferred"
+        },
+        "OutOfPossession": {
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "positioning": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "aggression": "preferred",
+          "bravery": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred",
+          "pace": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Advanced Centre Back",
+      "phases": {
+        "InPossession": {
+          "heading": "key",
+          "marking": "key",
+          "passing": "key",
+          "tackling": "key",
+          "technique": "key",
+          "anticipation": "key",
+          "composure": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "dribbling": "preferred",
+          "first_touch": "preferred",
+          "aggression": "preferred",
+          "bravery": "preferred",
+          "concentration": "preferred",
+          "vision": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Overlapping Centre Back",
+      "phases": {
+        "InPossession": {
+          "crossing": "key",
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "work_rate": "key",
+          "jumping_reach": "key",
+          "pace": "key",
+          "stamina": "key",
+          "strength": "key",
+          "dribbling": "preferred",
+          "technique": "preferred",
+          "aggression": "preferred",
+          "bravery": "preferred",
+          "composure": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Covering Centre Back",
+      "phases": {
+        "OutOfPossession": {
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "jumping_reach": "key",
+          "pace": "key",
+          "strength": "key",
+          "bravery": "preferred",
+          "acceleration": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Stopping Centre Back",
+      "phases": {
+        "OutOfPossession": {
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "aggression": "key",
+          "anticipation": "key",
+          "bravery": "key",
+          "positioning": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "pace": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Covering Wide Centre Back",
+      "phases": {
+        "OutOfPossession": {
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "pace": "key",
+          "bravery": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Stopping Wide Centre Back",
+      "phases": {
+        "OutOfPossession": {
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "aggression": "key",
+          "anticipation": "key",
+          "bravery": "key",
+          "positioning": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred",
+          "pace": "preferred"
+        }
+      }
+    }
+  ],
+  "FullBack": [
+    {
+      "name": "Full Back",
+      "phases": {
+        "InPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "concentration": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "acceleration": "key",
+          "crossing": "preferred",
+          "dribbling": "preferred",
+          "passing": "preferred",
+          "technique": "preferred",
+          "decisions": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        },
+        "OutOfPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "acceleration": "key",
+          "aggression": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Inside Full Back",
+      "phases": {
+        "InPossession": {
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "positioning": "key",
+          "strength": "key",
+          "dribbling": "preferred",
+          "aggression": "preferred",
+          "bravery": "preferred",
+          "composure": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "work_rate": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred",
+          "jumping_reach": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Holding Full Back",
+      "phases": {
+        "OutOfPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "acceleration": "key",
+          "teamwork": "preferred",
+          "agility": "preferred",
+          "pace": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Pressing Full Back",
+      "phases": {
+        "OutOfPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "aggression": "key",
+          "anticipation": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "bravery": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Inside Wing Back",
+      "phases": {
+        "InPossession": {
+          "passing": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "composure": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "acceleration": "key",
+          "first_touch": "preferred",
+          "marking": "preferred",
+          "technique": "preferred",
+          "concentration": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Playmaking Wing Back",
+      "phases": {
+        "InPossession": {
+          "first_touch": "key",
+          "passing": "key",
+          "tackling": "key",
+          "technique": "key",
+          "composure": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "vision": "key",
+          "acceleration": "key",
+          "crossing": "preferred",
+          "dribbling": "preferred",
+          "marking": "preferred",
+          "anticipation": "preferred",
+          "concentration": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Wing Back",
+      "phases": {
+        "InPossession": {
+          "crossing": "key",
+          "marking": "key",
+          "tackling": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "pace": "key",
+          "stamina": "key",
+          "dribbling": "preferred",
+          "first_touch": "preferred",
+          "passing": "preferred",
+          "technique": "preferred",
+          "anticipation": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred",
+          "agility": "preferred",
+          "balance": "preferred"
+        }
+      }
+    }
+  ],
+  "WingBack": [
+    {
+      "name": "Wing Back",
+      "phases": {
+        "InPossession": {
+          "crossing": "key",
+          "marking": "key",
+          "tackling": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "pace": "key",
+          "stamina": "key",
+          "dribbling": "preferred",
+          "first_touch": "preferred",
+          "passing": "preferred",
+          "technique": "preferred",
+          "anticipation": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred",
+          "agility": "preferred",
+          "balance": "preferred"
+        },
+        "OutOfPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "acceleration": "key",
+          "stamina": "key",
+          "aggression": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "pace": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Inside Wing Back",
+      "phases": {
+        "InPossession": {
+          "passing": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "composure": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "acceleration": "key",
+          "first_touch": "preferred",
+          "marking": "preferred",
+          "technique": "preferred",
+          "concentration": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Playmaking Wing Back",
+      "phases": {
+        "InPossession": {
+          "first_touch": "key",
+          "passing": "key",
+          "tackling": "key",
+          "technique": "key",
+          "composure": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "vision": "key",
+          "acceleration": "key",
+          "crossing": "preferred",
+          "dribbling": "preferred",
+          "marking": "preferred",
+          "anticipation": "preferred",
+          "concentration": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Advanced Wing Back",
+      "phases": {
+        "InPossession": {
+          "crossing": "key",
+          "dribbling": "key",
+          "technique": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "agility": "key",
+          "pace": "key",
+          "stamina": "key",
+          "first_touch": "preferred",
+          "marking": "preferred",
+          "passing": "preferred",
+          "tackling": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "flair": "preferred",
+          "positioning": "preferred",
+          "balance": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Holding Wing Back",
+      "phases": {
+        "OutOfPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "acceleration": "key",
+          "teamwork": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Pressing Wing Back",
+      "phases": {
+        "OutOfPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "aggression": "key",
+          "anticipation": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "stamina": "key",
+          "bravery": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "agility": "preferred",
+          "pace": "preferred"
+        }
+      }
+    }
+  ],
+  "DefensiveMidfielder": [
+    {
+      "name": "Defensive Midfielder",
+      "phases": {
+        "InPossession": {
+          "tackling": "key",
+          "anticipation": "key",
+          "concentration": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "first_touch": "preferred",
+          "marking": "preferred",
+          "passing": "preferred",
+          "aggression": "preferred",
+          "composure": "preferred",
+          "decisions": "preferred",
+          "work_rate": "preferred",
+          "stamina": "preferred",
+          "strength": "preferred"
+        },
+        "OutOfPossession": {
+          "tackling": "key",
+          "anticipation": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "marking": "preferred",
+          "aggression": "preferred",
+          "concentration": "preferred",
+          "stamina": "preferred",
+          "strength": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Box To Box Midfielder",
+      "phases": {
+        "InPossession": {
+          "passing": "key",
+          "tackling": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "stamina": "key",
+          "dribbling": "preferred",
+          "finishing": "preferred",
+          "first_touch": "preferred",
+          "long_shots": "preferred",
+          "technique": "preferred",
+          "aggression": "preferred",
+          "anticipation": "preferred",
+          "composure": "preferred",
+          "decisions": "preferred",
+          "positioning": "preferred",
+          "acceleration": "preferred",
+          "balance": "preferred",
+          "pace": "preferred",
+          "strength": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Box To Box Playmaker",
+      "phases": {
+        "InPossession": {
+          "first_touch": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "vision": "key",
+          "work_rate": "key",
+          "stamina": "key",
+          "dribbling": "preferred",
+          "marking": "preferred",
+          "tackling": "preferred",
+          "anticipation": "preferred",
+          "positioning": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred",
+          "balance": "preferred",
+          "pace": "preferred",
+          "long_shots": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Deep Lying Playmaker",
+      "phases": {
+        "InPossession": {
+          "first_touch": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "vision": "key",
+          "marking": "preferred",
+          "tackling": "preferred",
+          "anticipation": "preferred",
+          "concentration": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred",
+          "work_rate": "preferred",
+          "balance": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Half Back",
+      "phases": {
+        "InPossession": {
+          "heading": "key",
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "concentration": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "first_touch": "preferred",
+          "passing": "preferred",
+          "aggression": "preferred",
+          "bravery": "preferred",
+          "composure": "preferred",
+          "decisions": "preferred",
+          "work_rate": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Dropping Defensive Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "aggression": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Pressing Defensive Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "tackling": "key",
+          "aggression": "key",
+          "anticipation": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "stamina": "key",
+          "marking": "preferred",
+          "concentration": "preferred",
+          "pace": "preferred",
+          "strength": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Screening Defensive Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "teamwork": "preferred",
+          "work_rate": "preferred",
+          "stamina": "preferred",
+          "strength": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Wide Covering Defensive Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "anticipation": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "agility": "key",
+          "stamina": "key",
+          "aggression": "preferred",
+          "concentration": "preferred",
+          "pace": "preferred",
+          "strength": "preferred"
+        }
+      }
+    }
+  ],
+  "MidfielderCentral": [
+    {
+      "name": "Central Midfielder",
+      "phases": {
+        "InPossession": {
+          "first_touch": "key",
+          "passing": "key",
+          "tackling": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "technique": "preferred",
+          "anticipation": "preferred",
+          "composure": "preferred",
+          "concentration": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred",
+          "vision": "preferred",
+          "work_rate": "preferred",
+          "stamina": "preferred"
+        },
+        "OutOfPossession": {
+          "tackling": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "marking": "preferred",
+          "aggression": "preferred",
+          "anticipation": "preferred",
+          "concentration": "preferred",
+          "positioning": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Midfield Playmaker",
+      "phases": {
+        "InPossession": {
+          "first_touch": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "vision": "key",
+          "dribbling": "preferred",
+          "tackling": "preferred",
+          "anticipation": "preferred",
+          "flair": "preferred",
+          "positioning": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Wide Central Midfielder",
+      "phases": {
+        "InPossession": {
+          "first_touch": "key",
+          "passing": "key",
+          "tackling": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "crossing": "preferred",
+          "dribbling": "preferred",
+          "technique": "preferred",
+          "anticipation": "preferred",
+          "composure": "preferred",
+          "concentration": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred",
+          "vision": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Pressing Central Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "tackling": "key",
+          "aggression": "key",
+          "anticipation": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "stamina": "key",
+          "marking": "preferred",
+          "concentration": "preferred",
+          "positioning": "preferred",
+          "pace": "preferred",
+          "strength": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Screening Central Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "positioning": "key",
+          "anticipation": "preferred",
+          "teamwork": "preferred",
+          "work_rate": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Wide Covering Central Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "marking": "key",
+          "tackling": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "agility": "key",
+          "stamina": "key",
+          "aggression": "preferred",
+          "anticipation": "preferred",
+          "concentration": "preferred",
+          "positioning": "preferred",
+          "pace": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Channel Midfielder",
+      "phases": {
+        "InPossession": {
+          "crossing": "key",
+          "first_touch": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "off_the_ball": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "dribbling": "preferred",
+          "long_shots": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "flair": "preferred",
+          "vision": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Advanced Playmaker",
+      "phases": {
+        "InPossession": {
+          "first_touch": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "vision": "key",
+          "crossing": "preferred",
+          "dribbling": "preferred",
+          "anticipation": "preferred",
+          "flair": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Attacking Midfielder",
+      "phases": {
+        "InPossession": {
+          "first_touch": "key",
+          "long_shots": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "flair": "key",
+          "off_the_ball": "key",
+          "crossing": "preferred",
+          "dribbling": "preferred",
+          "finishing": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "vision": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred"
+        }
+      }
+    }
+  ],
+  "WideMidfielder": [
+    {
+      "name": "Wide Midfielder",
+      "phases": {
+        "InPossession": {
+          "decisions": "key",
+          "crossing": "key",
+          "passing": "key",
+          "technique": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "pace": "key",
+          "stamina": "key",
+          "dribbling": "preferred",
+          "first_touch": "preferred",
+          "anticipation": "preferred",
+          "composure": "preferred",
+          "off_the_ball": "preferred",
+          "vision": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred"
+        },
+        "OutOfPossession": {
+          "decisions": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "marking": "preferred",
+          "aggression": "preferred",
+          "anticipation": "preferred",
+          "off_the_ball": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Tracking Wide Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "aggression": "key",
+          "anticipation": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "stamina": "key",
+          "marking": "preferred",
+          "tackling": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred",
+          "agility": "preferred",
+          "pace": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Wide Outlet Wide Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "pace": "key",
+          "dribbling": "preferred",
+          "first_touch": "preferred",
+          "marking": "preferred",
+          "composure": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred",
+          "stamina": "preferred",
+          "work_rate": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Inside Winger",
+      "phases": {
+        "InPossession": {
+          "dribbling": "key",
+          "first_touch": "key",
+          "technique": "key",
+          "composure": "key",
+          "teamwork": "key",
+          "acceleration": "key",
+          "agility": "key",
+          "crossing": "preferred",
+          "long_shots": "preferred",
+          "passing": "preferred",
+          "anticipation": "preferred",
+          "flair": "preferred",
+          "off_the_ball": "preferred",
+          "vision": "preferred",
+          "work_rate": "preferred",
+          "balance": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Playmaking Winger",
+      "phases": {
+        "InPossession": {
+          "crossing": "key",
+          "dribbling": "key",
+          "first_touch": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "vision": "key",
+          "acceleration": "key",
+          "anticipation": "preferred",
+          "flair": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Winger",
+      "phases": {
+        "InPossession": {
+          "crossing": "key",
+          "dribbling": "key",
+          "technique": "key",
+          "teamwork": "key",
+          "acceleration": "key",
+          "agility": "key",
+          "pace": "key",
+          "first_touch": "preferred",
+          "passing": "preferred",
+          "anticipation": "preferred",
+          "flair": "preferred",
+          "off_the_ball": "preferred",
+          "work_rate": "preferred",
+          "balance": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    }
+  ],
+  "Winger": [
+    {
+      "name": "Winger",
+      "phases": {
+        "InPossession": {
+          "crossing": "key",
+          "dribbling": "key",
+          "technique": "key",
+          "teamwork": "key",
+          "acceleration": "key",
+          "agility": "key",
+          "pace": "key",
+          "first_touch": "preferred",
+          "passing": "preferred",
+          "anticipation": "preferred",
+          "flair": "preferred",
+          "off_the_ball": "preferred",
+          "work_rate": "preferred",
+          "balance": "preferred",
+          "stamina": "preferred"
+        },
+        "OutOfPossession": {
+          "anticipation": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "marking": "preferred",
+          "aggression": "preferred",
+          "off_the_ball": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Inside Winger",
+      "phases": {
+        "InPossession": {
+          "dribbling": "key",
+          "first_touch": "key",
+          "technique": "key",
+          "composure": "key",
+          "teamwork": "key",
+          "acceleration": "key",
+          "agility": "key",
+          "crossing": "preferred",
+          "long_shots": "preferred",
+          "passing": "preferred",
+          "anticipation": "preferred",
+          "flair": "preferred",
+          "off_the_ball": "preferred",
+          "vision": "preferred",
+          "work_rate": "preferred",
+          "balance": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Playmaking Winger",
+      "phases": {
+        "InPossession": {
+          "crossing": "key",
+          "dribbling": "key",
+          "first_touch": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "vision": "key",
+          "acceleration": "key",
+          "anticipation": "preferred",
+          "flair": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Inside Forward",
+      "phases": {
+        "InPossession": {
+          "dribbling": "key",
+          "first_touch": "key",
+          "technique": "key",
+          "anticipation": "key",
+          "composure": "key",
+          "off_the_ball": "key",
+          "acceleration": "key",
+          "agility": "key",
+          "crossing": "preferred",
+          "finishing": "preferred",
+          "long_shots": "preferred",
+          "passing": "preferred",
+          "flair": "preferred",
+          "vision": "preferred",
+          "work_rate": "preferred",
+          "balance": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Wide Forward",
+      "phases": {
+        "InPossession": {
+          "dribbling": "key",
+          "first_touch": "key",
+          "technique": "key",
+          "anticipation": "key",
+          "off_the_ball": "key",
+          "acceleration": "key",
+          "agility": "key",
+          "pace": "key",
+          "crossing": "preferred",
+          "finishing": "preferred",
+          "passing": "preferred",
+          "composure": "preferred",
+          "flair": "preferred",
+          "work_rate": "preferred",
+          "balance": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Inside Outlet Winger",
+      "phases": {
+        "OutOfPossession": {
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "balance": "key",
+          "dribbling": "preferred",
+          "first_touch": "preferred",
+          "marking": "preferred",
+          "composure": "preferred",
+          "acceleration": "preferred",
+          "strength": "preferred",
+          "stamina": "preferred",
+          "work_rate": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Wide Outlet Winger",
+      "phases": {
+        "OutOfPossession": {
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "pace": "key",
+          "dribbling": "preferred",
+          "first_touch": "preferred",
+          "marking": "preferred",
+          "composure": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred",
+          "stamina": "preferred",
+          "work_rate": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Tracking Winger",
+      "phases": {
+        "OutOfPossession": {
+          "aggression": "key",
+          "anticipation": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "stamina": "key",
+          "marking": "preferred",
+          "tackling": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred",
+          "agility": "preferred",
+          "pace": "preferred"
+        }
+      }
+    }
+  ],
+  "AttackingMidfielderCentral": [
+    {
+      "name": "Attacking Midfielder",
+      "phases": {
+        "InPossession": {
+          "first_touch": "key",
+          "long_shots": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "flair": "key",
+          "off_the_ball": "key",
+          "crossing": "preferred",
+          "dribbling": "preferred",
+          "finishing": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "vision": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred"
+        },
+        "OutOfPossession": {
+          "anticipation": "key",
+          "decisions": "key",
+          "work_rate": "key",
+          "marking": "preferred",
+          "aggression": "preferred",
+          "off_the_ball": "preferred",
+          "teamwork": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Channel Midfielder",
+      "phases": {
+        "InPossession": {
+          "crossing": "key",
+          "first_touch": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "off_the_ball": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "dribbling": "preferred",
+          "long_shots": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "flair": "preferred",
+          "vision": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Free Role",
+      "phases": {
+        "InPossession": {
+          "dribbling": "key",
+          "first_touch": "key",
+          "long_shots": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "flair": "key",
+          "off_the_ball": "key",
+          "vision": "key",
+          "crossing": "preferred",
+          "finishing": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Second Striker",
+      "phases": {
+        "InPossession": {
+          "finishing": "key",
+          "first_touch": "key",
+          "anticipation": "key",
+          "composure": "key",
+          "off_the_ball": "key",
+          "acceleration": "key",
+          "dribbling": "preferred",
+          "long_shots": "preferred",
+          "passing": "preferred",
+          "technique": "preferred",
+          "concentration": "preferred",
+          "decisions": "preferred",
+          "work_rate": "preferred",
+          "agility": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Advanced Playmaker",
+      "phases": {
+        "InPossession": {
+          "first_touch": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "vision": "key",
+          "crossing": "preferred",
+          "dribbling": "preferred",
+          "anticipation": "preferred",
+          "flair": "preferred",
+          "acceleration": "preferred",
+          "agility": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Central Outlet Attacking Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "balance": "key",
+          "first_touch": "preferred",
+          "marking": "preferred",
+          "composure": "preferred",
+          "strength": "preferred",
+          "stamina": "preferred",
+          "work_rate": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Splitting Outlet Attacking Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "pace": "key",
+          "first_touch": "preferred",
+          "marking": "preferred",
+          "composure": "preferred",
+          "acceleration": "preferred",
+          "stamina": "preferred",
+          "work_rate": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Tracking Attacking Midfielder",
+      "phases": {
+        "OutOfPossession": {
+          "aggression": "key",
+          "anticipation": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "stamina": "key",
+          "marking": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred"
+        }
+      }
+    }
+  ],
+  "Striker": [
+    {
+      "name": "Centre Forward",
+      "phases": {
+        "InPossession": {
+          "finishing": "key",
+          "first_touch": "key",
+          "heading": "key",
+          "technique": "key",
+          "composure": "key",
+          "off_the_ball": "key",
+          "acceleration": "key",
+          "strength": "key",
+          "dribbling": "preferred",
+          "passing": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "agility": "preferred",
+          "balance": "preferred",
+          "jumping_reach": "preferred",
+          "pace": "preferred"
+        },
+        "OutOfPossession": {
+          "anticipation": "key",
+          "decisions": "key",
+          "work_rate": "key",
+          "marking": "preferred",
+          "aggression": "preferred",
+          "off_the_ball": "preferred",
+          "teamwork": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Channel Forward",
+      "phases": {
+        "InPossession": {
+          "dribbling": "key",
+          "finishing": "key",
+          "first_touch": "key",
+          "technique": "key",
+          "composure": "key",
+          "off_the_ball": "key",
+          "work_rate": "key",
+          "acceleration": "key",
+          "crossing": "preferred",
+          "heading": "preferred",
+          "passing": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "agility": "preferred",
+          "balance": "preferred",
+          "pace": "preferred",
+          "stamina": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Deep Lying Forward",
+      "phases": {
+        "InPossession": {
+          "finishing": "key",
+          "first_touch": "key",
+          "technique": "key",
+          "composure": "key",
+          "off_the_ball": "key",
+          "strength": "key",
+          "dribbling": "preferred",
+          "passing": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "teamwork": "preferred",
+          "vision": "preferred",
+          "balance": "preferred"
+        }
+      }
+    },
+    {
+      "name": "False Nine",
+      "phases": {
+        "InPossession": {
+          "dribbling": "key",
+          "first_touch": "key",
+          "passing": "key",
+          "technique": "key",
+          "composure": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "vision": "key",
+          "acceleration": "key",
+          "finishing": "preferred",
+          "anticipation": "preferred",
+          "flair": "preferred",
+          "agility": "preferred",
+          "balance": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Poacher",
+      "phases": {
+        "InPossession": {
+          "finishing": "key",
+          "heading": "key",
+          "anticipation": "key",
+          "composure": "key",
+          "concentration": "key",
+          "off_the_ball": "key",
+          "acceleration": "key",
+          "first_touch": "preferred",
+          "technique": "preferred",
+          "decisions": "preferred",
+          "balance": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Target Forward",
+      "phases": {
+        "InPossession": {
+          "finishing": "key",
+          "heading": "key",
+          "aggression": "key",
+          "bravery": "key",
+          "composure": "key",
+          "off_the_ball": "key",
+          "balance": "key",
+          "jumping_reach": "key",
+          "strength": "key",
+          "first_touch": "preferred",
+          "anticipation": "preferred",
+          "decisions": "preferred",
+          "teamwork": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Central Outlet Centre Forward",
+      "phases": {
+        "OutOfPossession": {
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "balance": "key",
+          "first_touch": "preferred",
+          "marking": "preferred",
+          "composure": "preferred",
+          "strength": "preferred",
+          "stamina": "preferred",
+          "work_rate": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Splitting Outlet Centre Forward",
+      "phases": {
+        "OutOfPossession": {
+          "anticipation": "key",
+          "concentration": "key",
+          "decisions": "key",
+          "off_the_ball": "key",
+          "teamwork": "key",
+          "pace": "key",
+          "first_touch": "preferred",
+          "marking": "preferred",
+          "composure": "preferred",
+          "acceleration": "preferred",
+          "stamina": "preferred",
+          "work_rate": "preferred"
+        }
+      }
+    },
+    {
+      "name": "Tracking Centre Forward",
+      "phases": {
+        "OutOfPossession": {
+          "aggression": "key",
+          "anticipation": "key",
+          "decisions": "key",
+          "teamwork": "key",
+          "work_rate": "key",
+          "stamina": "key",
+          "marking": "preferred",
+          "off_the_ball": "preferred",
+          "positioning": "preferred"
+        }
+      }
+    }
+  ]
+}

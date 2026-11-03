@@ -1,3 +1,4 @@
+import { EntityLink } from "./ProfileTabs";
 import { useState } from "react";
 import { Ability } from "./Ability";
 import { AttributeFilters, readAttributeRows, STAFF_ATTRIBUTES, toAttributeBounds } from "./AttributeFilters";
@@ -93,7 +94,7 @@ function StaffCells({ staff: s }: { staff: StaffSummary }) {
     <>
       <td className="col-name">
         <div className="name">
-          {s.name}
+          <EntityLink entity="staff" uid={s.uid}>{s.name}</EntityLink>
           {s.isHuman && <HumanBadge />}
         </div>
         {s.fullName && s.fullName !== s.name && <div className="sub">{s.fullName}</div>}
@@ -105,7 +106,7 @@ function StaffCells({ staff: s }: { staff: StaffSummary }) {
       </td>
       <td className="col-club" title={s.club ?? undefined}>
         <WithPicture picture={<ClubLogo uid={s.clubUid} name={s.club} size={PICTURE_SIZE.rowLogo} />}>
-          {employerOf(s) ?? <span className="muted">{profileText.none}</span>}
+          <EntityLink entity="club" uid={s.clubUid}>{employerOf(s) ?? <span className="muted">{profileText.none}</span>}</EntityLink>
         </WithPicture>
       </td>
       <td className="col-nation">
