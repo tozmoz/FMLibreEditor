@@ -4,21 +4,21 @@ import { AttributeActions } from "./AttributeActions";
 import roleHighlights from "./roleHighlights.json";
 import { ClauseList } from "./ClauseList";
 import { CompareToggle } from "./Comparison";
-import { AbilityEditGroup, EditableValue, EditInput, PersonalEditGroup, PositionEditGroup } from "./EditControls";
+import { EditableValue, EditInput, RcaEditGroup } from "./EditControls";
 import { call } from "./api";
 import { keepPlaying } from "./editing";
 import { describeError, formatDate, formatNumber, formatMoney } from "./format";
-import { ATTRIBUTE_LABELS, profileText, type AttributeKey } from "./labels";
+import { ATTRIBUTE_LABELS, editText, profileText, type AttributeKey } from "./labels";
 import { MedicalGroup } from "./MedicalGroup";
 import { MoveButton } from "./MoveDialog";
 import { ClubLogo, NationFlag, PersonFace, PICTURE_SIZE, WithPicture } from "./Picture";
 import { FEET, GOALKEEPING, HIDDEN, isGoalkeeper, MENTAL, PHYSICAL, TECHNICAL } from "./playerAttributes";
-import { PositionPitch } from "./PositionPitch";
+import { PositionPitch, PositionRatings } from "./PositionPitch";
 import { ReleaseButton } from "./ReleaseDialog";
 import { TiesGroup } from "./TiesGroup";
 import {
   attributeRow,
-  bornText,
+  Born,
   ContractDates,
   Fact,
   LOWER_IS_BETTER,
@@ -50,9 +50,11 @@ export function PlayerProfile({ player, version, onClose, comparison }: PlayerPr
   const editing = useProfileEditing("player", player.uid);
   const details = loaded?.details;
   const info = details ?? player;
+  // The birth date and the height, like the nationality above them and the abilities, are inputs where they are shown
+  // while the player is edited.
   const vitals = [
-    bornText(info),
-    details && details.heightCm > 0 && profileText.height(details.heightCm),
+    info.dateOfBirth && <Born dateOfBirth={info.dateOfBirth} age={info.age} />,
+    details && details.heightCm > 0 && <Height cm={details.heightCm} />,
     `${profileText.uid} ${info.uid}`,
   ];
 
@@ -73,9 +75,11 @@ export function PlayerProfile({ player, version, onClose, comparison }: PlayerPr
           {info.nation && (
             <>
               {" · "}
-              <WithPicture inline picture={<NationFlag uid={info.nationUid} />}>
-                {info.nation}
-              </WithPicture>
+              <EditableValue field="nation">
+                <WithPicture inline picture={<NationFlag uid={info.nationUid} />}>
+                  {info.nation}
+                </WithPicture>
+              </EditableValue>
             </>
           )}
         </>
@@ -123,9 +127,7 @@ function ProfileBody({ details }: { details: PlayerDetails }) {
   const changeGroup = (value:string) => {setGroup(value);setRoleIndex(0);};
   return (
     <>
-      <AbilityEditGroup entity="player" />
-      <PersonalEditGroup />
-
+      <RcaEditGroup />
       <AttributeActions uid={details.uid} />
       <section className="profile-group role-highlights">
         <h3>Attribute highlights</h3>
@@ -162,7 +164,7 @@ function ProfileBody({ details }: { details: PlayerDetails }) {
         </div>
       </div>
 
-      <PositionEditGroup />
+      <PositionRatings ratings={details.positionRatings} />
 
       <MedicalGroup details={details} />
 
@@ -175,6 +177,19 @@ function ProfileBody({ details }: { details: PlayerDetails }) {
   );
 }
 
+/** "178 cm" in the header; the number is an input while the player is edited. */
+function Height({ cm }: { cm: number }) {
+  if (!useEditableField("height")) {
+    return profileText.height(cm);
+  }
+  return (
+    <span className="edit-with-unit">
+      <EditInput field="height" />
+      {profileText.heightUnit}
+    </span>
+  );
+}
+
 function attributeRows(details: PlayerDetails, keys: readonly AttributeKey[], highlights: Record<string,string> = {}): RatingRow[] {
   return keys.map((key) =>
     ({...attributeRow(key, ATTRIBUTE_LABELS[key], details.attributes[key], { lowerIsBetter: LOWER_IS_BETTER.has(key) }), highlight: highlights[key] === "key" ? "key" as const : highlights[key] === "preferred" ? "preferred" as const : undefined}),
@@ -182,12 +197,12 @@ function attributeRows(details: PlayerDetails, keys: readonly AttributeKey[], hi
 }
 
 /**
- * The wage, squad status and number, the dates and the lists the player is on. While he is edited the figures are
- * inputs, and both lists show as checkboxes: a tag shows only for a list he is on.
+ * The wage, squad status and number, whether he is on the transfer and the loan list, and the dates. While he is
+ * edited each value is an input where it is shown, a list a checkbox.
  */
 function ContractGroup({ details, contract }: { details: PlayerDetails; contract: Contract }) {
   const uid = details.uid;
-  const editingListing = useEditableField("contract.transfer_listed");
+  const yesNo = (on: boolean) => (on ? editText.yes : editText.no);
   return (
     <section className="profile-group">
       <h3>{profileText.contract}</h3>
@@ -202,6 +217,16 @@ function ContractGroup({ details, contract }: { details: PlayerDetails; contract
             </Fact>
             <Fact label={profileText.squadNumber}>
               <EditableValue field="contract.squad_number">{contract.squadNumber ?? profileText.none}</EditableValue>
+            </Fact>
+            <Fact label={profileText.transferListed}>
+              <EditableValue field="contract.transfer_listed" inFact>
+                {yesNo(contract.transferListed)}
+              </EditableValue>
+            </Fact>
+            <Fact label={profileText.loanListed}>
+              <EditableValue field="contract.loan_listed" inFact>
+                {yesNo(contract.loanListed)}
+              </EditableValue>
             </Fact>
             <Fact label={profileText.loyaltyBonus}>
               <EditableValue field="contract.loyalty_bonus">{formatMoney(contract.loyaltyBonus)}</EditableValue>
@@ -220,19 +245,6 @@ function ContractGroup({ details, contract }: { details: PlayerDetails; contract
       </div>
       <ClauseList uid={uid} name={details.name} clauses={contract.clauses} room={details.clauseRoom} />
       <ConcernList uid={uid} concerns={contract.concerns} />
-      {editingListing ? (
-        <div className="tags">
-          <EditInput field="contract.transfer_listed" />
-          <EditInput field="contract.loan_listed" />
-        </div>
-      ) : (
-        (contract.transferListed || contract.loanListed) && (
-          <div className="tags">
-            {contract.transferListed && <span className="tag listed">{profileText.transferListed}</span>}
-            {contract.loanListed && <span className="tag listed">{profileText.loanListed}</span>}
-          </div>
-        )
-      )}
     </section>
   );
 }
@@ -340,10 +352,7 @@ function TraitsGroup({ traits }: { traits: number[] }) {
   );
 }
 
-/**
- * International record, reputation and asking price, and the retirement the game plans for the player. His
- * nationality, birth date and height are edited at the top (see `PersonalEditGroup`).
- */
+/** International record, reputation and asking price, and the retirement the game plans for the player. */
 function CareerGroup({ details }: { details: PlayerDetails }) {
   const { international, reputation, askingPrice } = details;
   return (

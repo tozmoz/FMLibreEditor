@@ -6,7 +6,7 @@
 
 - Click player, staff and club links to open separate, closable profile tabs. Open profiles are reused and the tab strip scrolls; there is no fixed tab limit.
 - Links from search results, employer names, club squads, trained-at-club ties, the comparison tray and the change log where a supported entity UID is available.
-- Estimated recommended current ability (RCA) beside CA/PA while editing a player. Pending attribute, position and foot edits update the estimate before Apply.
+- Estimated recommended current ability (RCA) in the player profile while editing, alongside the in-place CA/PA controls. Pending attribute, position and foot edits update the estimate before Apply.
 - Optional **Keep CA matched to estimated RCA**, off by default. Its CA change appears in the existing review/Apply flow; typing CA manually turns matching off. PA is never automatically changed.
 - Key and preferred attribute highlights selected by position, role, and in/out-of-possession phase, with a switch to hide them.
 - Portable frontend checks for RCA, draft matching and profile navigation, including fourteen open profiles and unsaved-edit protection.
