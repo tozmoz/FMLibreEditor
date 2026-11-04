@@ -124,6 +124,7 @@ pub struct Session {
     stadium_class: OnceLock<Option<u64>>,
     /// The vtable of the retirement manager, once its class name has been checked.
     pub(crate) retirement_class: OnceLock<u64>,
+    pub(crate) retirement_manager: OnceLock<Option<u64>>,
     /// What the checks found: worked out the first time it is needed, and again by [`Session::recheck`].
     health: Mutex<Option<Arc<Health>>>,
     /// Whether editing a build without a profile was allowed.
@@ -158,6 +159,7 @@ impl Session {
             finance_class: OnceLock::new(),
             stadium_class: OnceLock::new(),
             retirement_class: OnceLock::new(),
+            retirement_manager: OnceLock::new(),
             health: Mutex::new(None),
             unknown_build_allowed: AtomicBool::new(false),
         })

@@ -20,6 +20,7 @@ use crate::date::FmDate;
 use crate::players::PlayerSummary;
 #[cfg(target_os = "macos")]
 use crate::rtti::class_of;
+use crate::rtti::{objects, vtables};
 use crate::session::Session;
 use crate::transfer::{MoveError, Patch, Patches, PointerList, removal_patches};
 
@@ -36,6 +37,7 @@ const PLAY_ON: u32 = 49;
 
 /// Bytes per entry of the index by person id: the `u32` id, 4 spare bytes and the pointer to the entry.
 const INDEX_ENTRY: usize = 16;
+const LONGEST_INDEX: u64 = 10_000;
 
 /// One retirement the game has planned.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -99,10 +101,11 @@ struct Planned {
 
 impl Planned {
     /// Where the person `person` is in the index, and his entry's pointer.
-    fn find(&self, person: u32) -> Option<(usize, u64)> {
+    fn find(&self, person: u32) -> Option<(Option<usize>, u64)> {
         self.index.iter().enumerate().find_map(|(at, entry)| {
             let id = u32::from_le_bytes(entry[..4].try_into().expect("4 bytes"));
-            (id == person).then(|| (at, u64::from_le_bytes(entry[8..].try_into().expect("8 bytes"))))
+            let ptr = u64::from_le_bytes(entry[8..].try_into().expect("8 bytes"));
+            (id == person && is_user_pointer(ptr)).then_some((Some(at), ptr))
         })
     }
 }
@@ -122,10 +125,17 @@ impl Session {
     pub fn planned_retirement(&self, player: &PlayerSummary) -> Result<Option<FmDate>, MoveError> {
         let planned = self.planned()?.ok_or(MoveError::NoRetirements)?;
         let person = self.person_id(player)?;
-        match planned.find(person) {
-            Some((_, entry)) => Ok(self.read_retirement(entry)?.date),
-            None => Ok(None),
+        if let Some((_, entry)) = planned.find(person) {
+            return Ok(self.read_retirement(entry)?.date);
         }
+        for &entry in &planned.entries {
+            if let Ok(r) = self.read_retirement(entry)
+                && r.person == person
+            {
+                return Ok(r.date);
+            }
+        }
+        Ok(None)
     }
 
     /// Works out keeping `player` from retiring: his planned retirement taken out of the manager's lists, and the
@@ -136,24 +146,36 @@ impl Session {
         let mut patches = Patches::default();
         let mut date = None;
         let mut taken = Taken { person, entry: None, next: None, traits: (0, 0, 0) };
-        if let Some((at, entry)) = planned.find(person) {
-            let list = planned.list.as_ref().ok_or(MoveError::NoRetirements)?;
-            let index = planned.entries.iter().position(|&listed| listed == entry).ok_or(MoveError::NoRetirements)?;
+        let found = planned.find(person).or_else(|| {
+            planned.entries.iter().copied().find_map(|entry| {
+                let r = self.read_retirement(entry).ok()?;
+                (r.person == person).then_some((None, entry))
+            })
+        });
+        if let Some((at, entry)) = found {
             date = self.read_retirement(entry)?.date;
-            (taken.entry, taken.next) = (Some(entry), planned.entries.get(index + 1).copied());
             // The index first, as the game finds a person's entry by it; each list repeats its last entry for a
             // moment, then ends one earlier and clears the slot it gave up.
-            let last = planned.index.len() - 1;
-            let size = INDEX_ENTRY as u64;
-            patches.push(
-                planned.index_begin + at as u64 * size,
-                planned.index[at..last].concat(),
-                planned.index[at + 1..].concat(),
-            );
-            let end = planned.index_end;
-            patches.push(planned.index_header + 8, end.to_le_bytes(), (end - size).to_le_bytes());
-            patches.push(planned.index_begin + last as u64 * size, planned.index[last], [0; INDEX_ENTRY]);
-            removal_patches(list, index, &planned.entries, &mut patches);
+            if let Some(at) = at
+                && !planned.index.is_empty()
+            {
+                let last = planned.index.len() - 1;
+                let size = INDEX_ENTRY as u64;
+                patches.push(
+                    planned.index_begin + at as u64 * size,
+                    planned.index[at..last].concat(),
+                    planned.index[at + 1..].concat(),
+                );
+                let end = planned.index_end;
+                patches.push(planned.index_header + 8, end.to_le_bytes(), (end - size).to_le_bytes());
+                patches.push(planned.index_begin + last as u64 * size, planned.index[last], [0; INDEX_ENTRY]);
+            }
+            if let (Some(list), Some(index)) =
+                (planned.list.as_ref(), planned.entries.iter().position(|&listed| listed == entry))
+            {
+                (taken.entry, taken.next) = (Some(entry), planned.entries.get(index + 1).copied());
+                removal_patches(list, index, &planned.entries, &mut patches);
+            }
         }
         // The two traits share the mask's seventh byte.
         let p = &self.layout.player;
@@ -208,7 +230,9 @@ impl Session {
             }
             let (pointer, index) = (8, INDEX_ENTRY as u64);
             let begin = planned.list.as_ref().map(|list| list.begin_address()).ok_or(MoveError::NoRetirements)?;
-            if planned.list_capacity - planned.list_end < pointer || planned.index_capacity - planned.index_end < index
+            let has_index = planned.index_begin > 0 && planned.index_end >= planned.index_begin;
+            if planned.list_capacity - planned.list_end < pointer
+                || (has_index && planned.index_capacity - planned.index_end < index)
             {
                 return Err(MoveError::Changed { address: planned.list_header });
             }
@@ -235,20 +259,22 @@ impl Session {
             let end = planned.list_end;
             patches.push(planned.list_header + 8, end.to_le_bytes(), (end + pointer).to_le_bytes());
 
-            let id = |e: &[u8; INDEX_ENTRY]| u32::from_le_bytes(e[..4].try_into().expect("4 bytes"));
-            let slot = planned.index.iter().position(|e| id(e) > taken.person).unwrap_or(planned.index.len());
-            let mut added = [0; INDEX_ENTRY];
-            added[..4].copy_from_slice(&taken.person.to_le_bytes());
-            added[8..].copy_from_slice(&entry.to_le_bytes());
-            let moved = planned.index[slot..].concat();
-            let spare = self.process.read_bytes(planned.index_end, INDEX_ENTRY)?;
-            patches.push(
-                planned.index_begin + slot as u64 * index,
-                [moved.clone(), spare].concat(),
-                [&added[..], &moved[..]].concat(),
-            );
-            let end = planned.index_end;
-            patches.push(planned.index_header + 8, end.to_le_bytes(), (end + index).to_le_bytes());
+            if has_index {
+                let id = |e: &[u8; INDEX_ENTRY]| u32::from_le_bytes(e[..4].try_into().expect("4 bytes"));
+                let slot = planned.index.iter().position(|e| id(e) > taken.person).unwrap_or(planned.index.len());
+                let mut added = [0; INDEX_ENTRY];
+                added[..4].copy_from_slice(&taken.person.to_le_bytes());
+                added[8..].copy_from_slice(&entry.to_le_bytes());
+                let moved = planned.index[slot..].concat();
+                let spare = self.process.read_bytes(planned.index_end, INDEX_ENTRY)?;
+                patches.push(
+                    planned.index_begin + slot as u64 * index,
+                    [moved.clone(), spare].concat(),
+                    [&added[..], &moved[..]].concat(),
+                );
+                let end = planned.index_end;
+                patches.push(planned.index_header + 8, end.to_le_bytes(), (end + index).to_le_bytes());
+            }
         }
         self.write_patches(&patches.0)
     }
@@ -257,16 +283,27 @@ impl Session {
     /// layout do not place it or it does not check out.
     fn retirement_manager(&self) -> Option<u64> {
         self.layout.retirement.as_ref()?;
-        let rva = self.profile.as_ref()?.retirement_manager?;
-        let manager = self.process.read_u64(self.plugin.base + rva).ok().filter(|&at| is_user_pointer(at))?;
-        let vtable = self.process.read_u64(manager).ok()?;
-        if self.retirement_class.get() != Some(&vtable) {
-            if class_of(&self.process, &self.plugin, manager)? != MANAGER_CLASS {
-                return None;
+        if let Some(rva) = self.profile.as_ref().and_then(|p| p.retirement_manager)
+            && let Some(manager) = self.process.read_u64(self.plugin.base + rva).ok().filter(|&at| is_user_pointer(at))
+            && let Ok(vtable) = self.process.read_u64(manager)
+        {
+            if self.retirement_class.get() == Some(&vtable) {
+                return Some(manager);
             }
-            let _ = self.retirement_class.set(vtable);
+            if class_of(&self.process, &self.plugin, manager).as_deref() == Some(MANAGER_CLASS) {
+                let _ = self.retirement_class.set(vtable);
+                return Some(manager);
+            }
         }
-        Some(manager)
+        *self.retirement_manager.get_or_init(|| {
+            let vtables = vtables(&self.process, &self.plugin, "RETIREMENT_MANAGER");
+            let found = objects(&self.process, &self.plugin, &vtables);
+            let manager = found.values().flatten().copied().next()?;
+            if let Ok(vtable) = self.process.read_u64(manager) {
+                let _ = self.retirement_class.set(vtable);
+            }
+            Some(manager)
+        })
     }
 
     /// The manager's lists, checked: as many entries in the index as in the list. `None` when the manager cannot be
@@ -282,26 +319,28 @@ impl Session {
         };
         // A list the game has not needed yet has no block.
         let list_header = manager + r.planned;
-        let [_, list_end, list_capacity] = header(list_header)?;
-        let list = match header(list_header)? {
+        let [list_begin, list_end, list_capacity] = header(list_header)?;
+        let list = match [list_begin, list_end, list_capacity] {
             [0, 0, 0] => None,
             _ => Some(PointerList::read(&self.process, list_header)?.ok_or(MoveError::NoRetirements)?),
         };
         let entries = list.as_ref().map(|list| list.elements(&self.process)).transpose()?.unwrap_or_default();
+        if !entries.iter().all(|&entry| is_user_pointer(entry)) {
+            return Err(MoveError::NoRetirements);
+        }
         let index_header = manager + r.by_person;
         let [begin, end, capacity] = header(index_header)?;
         let size = INDEX_ENTRY as u64;
-        let sane = (is_user_pointer(begin) || begin == 0)
-            && begin <= end
+        let index = if is_user_pointer(begin)
+            && begin < end
             && end <= capacity
             && (end - begin).is_multiple_of(size)
-            && (end - begin) / size == entries.len() as u64
-            && entries.iter().all(|&entry| is_user_pointer(entry));
-        if !sane {
-            return Err(MoveError::NoRetirements);
-        }
-        let bytes = if end > begin { self.process.read_bytes(begin, (end - begin) as usize)? } else { Vec::new() };
-        let index = bytes.as_chunks::<INDEX_ENTRY>().0.to_vec();
+            && (end - begin) / size <= LONGEST_INDEX
+        {
+            self.process.read_bytes(begin, (end - begin) as usize)?.as_chunks::<INDEX_ENTRY>().0.to_vec()
+        } else {
+            Vec::new()
+        };
         Ok(Some(Planned {
             list,
             entries,

@@ -48,7 +48,7 @@ const NO_SQUAD_NUMBER: u8 = 255;
 const LISTED: u8 = 0b11;
 
 /// The longest list the editor reads; no squad comes near it.
-const LONGEST_LIST: u64 = 2_000;
+const LONGEST_LIST: u64 = 10_000;
 
 /// Bytes the editor writes at one address, with the bytes it expects to find there.
 #[derive(Debug, Clone, PartialEq, Eq)]
