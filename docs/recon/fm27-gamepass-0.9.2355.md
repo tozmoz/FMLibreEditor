@@ -494,7 +494,8 @@ These sit in a player's contract (see the table above).
   list, by a player out on loan and a player who plays for the team. So a number
   counts as taken only when a player who plays for the team (his `+0x130`) wears
   it. An undo is checked the same way: a number goes back only while no such
-  player wears it.
+  player wears it, and so does the number a player wore when the undo of his
+  move, swap or release puts him back in his team.
 - **Listing:** bit 0 puts the player on the transfer list and bit 1 on the loan
   list. The game uses the byte's other bits too, so a write keeps them.
 
