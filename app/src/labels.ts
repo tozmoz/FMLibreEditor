@@ -125,6 +125,9 @@ export const staffListText = strings.staffList;
 /** The club profile: what the player and staff panels do not have. */
 export const clubProfileText = strings.clubProfile;
 
+/** A club's staff: the tab of its profile, and Release all staff with its dialog. */
+export const clubStaffText = strings.clubStaff;
+
 /** The club list, with the sidebar entry and the status-line count that go with it. */
 export const clubListText = strings.clubList;
 
@@ -167,7 +170,10 @@ export const comparisonText = strings.comparison;
 /** Moving a player to another club, or swapping him with one: the button in his profile and the dialog it opens. */
 export const moveText = strings.move;
 
-/** Releasing a player from his club: the button beside Transfer in his profile and the dialog it opens. */
+/**
+ * Releasing a player or a member of staff from their club: the button beside Transfer in the profile and the dialog it
+ * opens.
+ */
 export const releaseText = strings.release;
 
 /** Changing a player's names: the button beside Release in his profile and the dialog it opens. */

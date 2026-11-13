@@ -374,6 +374,19 @@ enum Command {
         #[arg(long, default_value_t = 0)]
         hold: u64,
     },
+    /// Release members of staff from their clubs in the running game, one after another: each is left with no club and
+    /// no contract, as the game's own staff without a club are.
+    StaffRelease {
+        /// The members of staff's ids.
+        #[arg(required = true)]
+        ids: Vec<u32>,
+        /// Bring them back afterwards, the last one first, and check it: tests a release without changing the save.
+        #[arg(long)]
+        restore: bool,
+        /// With --restore, how many seconds to wait before bringing them back, to look at the game meanwhile.
+        #[arg(long, default_value_t = 0)]
+        hold: u64,
+    },
     /// Move a member of staff to another club in the running game, in the departments he works in.
     StaffMove {
         /// The member of staff's id.
@@ -1183,6 +1196,7 @@ fn run(cli: Cli) -> Result<()> {
                 | Command::Prizes { draw: Some(_), .. }
                 | Command::Prizes { loss: Some(_), .. }
                 | Command::Release { .. }
+                | Command::StaffRelease { .. }
                 | Command::StaffMove { .. }
                 | Command::StaffJob { .. }
                 | Command::StaffSign { .. }
@@ -1316,6 +1330,9 @@ fn run(cli: Cli) -> Result<()> {
         }
         Command::Release { uid, restore, hold } => {
             release_player(&connect(process, ArraySource::ProfileFirst)?, uid, restore, hold)
+        }
+        Command::StaffRelease { ids, restore, hold } => {
+            staff_release(&connect(process, ArraySource::ProfileFirst)?, &ids, restore.then_some(hold))
         }
         Command::StaffMove { id, club, job, restore } => {
             staff_change(&connect(process, ArraySource::ProfileFirst)?, id, StaffAction::Move(club, job), restore)
@@ -5325,6 +5342,53 @@ fn release_player(session: &Session, uid: u32, restore: bool, hold: u64) -> Resu
         }
         session.undo_club_move(&done)?;
         ensure!(club_now("back at")? == Some(plan.from_club), "the player is not back at {from}");
+    }
+    Ok(())
+}
+
+/// Releases the members of staff `ids`, one after another, each planned from the game as the one before left it; one
+/// refused is said and passed over. With `restore_after`, waits that many seconds and brings them back, the last one
+/// first, as an undo of the batch does.
+fn staff_release(session: &Session, ids: &[u32], restore_after: Option<u64>) -> Result<()> {
+    let staff = StaffIndex::new(session.staff()?);
+    let clubs = ClubIndex::new(session.clubs()?);
+    let club = |uid: u32| clubs.get(uid).map_or("?", |c| c.name.as_str());
+    let job = |code: u8| job_name(code).map_or_else(|| format!("job {code}"), str::to_owned);
+    let mut done = Vec::new();
+    for &id in ids {
+        let member = staff.get(id).with_context(|| format!("no member of staff with id {id}"))?;
+        match session.plan_staff_release(member).and_then(|plan| session.apply_staff_plan(&plan)) {
+            Ok(change) => {
+                println!("{} (id {id}): {}, {}: released", member.name, club(change.from_club), job(change.job.0));
+                done.push(change);
+            }
+            Err(err) => println!("{} (id {id}): not released: {err}", member.name),
+        }
+    }
+    // Read them again as the lists would.
+    let now = |label: &str| -> Result<()> {
+        let read = session.staff()?;
+        for change in &done {
+            let member = read.iter().find(|s| s.uid == change.member).context("a member of staff is gone")?;
+            println!("  {label} {}: {}", member.name, member.club.as_deref().unwrap_or("no club"));
+        }
+        Ok(())
+    };
+    now("now")?;
+    if let Some(hold) = restore_after {
+        if hold > 0 {
+            println!("  bringing them back in {hold} s");
+            std::thread::sleep(std::time::Duration::from_secs(hold));
+        }
+        for change in done.iter().rev() {
+            session.undo_staff_change(change)?;
+        }
+        now("back")?;
+        let read = session.staff()?;
+        for change in &done {
+            let back = read.iter().find(|s| s.uid == change.member).and_then(|s| s.club_uid);
+            ensure!(back == Some(change.from_club), "member of staff {} is not back at his club", change.member);
+        }
     }
     Ok(())
 }

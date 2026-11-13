@@ -1008,8 +1008,9 @@ export const ja: Strings = {
     reputationTitle: "評価",
 
     tabsLabel: "クラブの項目",
-    tabs: { overview: "概要", squad: "スカッド", stadium: "スタジアム" },
+    tabs: { overview: "概要", squad: "スカッド", staff: "スタッフ", stadium: "スタジアム" },
     squadLocked: "スカッドを開くには編集を終了してください",
+    staffLocked: "スタッフを開くには編集を終了してください",
 
     facilities: "施設",
 
@@ -1065,6 +1066,51 @@ export const ja: Strings = {
     info: "クラブ情報",
     seasonTickets: "シーズンチケット",
     socialMedia: "SNSフォロワー",
+  },
+
+  clubStaff: {
+    loading: "スタッフを読み込み中…",
+    empty: "ゲームはこのクラブのスタッフを保持していません：このセーブでプレイされていないリーグのクラブにはスタッフがいません。",
+    count: (total: number, staying: number) =>
+      staying === 0 ? `スタッフ${format(total)}人` : `スタッフ${format(total)}人・ほかを解除しても${format(staying)}人は残ります`,
+
+    actionsLabel: "スタッフ全体への操作",
+    releaseAll: (count: number) => (count === 0 ? "全スタッフの契約解除" : `全スタッフの契約解除（${format(count)}人）`),
+    releaseAllTitle: "あなたと役員会を除く、クラブの全スタッフの契約を一度に解除します。先に確認画面が開きます",
+    releaseNone: "このクラブには契約解除できるスタッフがいません",
+    hint: "あなたと役員会以外の全員がすぐにクラブを離れます。元に戻す操作は変更履歴でも行えます。",
+    released: (count: number) => `スタッフ${format(count)}人の契約を解除しました`,
+    refused: (name: string, reason: string) => `${name}：${reason}`,
+    undo: "元に戻す",
+    undoTitle: "契約解除したスタッフを、同じ契約のままクラブに戻します",
+
+    tableLabel: "クラブのスタッフ",
+    staysColumn: "残留",
+    stays: {
+      you: "あなた",
+      board: "役員会",
+      player: "選手でもある",
+      held: "クラブが別の形で保持",
+      other: "解除できません",
+    },
+
+    title: "全スタッフの契約解除",
+    from: "クラブ",
+    leaving: (count: number) => `${format(count)}人がクラブを離れます`,
+    staying: (count: number) => `${format(count)}人が残ります`,
+    more: (count: number) => `ほか${format(count)}人`,
+    doesHeading: "行われること",
+    does: [
+      "各スタッフはすぐにクラブのスタッフから外れ、契約が終了します：ゲーム自身の所属クラブのないスタッフと同じく無職になります",
+      "誰にも何も支払われません",
+      "監督やフットボールディレクターの座は空席となり、クラブが補充します",
+      "あなた、役員会、エディターが解除できない人は残ります",
+      "変更履歴に記録され、1回の取り消しで全員を同じ契約のまま戻せます",
+    ],
+    dialogHint: "「全員解除」を押すまで、ゲーム内では何も変わりません。",
+    release: "全員解除",
+    releasing: "契約解除中…",
+    cancel: "キャンセル",
   },
 
   clubList: {
@@ -1764,12 +1810,14 @@ export const ja: Strings = {
   release: {
     button: "契約解除",
     buttonTitle: "ゲーム内でこの選手をクラブとの契約から解除し、フリーエージェントにします",
+    staffButtonTitle: "ゲーム内でこのスタッフをクラブとの契約から解除し、所属クラブなしにします",
 
     // The dialog
     title: "契約解除",
     from: "離れるクラブ",
     checking: "契約解除を確認中…",
     ready: (club: string) => `${club} → フリーエージェント`,
+    staffReady: (club: string) => `${club} → 無職`,
     doesHeading: "契約解除で行われること",
     does: [
       "クラブのすべてのチームを離れ、契約が終了します：どのクラブとも契約できるフリーエージェントになります",
@@ -1777,6 +1825,12 @@ export const ja: Strings = {
       "クラブでのキャプテンの役割は空席になります",
       "ゲームの移籍履歴には表示されません",
       "変更履歴に記録され、1回の取り消しで同じ契約のまま選手を戻せます",
+    ],
+    staffDoes: [
+      "すぐにクラブのスタッフから外れ、契約が終了します：ゲーム自身の所属クラブのないスタッフと同じく無職になります",
+      "誰にも何も支払われません",
+      "監督やフットボールディレクターの座は空席となり、クラブが補充します",
+      "変更履歴に記録され、1回の取り消しで同じ契約のまま戻せます",
     ],
 
     // The foot

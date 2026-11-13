@@ -1069,8 +1069,9 @@ export const it: Strings = {
     reputationTitle: "Reputazione",
 
     tabsLabel: "Sezioni della società",
-    tabs: { overview: "Panoramica", squad: "Rosa", stadium: "Stadio" },
+    tabs: { overview: "Panoramica", squad: "Rosa", staff: "Staff", stadium: "Stadio" },
     squadLocked: "Termina la modifica per aprire la rosa",
+    staffLocked: "Termina la modifica per aprire lo staff",
 
     facilities: "Strutture",
 
@@ -1130,6 +1131,53 @@ export const it: Strings = {
     info: "Info societarie",
     seasonTickets: "Abbonamenti",
     socialMedia: "Follower sui social media",
+  },
+
+  clubStaff: {
+    loading: "Lettura dello staff…",
+    empty: "Il gioco non tiene staff per questa società: le società dei campionati non giocati in questa partita non ne hanno.",
+    count: (total, staying) => {
+      const all = total === 1 ? "1 membro dello staff" : `${format(total)} membri dello staff`;
+      return staying === 0 ? all : `${all} · ${format(staying)} ${staying === 1 ? "resta" : "restano"} se gli altri vengono svincolati`;
+    },
+
+    actionsLabel: "Azioni su tutto lo staff",
+    releaseAll: (count) => (count === 0 ? "Svincola tutto lo staff" : `Svincola tutto lo staff (${format(count)})`),
+    releaseAllTitle: "Svincola in una volta tutto lo staff della società, tranne te e la dirigenza; prima lo chiede una finestra",
+    releaseNone: "Nessuno dello staff di questa società può essere svincolato",
+    hint: "Tutti tranne te e la dirigenza lasciano subito la società. Il ripristino è anche nella vista Modifiche.",
+    released: (count) => (count === 1 ? "1 membro dello staff svincolato" : `${format(count)} membri dello staff svincolati`),
+    refused: (name, reason) => `${name}: ${reason}`,
+    undo: "Ripristina",
+    undoTitle: "Riporta alla società lo staff svincolato, con i suoi contratti",
+
+    tableLabel: "Lo staff della società",
+    staysColumn: "Resta",
+    stays: {
+      you: "Tu",
+      board: "La dirigenza",
+      player: "Anche giocatore",
+      held: "Tenuto dalla società",
+      other: "Non svincolabile",
+    },
+
+    title: "Svincola tutto lo staff",
+    from: "Società",
+    leaving: (count) => (count === 1 ? "1 lascia la società" : `${format(count)} lasciano la società`),
+    staying: (count) => (count === 1 ? "1 resta" : `${format(count)} restano`),
+    more: (count) => `e altri ${format(count)}`,
+    doesHeading: "Cosa fa",
+    does: [
+      "Ognuno lascia subito lo staff della società e il suo contratto finisce: disoccupato, come lo staff senza società del gioco",
+      "Nessuno viene pagato",
+      "Un posto da allenatore o da direttore sportivo resta vuoto, che la società riempirà",
+      "Restano tu, la dirigenza e chi l'editor non può svincolare",
+      "Compare in Modifiche, dove un solo annullamento li riporta tutti con gli stessi contratti",
+    ],
+    dialogHint: "Nel gioco non cambia nulla finché non premi Svincola tutti.",
+    release: "Svincola tutti",
+    releasing: "Svincolo…",
+    cancel: "Annulla",
   },
 
   clubList: {
@@ -1873,12 +1921,14 @@ export const it: Strings = {
   release: {
     button: "Svincola",
     buttonTitle: "Svincola questo giocatore dalla sua società nel gioco: diventa svincolato",
+    staffButtonTitle: "Svincola questo membro dello staff dalla sua società nel gioco: resta senza società",
 
     // La finestra
     title: "Svincolo",
     from: "Lascia",
     checking: "Verifica dello svincolo…",
     ready: (club) => `${club} → svincolato`,
+    staffReady: (club) => `${club} → disoccupato`,
     doesHeading: "Cosa fa lo svincolo",
     does: [
       "Lascia ogni squadra della società e il contratto finisce: uno svincolato che qualsiasi società può tesserare",
@@ -1886,6 +1936,12 @@ export const it: Strings = {
       "Una fascia di capitano nella società resta vuota",
       "La cronologia dei trasferimenti del gioco non lo riporta",
       "Compare in Modifiche, dove un solo annullamento riporta il giocatore con lo stesso contratto",
+    ],
+    staffDoes: [
+      "Lascia subito lo staff della società e il contratto finisce: disoccupato, come lo staff senza società del gioco",
+      "Nessuno viene pagato",
+      "Un posto da allenatore o da direttore sportivo resta vuoto, che la società riempirà",
+      "Compare in Modifiche, dove un solo annullamento lo riporta con lo stesso contratto",
     ],
 
     // Il piè di pagina

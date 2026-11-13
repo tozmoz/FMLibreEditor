@@ -24,19 +24,24 @@ import {
   type PanelIds,
   type RatingRow,
 } from "./ProfileParts";
+import { ClubStaffTab } from "./ClubStaffTab";
 import { SquadTab } from "./SquadTab";
 import type { ClubDetails, ClubSummary, Finances, Stadium, StadiumName } from "./types";
 import { EditorContext, useProfileEditing } from "./useProfileEditing";
 
 const text = clubProfileText;
 
-/** The tabs of the profile: what the club has, its squad, and its stadium. */
-export type ClubTab = "overview" | "squad" | "stadium";
+/** The tabs of the profile: what the club has, its squad, its staff, and its stadium. */
+export type ClubTab = "overview" | "squad" | "staff" | "stadium";
 
-const TABS: readonly ClubTab[] = ["overview", "squad", "stadium"];
+const TABS: readonly ClubTab[] = ["overview", "squad", "staff", "stadium"];
+
+/** The tabs that are out of reach while the club is edited: they write to the game themselves. */
+const LOCKED_WHILE_EDITED: readonly ClubTab[] = ["squad", "staff"];
 
 /** The tab saved before the language was switched; the overview when there is none. */
-export const readTab = (value: unknown): ClubTab => (value === "squad" || value === "stadium" ? value : "overview");
+export const readTab = (value: unknown): ClubTab =>
+  TABS.includes(value as ClubTab) ? (value as ClubTab) : "overview";
 
 interface ClubProfileProps {
   /** The row that was picked; its fields fill the header while the full profile loads. */
@@ -59,14 +64,15 @@ export function ClubProfile({ club, version, tab, onTab, onClose }: ClubProfileP
   const vitals = [info.founded !== null && text.founded(info.founded), `${profileText.uid} ${info.uid}`];
 
   // The club is edited on the Overview and the Stadium tab, which have its inputs: editing starts on the Overview
-  // unless the Stadium tab is open, and the Squad tab is not offered until it is done.
+  // unless the Stadium tab is open, and the Squad and Staff tabs are not offered until it is done.
   const locked = editing.stage !== "view";
+  const away = locked && LOCKED_WHILE_EDITED.includes(tab);
   useEffect(() => {
-    if (locked && tab === "squad") {
+    if (away) {
       onTab("overview");
     }
-  }, [locked, tab, onTab]);
-  const shown = locked && tab === "squad" ? "overview" : tab;
+  }, [away, onTab]);
+  const shown = away ? "overview" : tab;
   const panel: PanelIds = { id: `${base}-panel`, labelledBy: `${base}-${shown}` };
 
   return (
@@ -95,6 +101,8 @@ export function ClubProfile({ club, version, tab, onTab, onClose }: ClubProfileP
       {details &&
         (shown === "squad" ? (
           <SquadTab clubUid={club.uid} version={version} panel={panel} />
+        ) : shown === "staff" ? (
+          <ClubStaffTab club={{ uid: club.uid, name: info.name, women: info.women }} version={version} panel={panel} />
         ) : shown === "stadium" ? (
           <StadiumTab club={club.uid} stadium={details.stadium} panel={panel} />
         ) : (
@@ -116,8 +124,8 @@ interface ClubTabsProps {
 /** The tabs under the header. The arrow keys move between them, as in any tab list. */
 function ClubTabs({ tab, base, locked, onSelect }: ClubTabsProps) {
   const buttons = useRef<Partial<Record<ClubTab, HTMLButtonElement | null>>>({});
-  // The Squad tab is out of reach while the club is edited.
-  const offered = TABS.filter((id) => !(locked && id === "squad"));
+  // The Squad and Staff tabs are out of reach while the club is edited.
+  const offered = TABS.filter((id) => !(locked && LOCKED_WHILE_EDITED.includes(id)));
 
   const keyDown = (event: KeyboardEvent) => {
     const at = offered.indexOf(tab);
@@ -141,7 +149,7 @@ function ClubTabs({ tab, base, locked, onSelect }: ClubTabsProps) {
   return (
     <div className="profile-tabs" role="tablist" aria-label={text.tabsLabel} onKeyDown={keyDown}>
       {TABS.map((id) => {
-        const unavailable = locked && id === "squad";
+        const unavailable = locked && LOCKED_WHILE_EDITED.includes(id);
         return (
           <button
             key={id}
@@ -157,7 +165,7 @@ function ClubTabs({ tab, base, locked, onSelect }: ClubTabsProps) {
             // Only the tab that is open is a Tab stop; the arrow keys reach the other.
             tabIndex={id === tab ? 0 : -1}
             disabled={unavailable}
-            title={unavailable ? text.squadLocked : undefined}
+            title={unavailable ? (id === "staff" ? text.staffLocked : text.squadLocked) : undefined}
             onClick={() => onSelect(id)}
           >
             {text.tabs[id]}

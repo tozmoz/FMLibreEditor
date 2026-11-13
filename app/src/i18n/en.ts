@@ -1014,9 +1014,11 @@ export const en = {
     // The tabs under the header: what the club has, and its squad (see `squad`).
     /** The name of the tabs for assistive technology. */
     tabsLabel: "Club sections",
-    tabs: { overview: "Overview", squad: "Squad", stadium: "Stadium" },
+    tabs: { overview: "Overview", squad: "Squad", staff: "Staff", stadium: "Stadium" },
     /** Hover text of the Squad tab while the club is edited: its values are on the Overview. */
     squadLocked: "Finish editing to open the squad",
+    /** The same for the Staff tab (see `clubStaff`). */
+    staffLocked: "Finish editing to open the staff",
 
     facilities: "Facilities",
 
@@ -1084,6 +1086,80 @@ export const en = {
     info: "Club info",
     seasonTickets: "Season tickets",
     socialMedia: "Social media followers",
+  },
+
+  /**
+   * The Staff tab of a club's profile: the club's staff, and Release all staff, which releases every one of them the
+   * editor can (not you, not the board) after a dialog that asks first.
+   */
+  clubStaff: {
+    loading: "Reading the staff…",
+    /** When the game keeps no staff for the club. */
+    empty: "The game keeps no staff for this club: clubs of leagues not played in this save have none.",
+    /**
+     * Above the table: how many staff the club has, and how many of them stay when the rest are released (0 when there
+     * is nobody to release).
+     */
+    count: (total: number, staying: number) => {
+      const all = total === 1 ? "1 member of staff" : `${format(total)} staff`;
+      return staying === 0 ? all : `${all} · ${format(staying)} stay if the rest are released`;
+    },
+
+    // The action on the whole staff
+    /** The name of the group of buttons for assistive technology. */
+    actionsLabel: "Actions on the whole staff",
+    /** `count` is how many of the club's staff it releases. */
+    releaseAll: (count: number) => (count === 0 ? "Release all staff" : `Release all staff (${format(count)})`),
+    releaseAllTitle: "Release every member of the club's staff at once, but you and the board; a dialog asks first",
+    /** Hover text of Release all staff while none of the club's staff can be released. */
+    releaseNone: "None of this club's staff can be released",
+    /** Beside the button: whom it leaves, and where undoing is. */
+    hint: "Everyone but you and the board leaves the club at once. Undo is in the Changes view as well.",
+    /** What Release all did, under the button; `count` is how many were released. */
+    released: (count: number) =>
+      count === 1 ? "1 member of staff released" : `${format(count)} members of staff released`,
+    /** A release the game refused: `name` is the member of staff's, `reason` the game's answer. */
+    refused: (name: string, reason: string) => `${name}: ${reason}`,
+    undo: "Undo",
+    undoTitle: "Bring the released staff back to the club, on their contracts",
+
+    // The table
+    /** The table's name for assistive technology. */
+    tableLabel: "The club's staff",
+    /** The last column: why a member of staff stays when the rest are released (empty for one who leaves). */
+    staysColumn: "Stays",
+    /** The reasons, short; the hover text has the game's answer in full. */
+    stays: {
+      you: "You",
+      board: "The board",
+      player: "A player too",
+      held: "Held by the club",
+      other: "Cannot be released",
+    },
+
+    // The dialog that asks first
+    title: "Release all staff",
+    /** The club the staff leave. */
+    from: "Club",
+    /** The headings over those who leave and over those who stay; `count` is how many. */
+    leaving: (count: number) => (count === 1 ? "1 leaves the club" : `${format(count)} leave the club`),
+    staying: (count: number) => (count === 1 ? "1 stays" : `${format(count)} stay`),
+    /** After the names shown: how many more there are. */
+    more: (count: number) => `and ${format(count)} more`,
+    doesHeading: "What it does",
+    /** What the release does to each one, one line each. */
+    does: [
+      "Each one leaves the club's staff at once, and the contract ends: unemployed, as the game's own staff without a club are",
+      "No one is paid anything",
+      "A place as manager or director of football is left empty, for the club to fill",
+      "You, the board and those the editor cannot release stay",
+      "Listed under Changes, where one undo brings them all back on the same contracts",
+    ],
+    /** In the dialog's foot: nothing changes in the game until Release all. */
+    dialogHint: "Nothing changes in the game until you press Release all.",
+    release: "Release all",
+    releasing: "Releasing…",
+    cancel: "Cancel",
   },
 
   /** The club list, with the sidebar entry and the status-line count that go with it. */
@@ -2037,6 +2113,9 @@ export const en = {
     button: "Release",
     buttonTitle: "Release this player from their club in the game: they become a free agent",
 
+    /** The same button in a member of staff's profile: its hover text. */
+    staffButtonTitle: "Release this member of staff from their club in the game: they are left without a club",
+
     // The dialog
     title: "Release",
     /** The club the player leaves. */
@@ -2044,6 +2123,8 @@ export const en = {
     checking: "Checking the release…",
     /** The player can be released; `club` is the name of their club. */
     ready: (club: string) => `${club} → free agent`,
+    /** A member of staff can be released; `club` is the name of their club. */
+    staffReady: (club: string) => `${club} → unemployed`,
     doesHeading: "What the release does",
     /** What the game does to the player, one line each. */
     does: [
@@ -2052,6 +2133,13 @@ export const en = {
       "Any captaincy at the club is left empty",
       "The game's transfer history does not list it",
       "Listed under Changes, where one undo brings the player back on the same contract",
+    ],
+    /** What the release does to a member of staff, one line each. */
+    staffDoes: [
+      "Leaves the club's staff at once, and the contract ends: unemployed, as the game's own staff without a club are",
+      "No one is paid anything",
+      "A place as manager or director of football is left empty, for the club to fill",
+      "Listed under Changes, where one undo brings them back on the same contract",
     ],
 
     // The foot

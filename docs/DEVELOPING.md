@@ -336,6 +336,8 @@ fmlibre-probe staff-move 4000571 1139 --restore      # move a member of staff to
 fmlibre-probe staff-move 4102655 676 --job 88 --restore   # the same, as another job (a code, see staff-job)
 fmlibre-probe staff-job 4000571 14 --restore         # give a member of staff another job and back: this writes too
 fmlibre-probe staff-sign 9318 728 2 --restore        # sign one with no club, as a coach, and back: this writes too
+fmlibre-probe staff-release 5129148 103353 --restore # release staff from their clubs and back: this writes too
+fmlibre-probe staff-refs 5129148 --show "no class"   # what points at a member of staff, by holder; no writes
 fmlibre-probe staff-places                           # where clubs keep their staff, job by job; no writes
 fmlibre-probe staff-places --club-offset 0x148       # what one place of every club holds: its director of football
 fmlibre-probe contract-classes                       # full and basic contracts of players and staff, counted
@@ -368,15 +370,16 @@ Addresses and lengths are hexadecimal. Add `--json report.json` to `info` or `sc
 to save the results. `calibrate --scan` ignores the build profile and finds the
 arrays, the in-game date, the retirement manager and the game object the way it would on an unknown build.
 
-Only `set`, `move`, `swap`, `release`, `staff-move`, `staff-job`, `staff-sign`, `heal --heal`,
+Only `set`, `move`, `swap`, `release`, `staff-move`, `staff-job`, `staff-sign`, `staff-release`, `heal --heal`,
 `bans --lift`, `tie-set`, `tie-add`, `tie-remove`, `captain`, `cohesion --set`, `familiarity --set`,
 `training-history --max` and `prizes` with an amount to change write to the game. Unlike the app, the probe writes to a build without a profile too, as far as the checks allow, so
 that a new build can be mapped.
 - `set` changes one field after the checks above. Values are as stored:
   attributes run 0–100, or 1–20 with `--shown`.
-- `move` moves a player to a club's senior team; `release` leaves him a free agent.
+- `move` moves a player to a club's senior team; `release` leaves him a free agent, and `staff-release` a member of
+  staff without a club.
 - With `--restore`, each one puts the old values back straight away, to test
-  without changing the save. `set`, `move`, `release`, `heal`, `bans`, the `tie`
+  without changing the save. `set`, `move`, `release`, `staff-release`, `heal`, `bans`, the `tie`
   commands, `captain`, `cohesion`, `familiarity`, `training-history` and `prizes` also take `--hold <seconds>` to
   wait first, so the
   change can be looked at in the game. The Dynamics page shows a team's cohesion as the game last

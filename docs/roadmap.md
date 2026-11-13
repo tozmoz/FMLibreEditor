@@ -310,6 +310,15 @@ changes many at once, and undo.
   - [x] Release a player on a free: he leaves his club's lists, and his team and contract pointers are
     cleared, as the game's own free agents have them. A captaincy he held is left empty; so is one a player
     gives up by moving. Checked on the Mac Steam build and both Windows builds, restored.
+  - [x] Release a member of staff, or all of a club's staff at once (#170): Release in his profile, and Release all
+    staff in the club's new Staff tab, each asking first. He leaves the club's department lists, and its place for a
+    director of football or its senior team's for a manager, left empty for the club to fill, and then has no
+    contract, as the game's own staff without a club have none. The human manager, the board and player-coaches stay.
+    Release all is one batch, which one undo takes back. A contract's end moved to the game's date is no release: on
+    the Windows Steam build the game showed the new end and ended none of four such contracts in six days. Checked in
+    the game on Steam: seven staff of a club no human runs and of the human manager's released, a day played, the game
+    saved and loaded again, and they stayed without a club (see the [staff notes](recon/fm27-staff.md#releasing-staff)).
+    Game Pass and macOS not checked yet.
   - [x] Sign a free agent: the Transfer dialog, without fee or swap, signs him for a club's senior team
     under a contract the editor makes. The game keeps its contracts in a pool of 200-byte slots, a static of the game
     plugin (one of 279 pools in its data, each chaining its free slots): the editor takes the first free slot as the

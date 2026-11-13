@@ -24,6 +24,7 @@ import type {
   ClubDetails,
   ClubFilter,
   ClubPage,
+  ClubStaffRow,
   ClubSummary,
   CheckKey,
   ConnectionInfo,
@@ -1031,6 +1032,40 @@ const staff: StaffSummary[] = (() => {
 const womenStaff = new Set(staff.filter((_, i) => isStaffWoman(i)).map((s) => s.uid));
 const isWoman = (uid: number) => women.has(uid) || womenStaff.has(uid);
 
+/**
+ * The board of each fixture men's club, whom a release leaves at the club as the real commands do: a chairperson, and
+ * at the first club an owner too. After the others, so that the generated staff come out as before.
+ */
+staff.push(
+  ...CLUBS.map((club, i): StaffSummary => {
+    const born: FmDate = { year: 1956 + i * 3, month: 1 + i, day: 9 + i };
+    return {
+      uid: 2_100_000 + i,
+      name: `${FIRST[(i + 4) % FIRST.length]} ${LAST[(i + 7) % LAST.length]}`,
+      fullName: null,
+      dateOfBirth: born,
+      age: ageOn(born, GAME_DATE),
+      ...withUids(NATIONS[i % NATIONS.length], club),
+      job: 4,
+      currentAbility: 60 + i * 7,
+      potentialAbility: 70 + i * 7,
+      isHuman: false,
+    };
+  }),
+  {
+    uid: 2_100_100,
+    name: "Bruno Novák",
+    fullName: null,
+    dateOfBirth: { year: 1961, month: 6, day: 2 },
+    age: ageOn({ year: 1961, month: 6, day: 2 }, GAME_DATE),
+    ...withUids("Czechia", CLUBS[0]),
+    job: 66,
+    currentAbility: 90,
+    potentialAbility: 95,
+    isHuman: false,
+  },
+);
+
 /** Made-up but self-consistent profile for a fixture member of staff. */
 function staffDetails(member: StaffSummary): StaffDetails {
   const next = random(member.uid);
@@ -1709,6 +1744,66 @@ function changeStaffJob(uid: number, job: number): LoggedChange {
   const old = member.job!;
   member.job = job;
   return logStaff(member, "contract.job", old, job);
+}
+
+// Staff: releases ---------------------------------------------------------------------------------------------------
+
+/**
+ * `plan_staff_release`: the checks of the real command that the fixtures can have, with its messages (the board's job
+ * is not one the editor gives); names the club.
+ */
+function planStaffRelease(uid: number): ClubName {
+  const member = movableStaff(uid);
+  if (!STAFF_JOBS.includes(member.job ?? 0)) {
+    const job = member.job ?? 0;
+    throw failure("staff.job", `the editor does not yet move staff whose job is ${job}, or give that job`, { job });
+  }
+  const from = clubs.find((c) => c.uid === member.clubUid)!;
+  return { uid: from.uid, name: from.name };
+}
+
+/**
+ * `release_staff`: the fixture member of staff leaves the club with no contract, logged as a change of his `club` to 0,
+ * in the batch `batch` when the whole staff is released.
+ */
+function releaseStaff(uid: number, batch: number | null = null): LoggedChange {
+  const from = planStaffRelease(uid);
+  const member = staff.find((s) => s.uid === uid)!;
+  staffUndo.set(changes.length + 1, { club: member.club, clubUid: member.clubUid, job: member.job });
+  Object.assign(member, { club: null, clubUid: null, job: null });
+  const logged = logStaff(member, "club", from.uid, 0, { from: from.name });
+  changes[changes.length - 1].batch = batch;
+  return { ...logged, batch };
+}
+
+/** `club_staff`: the fixture club's staff, you first and then the best, each with why Release all staff leaves them. */
+function clubStaffRows(clubUid: number): ClubStaffRow[] {
+  if (!clubs.some((c) => c.uid === clubUid)) {
+    throw notFound("club", clubUid);
+  }
+  return staff
+    .filter((s) => s.clubUid === clubUid)
+    .sort((a, b) => Number(b.isHuman) - Number(a.isHuman) || b.currentAbility - a.currentAbility)
+    .map((member) => {
+      try {
+        planStaffRelease(member.uid);
+        return { ...member, stays: null };
+      } catch (e) {
+        // `planStaffRelease` fails the way the real command does, with a failure.
+        return { ...member, stays: e as Failure };
+      }
+    });
+}
+
+/** `release_club_staff`: every fixture member of staff of the club that can be released, released as one batch. */
+function releaseClubStaff(clubUid: number): MassReport {
+  const batch = nextMassId++;
+  const report: MassReport = { batch, applied: 0, failed: [] };
+  for (const row of clubStaffRows(clubUid).filter((row) => row.stays === null)) {
+    releaseStaff(row.uid, batch);
+    report.applied++;
+  }
+  return report;
 }
 
 function undoChange(id: number): LoggedChange {
@@ -3380,6 +3475,14 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       ) as T;
     case "change_staff_job":
       return changeStaffJob(Number(args?.uid), Number(args?.job)) as T;
+    case "plan_staff_release":
+      return planStaffRelease(Number(args?.uid)) as T;
+    case "release_staff":
+      return releaseStaff(Number(args?.uid)) as T;
+    case "club_staff":
+      return clubStaffRows(Number(args?.club)) as T;
+    case "release_club_staff":
+      return releaseClubStaff(Number(args?.club)) as T;
     case "plan_club_swap":
       return planSwap(Number(args?.uid), Number(args?.other)) as T;
     case "plan_release":
