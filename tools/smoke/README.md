@@ -30,8 +30,9 @@ Each check prints a line: `PASS`, `FAIL` or `SKIP`. The screenshots and `results
 
 The copy of the app the tests start has its own WebView2 profile and its own data folder (`FMLIBRE_DATA`) under that
 folder, so it neither joins the copy you have open nor touches your `frozen.json`. It debugs on port 9341, as does the
-copy for the unknown build once the first is closed; the `freeze` test starts a second copy beside the first, on the
-data folder of the first, and it debugs two ports higher, on 9343 (`--port` moves them all).
+copy for the unknown build once the first is closed; the `history` and `freeze` tests start copies beside the
+first, on the data folder of the first, which debug two and four ports higher, on 9343 and 9345 (`--port` moves them
+all).
 
 ## What they write
 
@@ -48,6 +49,7 @@ By default nothing that changes the game. With `--writes`, the tests change the 
 | `palette` | no | The command palette and the keyboard shortcuts: Ctrl+K opens and closes the palette, its commands with their shortcuts, Escape giving the caret back to the list's search, the arrows (round from the first line to the last); the best player, a member of staff and a club found and opened, each in its own tab; Ctrl+2 and Ctrl+3 for the tabs, Ctrl+F for the list's search, Ctrl+E starting and ending the editing of the open profile; under a dialog the shortcuts wait; Ctrl+R reads the data again without the web view loading the page again |
 | `scouting` | no | The Scouting tab: its six sections; every list of opportunities holds only players on it for its reason (contracts ending within six months, clauses below the value, wonderkids 19 or younger), and its card counts what the core counts; Compare puts a player beside the club's no. 1 at his position with the role's key attributes; Find a replacement looks for players like one the scout would let go, the most alike first; the scout report drawn as a picture and saved as a PNG in the exports folder; the squad on a pitch, a line picked on it shown in full, and the table a click away; the youth intakes of the club (its own players who joined it at 17 or younger, the newest intake first, or a note that it has none) and of the club with the most players of 16 or younger, picked from the section's club search, with the cities a city of birth can be set to and the inputs Edit opens. Skipped where the user manages no club |
 | `edit` | yes | Edits through the app's commands, read back by the probe and undone; a city of birth set to another city of the player's nation and back, a nation refused in its place; one attribute through Edit mode, undone from the Changes tab |
+| `history` | yes | The history of the career's changes, as after a restart: a captaincy the first copy makes is in the career's history file; a second copy of the app on the same data folder lists it as an earlier change without Undo (its undo refused) and changes a player's attribute; a third copy lists that one as an earlier change the game holds, marked so in the Changes tab, where its Undo writes the old value back (the probe reads it) while the captaincy's row has none, and the masthead counts no change of its own; Clear history empties the list and the file; the first copy undoes its captaincy |
 | `mass` | yes | A mass edit over a club's players, applied, read back and undone as one batch |
 | `contract` | yes | Extending contracts: a player's and a member of staff's five years longer through the app's command, read back by the probe and undone; no years refused, and a basic contract (no end) refused with nothing written; Extend in the player's profile, undone from the Changes tab; a mass edit that adds a year to a club's players' contracts, read back and undone as one batch |
 | `move` | yes | A transfer the app agrees to, and the undo that moves the player back |

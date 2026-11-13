@@ -424,6 +424,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Diese Daten haben sich im Spiel geändert; ${reload}.`,
   "app.noChange": (p) => `Die Änderung ${p.id} gibt es nicht.`,
   "app.alreadyUndone": () => "Diese Änderung wurde bereits rückgängig gemacht.",
+  "app.historyOnly": () => "Diese Änderung wurde vor der letzten Verbindung der App gemacht, und zum Rückgängigmachen wäre der damalige Speicher des Spiels nötig: Ändern Sie sie von Hand zurück.",
+  "app.history": (p) => `Der Verlauf konnte nicht gelöscht werden: ${p.reason}`,
   "export.failed": (p) => `Die Datei konnte nicht geschrieben werden: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor darf nicht in ${p.folder} schreiben. Falls macOS gefragt hat, ob die App Ihren Ordner „Dokumente“ ` +
@@ -1411,8 +1413,31 @@ export const de: Strings = {
 
   changes: {
     nav: "Änderungen",
-    title: "Änderungen in dieser Sitzung",
-    hint: "Neueste zuerst. Eine Änderung lässt sich nur rückgängig machen, solange das Spiel noch den geschriebenen Wert hat.",
+    title: "Änderungen",
+    hint:
+      "Neueste zuerst. Die App behält die Änderungen jeder Karriere, daher werden sie nach einem Neustart wieder aufgelistet. Eine Änderung lässt sich nur rückgängig machen, solange das Spiel noch den geschriebenen Wert hat.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count, missing) =>
+      `${changeCount(count)} aus früheren Sitzungen` + (missing > 0 ? `, davon ${format(missing)} beim Lesen der Daten nicht im Spiel` : "") + ". Wechsel, Heilungen, Bindungen, Klauseln und Namen bleiben als Verlauf erhalten, ohne Rückgängig.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Früher",
+    earlierTitle: "Geschrieben, bevor die App zuletzt verbunden war, und im Verlauf dieser Karriere gespeichert",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "Im Spiel",
+    inGameTitle: "Das Spiel hatte diesen Wert, als die Daten zuletzt gelesen wurden",
+    notInGame: "Nicht im Spiel",
+    notInGameTitle: "Das Spiel hatte diesen Wert beim letzten Lesen der Daten nicht: Das Spiel wurde nach der Änderung nicht gespeichert, oder es hat den Wert seitdem geändert",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Verlauf",
+    historyOnlyTitle: "Vor der letzten Verbindung der App gemacht: Zum Rückgängigmachen wäre der damalige Speicher des Spiels nötig",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count) => `${format(count)} nicht im Spiel`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Verlauf löschen",
+    clearHistoryTitle: "Diese Liste leeren und den Verlauf dieser Karriere vergessen. Die Änderungen bleiben im Spiel.",
+    confirmClear: "Den Verlauf dieser Karriere löschen? Die Änderungen bleiben im Spiel, lassen sich von hier aus aber nicht mehr rückgängig machen.",
+    keepHistory: "Behalten",
+    clearConfirm: "Löschen",
     continueHint: "Das Spiel zeigt eine Änderung, sobald es weiterläuft: Klicken Sie im Spiel auf Fortfahren.",
     swappedWith: (name) => `Getauscht gegen ${name}`,
     released: (name) => `Vertrag von ${name} aufgelöst`,

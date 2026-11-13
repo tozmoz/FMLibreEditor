@@ -252,6 +252,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Bu veriler oyunda değişti; ${reload}.`,
   "app.noChange": (p) => `${p.id} numaralı bir değişiklik yok.`,
   "app.alreadyUndone": () => "Bu değişiklik zaten geri alındı.",
+  "app.historyOnly": () => "Bu değişiklik uygulama son bağlandığından önce yapıldı ve geri almak için oyunun belleğinin o anki hâli gerekiyordu: elle geri değiştir.",
+  "app.history": (p) => `Geçmiş temizlenemedi: ${p.reason}`,
   "export.failed": (p) => `Dosya yazılamadı: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor ${p.folder} klasörüne yazamıyor. macOS, Belgeler klasörünü kullanıp kullanamayacağını sorduysa ` +
@@ -1301,8 +1303,33 @@ export const tr: Strings = {
 
   changes: {
     nav: "Değişiklikler",
-    title: "Bu oturumdaki değişiklikler",
-    hint: "En yeniler üstte. Bir değişiklik yalnızca oyun yazdığı değeri hâlâ tutuyorsa geri alınabilir.",
+    title: "Değişiklikler",
+    hint:
+      "En yenisi en üstte. Uygulama her kariyerin değişikliklerini saklar; yeniden başlatınca da listelenirler. Bir değişiklik, ancak oyun yazdığı değeri hâlâ tutuyorsa geri alınabilir.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count, missing) =>
+      `Önceki oturumlardan ${format(count)} değişiklik` +
+      (missing > 0 ? `; ${format(missing)} tanesi veriler okunduğunda oyunda yoktu` : "") +
+      ". Bunlar arasındaki transferler, iyileştirmeler, bağlar, maddeler ve isimler geçmiş olarak durur, geri alınamaz.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Önceki",
+    earlierTitle: "Uygulama son bağlandığından önce yazıldı; bu kariyerin geçmişinde saklanıyor",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "Oyunda",
+    inGameTitle: "Veriler son okunduğunda oyun bu değeri tutuyordu",
+    notInGame: "Oyunda değil",
+    notInGameTitle: "Veriler son okunduğunda oyun bu değeri tutmuyordu: değişiklikten sonra oyun kaydedilmedi ya da oyun değeri o zamandan beri değiştirdi",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Geçmiş",
+    historyOnlyTitle: "Uygulama son bağlandığından önce yapıldı: geri almak için oyunun belleğinin o anki hâli gerekiyordu",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count) => `${format(count)} tanesi oyunda değil`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Geçmişi temizle",
+    clearHistoryTitle: "Bu listeyi boşalt ve bu kariyerin geçmişini unut. Değişiklikler oyunda kalır.",
+    confirmClear: "Bu kariyerin geçmişi temizlensin mi? Değişiklikler oyunda kalır, ama artık buradan geri alınamaz.",
+    keepHistory: "Vazgeç",
+    clearConfirm: "Temizle",
     continueHint: "Oyun değişiklikleri bir kez ilerleyince gösterir: oyunda Devam'a basın.",
     swappedWith: (name) => `Takas: ${name}`,
     released: (name) => `${name} serbest bırakıldı`,

@@ -253,6 +253,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `このデータはゲーム内で変更されました。${reload}。`,
   "app.noChange": (p) => `変更 ${p.id} はありません。`,
   "app.alreadyUndone": () => "この変更はすでに元に戻されています。",
+  "app.historyOnly": () => "この変更はアプリが最後に接続する前に行われ、元に戻すには当時のゲームのメモリが必要でした：手動で元に戻してください。",
+  "app.history": (p) => `履歴を消去できませんでした：${p.reason}`,
   "export.failed": (p) => `ファイルを書き込めませんでした：${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor は ${p.folder} に書き込めません。macOS から書類フォルダの使用について確認された場合は、` +
@@ -1294,8 +1296,31 @@ export const ja: Strings = {
 
   changes: {
     nav: "変更履歴",
-    title: "このセッションの変更",
-    hint: "新しい順。ゲームが書き込んだ値をまだ保持している間だけ、変更を元に戻せます。",
+    title: "変更",
+    hint:
+      "新しい順。アプリはキャリアごとに変更を保存するため、再起動後も一覧に表示されます。ゲームが書き込んだ値をまだ保持している間だけ、変更を元に戻せます。",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count: number, missing: number) =>
+      `以前のセッションの${changeCount(count)}` + (missing > 0 ? `（うち${format(missing)}件はデータ読み込み時にゲーム内にありませんでした）` : "") + "。移籍、治療、結びつき、条項、名前の変更は履歴として残り、元に戻せません。",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "以前",
+    earlierTitle: "アプリが最後に接続する前に書き込まれ、このキャリアの履歴に保存されています",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "ゲーム内",
+    inGameTitle: "データを最後に読み込んだとき、ゲームはこの値を保持していました",
+    notInGame: "ゲーム内になし",
+    notInGameTitle: "データを最後に読み込んだとき、ゲームはこの値を保持していませんでした：変更後にゲームを保存しなかったか、その後ゲームが値を変えました",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "履歴",
+    historyOnlyTitle: "アプリが最後に接続する前に行われた変更：元に戻すには当時のゲームのメモリが必要でした",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count: number) => `${format(count)}件はゲーム内になし`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "履歴を消去",
+    clearHistoryTitle: "この一覧を空にし、このキャリアの履歴を消去します。変更はゲームに残ります。",
+    confirmClear: "このキャリアの履歴を消去しますか？変更はゲームに残りますが、ここからは元に戻せなくなります。",
+    keepHistory: "残す",
+    clearConfirm: "消去",
     continueHint: "変更はゲームが進行した後に表示されます：ゲームで「続ける」を押してください。",
     swappedWith: (name: string) => `${name}とトレード`,
     released: (name: string) => `${name}を契約解除`,

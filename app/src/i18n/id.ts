@@ -241,6 +241,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Data ini sudah berubah di game; ${reload}.`,
   "app.noChange": (p) => `Tidak ada perubahan nomor ${p.id}.`,
   "app.alreadyUndone": () => "Perubahan ini sudah diurungkan.",
+  "app.historyOnly": () => "Perubahan ini dibuat sebelum aplikasi terakhir tersambung, dan untuk mengurungkannya perlu memori game seperti saat itu: ubah kembali secara manual.",
+  "app.history": (p) => `Riwayat tidak bisa dihapus: ${p.reason}`,
   "export.failed": (p) => `Berkas tidak bisa ditulis: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor tidak boleh menulis ke ${p.folder}. Jika macOS bertanya apakah aplikasi ini boleh memakai folder ` +
@@ -1267,8 +1269,31 @@ export const id: Strings = {
 
   changes: {
     nav: "Perubahan",
-    title: "Perubahan sesi ini",
-    hint: "Terbaru di atas. Perubahan hanya bisa diurungkan selama game masih menyimpan nilai yang ditulisnya.",
+    title: "Perubahan",
+    hint:
+      "Terbaru di atas. Aplikasi menyimpan perubahan tiap karier, jadi daftar ini muncul lagi setelah aplikasi dimulai ulang. Perubahan hanya bisa diurungkan selama game masih menyimpan nilai yang ditulisnya.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count: number, missing: number) =>
+      `${changeCount(count)} dari sesi sebelumnya` + (missing > 0 ? `, ${format(missing)} di antaranya tidak ada di game saat data dibaca` : "") + ". Transfer, penyembuhan, ikatan, klausul, dan nama di antaranya disimpan sebagai riwayat, tanpa Urungkan.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Sebelumnya",
+    earlierTitle: "Ditulis sebelum aplikasi terakhir tersambung, dan disimpan dalam riwayat karier ini",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "Ada di game",
+    inGameTitle: "Game menyimpan nilai ini saat data terakhir dibaca",
+    notInGame: "Tidak ada di game",
+    notInGameTitle: "Game tidak menyimpan nilai ini saat data terakhir dibaca: game belum disimpan setelah perubahan, atau game sudah mengubah nilainya sejak itu",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Riwayat",
+    historyOnlyTitle: "Dibuat sebelum aplikasi terakhir tersambung: untuk mengurungkannya perlu memori game seperti saat itu",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count: number) => `${format(count)} tidak ada di game`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Hapus riwayat",
+    clearHistoryTitle: "Kosongkan daftar ini dan lupakan riwayat karier ini. Perubahannya tetap ada di game.",
+    confirmClear: "Hapus riwayat karier ini? Perubahannya tetap ada di game, tetapi tidak bisa lagi diurungkan dari sini.",
+    keepHistory: "Pertahankan",
+    clearConfirm: "Hapus",
     continueHint: "Game menampilkan perubahan setelah waktu berjalan: tekan Lanjutkan di game.",
     swappedWith: (name: string) => `Ditukar dengan ${name}`,
     released: (name: string) => `${name} dilepas`,

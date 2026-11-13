@@ -449,6 +449,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Ces données ont changé dans le jeu\u00a0; ${reload}.`,
   "app.noChange": (p) => `La modification ${p.id} n'existe pas.`,
   "app.alreadyUndone": () => "Cette modification a déjà été annulée.",
+  "app.historyOnly": () => "Cette modification a été faite avant la dernière connexion de l'application et l'annuler demandait la mémoire du jeu telle qu'elle était alors\u00a0: remettez-la à la main.",
+  "app.history": (p) => `L'historique n'a pas pu être effacé\u00a0: ${p.reason}`,
   "export.failed": (p) => `Impossible d'écrire le fichier\u00a0: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor ne peut pas écrire dans ${p.folder}. Si macOS a demandé s'il pouvait utiliser votre dossier ` +
@@ -1433,10 +1435,31 @@ export const fr: Strings = {
 
   changes: {
     nav: "Modifications",
-    title: "Modifications de cette session",
+    title: "Modifications",
     hint:
-      "Les plus récentes d'abord. Une modification ne peut être annulée que tant que le jeu garde la valeur qu'elle a " +
-      "écrite.",
+      "Les plus récentes d'abord. L'application garde les modifications de chaque carrière, elles sont donc listées de nouveau après un redémarrage. Une modification ne peut être annulée que tant que le jeu garde la valeur qu'elle a écrite.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count, missing) =>
+      `${changeCount(count)} de sessions précédentes` + (missing > 0 ? `, dont ${format(missing)} absente${agree(missing)} du jeu à la lecture des données` : "") + ". Les transferts, soins, liens, clauses et noms restent dans l'historique, sans Annuler.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Précédente",
+    earlierTitle: "Écrite avant la dernière connexion de l'application et gardée dans l'historique de cette carrière",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "Dans le jeu",
+    inGameTitle: "Le jeu avait cette valeur à la dernière lecture des données",
+    notInGame: "Pas dans le jeu",
+    notInGameTitle: "Le jeu n'avait pas cette valeur à la dernière lecture des données\u00a0: il n'a pas été sauvegardé après la modification, ou il a changé la valeur depuis",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Historique",
+    historyOnlyTitle: "Faite avant la dernière connexion de l'application\u00a0: l'annuler demandait la mémoire du jeu telle qu'elle était alors",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count) => `${format(count)} absente${agree(count)} du jeu`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Effacer l'historique",
+    clearHistoryTitle: "Vider cette liste et oublier l'historique de cette carrière. Les modifications restent dans le jeu.",
+    confirmClear: "Effacer l'historique de cette carrière\u00a0? Les modifications restent dans le jeu, mais ne pourront plus être annulées d'ici.",
+    keepHistory: "Garder",
+    clearConfirm: "Effacer",
     continueHint: "Le jeu affiche une modification une fois qu'il avance\u00a0: appuyez sur Continuer dans le jeu.",
     swappedWith: (name) => `Échange avec ${name}`,
     released: (name) => `Libération ${de(name)}`,

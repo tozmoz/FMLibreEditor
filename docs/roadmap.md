@@ -83,6 +83,16 @@ before trusting them.
   - an EN | TR switch in the sidebar;
   - dates and numbers follow the language;
   - the connection and the change log survive the switch.
+- [x] A history of each career's changes: the Changes view lists the changes of earlier sessions too, from a file per
+  career in the app's data folder (one line per change or undo, added as they are made). An earlier change says
+  whether the game held its value when the data was read (the game may not have been saved after it); a change of a
+  value is undone as a new edit back to the old value, with every check, while moves, healing, ties, clauses, names
+  and the like stay as history, as their undo needed the game's memory as it was. Clear history empties it. Loading
+  another career and reading the data again lists that career's history instead: before, the list kept the other
+  career's changes, whose Undo could write to the people with the same UIDs in this one.
+- [ ] Edit packages: the changes of the history written to a file, and read into another save of the same database,
+  with a preview as a mass edit has (people found by UID and birth date, nations and cities by name), applied as one
+  batch.
 - [x] Spanish, and flags for the languages:
   - a menu in the masthead, under the flag of the language in use, lists each language with its flag;
   - the system's language is the default where the app has it, English otherwise;
