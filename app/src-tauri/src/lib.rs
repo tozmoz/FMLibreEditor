@@ -12,7 +12,7 @@ use fmlibre_core::{
     ArraySource, Buyer, COHESION_RANGE, CaptainRole, CaptainSet, Change, Clause, ClauseSet, ClubDetails, ClubFilter,
     ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet, EditError, Entity, EntityArrays, ExportFormat, ExportHeader,
     Exported, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsCounts, GraphicsIndex, HOMEGROWN_RULES,
-    Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted, Listed, Loan, MoveError, MovePlan, MoveTerms,
+    Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted, Listed, Loan, Lock, MoveError, MovePlan, MoveTerms,
     NameChange, NameKind, Nation, NewContract, NewStaffContract, Operation, Paid, People, PersonNames, Picture,
     Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, ROLES, RelationSet, RetirementSet,
     Role, SCOUT_POSITIONS, ScoutError, ScoutPosition, ScoutRequest, Scouted, SearchIndex, Session, SessionError,
@@ -1662,7 +1662,8 @@ impl Connection {
 
     /// Writes back the old value of the logged change `id`, if the game still holds the new
     /// one; a move or healing goes back if the game still holds everything it wrote. A change
-    /// listed from the history goes back as `undo_earlier` says.
+    /// listed from the history goes back as `undo_earlier` says. Nothing goes back once the game
+    /// has loaded a save since the lists were read (see `refuse_after_load`).
     fn undo(&mut self, id: usize) -> Result<LoggedChange, Failure> {
         let entry = self
             .log
@@ -1673,6 +1674,7 @@ impl Connection {
         if entry.undone_at.is_some() {
             return Err(Failure::new("app.alreadyUndone", "This change has already been undone."));
         }
+        self.refuse_after_load()?;
         if entry.earlier {
             self.undo_earlier(&entry)?;
             return Ok(self.mark_undone(id));
@@ -1767,6 +1769,18 @@ impl Connection {
             }
         }
         self.note_change(change, change.old);
+        Ok(())
+    }
+
+    /// Refuses an undo while the game has loaded a save, or gone back to its main menu, since the lists were read: the
+    /// people and clubs there may be another save's, at the same places, and putting a value back skips the checks a new
+    /// edit makes, that one among them. An undo of a change of this connection would write where the lists found its
+    /// person, if a person with the same UID was there and held the value it wrote. Reload data reads the lists again,
+    /// and keeps the log only while the game has the same career.
+    fn refuse_after_load(&self) -> Result<(), Failure> {
+        if self.session.save_changed() {
+            return Err(MoveError::Locked(Lock::SaveChanged).into());
+        }
         Ok(())
     }
 
@@ -4336,11 +4350,13 @@ fn apply_mass_edit(state: State<'_, AppState>, id: u32) -> Result<MassReport, Fa
 }
 
 /// Undoes every change of the mass edit `batch` that is not undone yet, newest first.
-/// Changes the game has changed since are left as they are and reported.
+/// Changes the game has changed since are left as they are and reported. Refused at once
+/// while the game has loaded a save since the lists were read, as each undo would be.
 #[tauri::command]
 fn undo_batch(state: State<'_, AppState>, batch: u32) -> Result<BatchUndo, Failure> {
     let mut guard = state.0.lock()?;
     let connection = guard.as_mut().ok_or_else(not_connected)?;
+    connection.refuse_after_load()?;
     let ids: Vec<usize> = connection
         .log
         .iter()
