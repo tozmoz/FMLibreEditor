@@ -1521,7 +1521,8 @@ impl Connection {
             Some(Undo::Captain(captaincy)) => self.session.undo_captain(&captaincy)?,
             None => {
                 let (target, _) = self.target(entry.change.entity, entry.change.uid)?;
-                self.session.revert(&target, &entry.change)?;
+                // A squad number a team-mate has been given since is refused, naming him.
+                self.session.revert(&target, &entry.change).map_err(|err| self.with_names(err.into()))?;
                 self.note_change(&entry.change, entry.change.old);
             }
         }
