@@ -1396,6 +1396,28 @@ export const ko: Strings = {
     previous: "이전",
     next: "다음",
     range: (first, last, total) => `${format(total)}건 중 ${format(first)}–${format(last)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "이름, UID, 항목, 구단으로 변경 사항 검색",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "세션",
+    sessions: { all: "전체", this: "이번 세션", earlier: "이전 세션" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "되돌리지 않음",
+    notUndoneTitle: "아직 적용 중인 변경 사항만",
+    notInGameFilterTitle: "데이터를 마지막으로 읽었을 때 게임에 없던 이전 변경 사항만",
+    /** Takes the search text and every choice away. */
+    clearFilter: "필터 해제",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching, total, undone) => {
+      const count = `${changes(total)} 중 ${format(matching)}건`;
+      return undone === 0 ? count : `${count} · ${format(undone)}건 되돌림`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching, total) => `${format(total)}건 중 ${format(matching)}건 일치`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "검색과 필터에 맞는 변경 사항이 없습니다.",
   },
 
   export: {
@@ -1448,6 +1470,24 @@ export const ko: Strings = {
     show: "폴더에서 보기",
     showTitle: "파일이 있는 폴더에서 파일을 표시합니다",
     close: "닫기",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "목록에 표시된 변경 사항을 스프레드시트나 스크립트에서 쓸 CSV 파일로 저장합니다",
+      title: "변경 사항 내보내기",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count, filtering) =>
+        count === 0
+          ? "검색과 필터에 맞는 변경 사항이 없습니다."
+          : filtering
+            ? `${changes(count)}: 검색과 필터로 선택된 항목을 최신순으로 내보냅니다.`
+            : `${changes(count)}: 이 커리어의 전체 기록을 최신순으로 내보냅니다.`,
+      contents:
+        "각 변경 사항의 시각(현지 시간, UTC와의 차이 포함), 이름과 UID, 항목, 게임이 저장하는 형태와 여기에 표시되는 " +
+        "형태의 이전 값과 새 값, 목록이 아래에 보여 주는 설명, 속해 있던 일괄 편집, 되돌린 시각, 이전 세션의 " +
+        "변경인지와 게임에 있는지 여부가 담깁니다. 게임에는 아무것도 바뀌지 않습니다.",
+      done: (count, file) => `${changes(count)}을 ${file}에 내보냈습니다`,
+    },
   },
 
   massEdit: {

@@ -259,7 +259,10 @@ save before writing, and reads the clubs again (see `Connection::hold_stadiums`)
 
 Exports go to `Documents\FMLibreEditor\Exports` (`~/Documents/FMLibreEditor/Exports` on
 macOS); `FMLIBRE_EXPORTS` names another folder. The columns and the JSON keys are in
-`crates/fmlibre-core/src/export.rs`.
+`crates/fmlibre-core/src/export.rs`. The Changes view's export (`export_changes`) is CSV only: the
+window sends the rows its search and filters leave, with the texts only it has (the values as
+shown, the field's name, the time in its zone), and `export_changes` in `export.rs` writes them
+with the same quoting, separator and byte order mark as the lists.
 
 ### Releasing
 

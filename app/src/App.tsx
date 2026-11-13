@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { flushSync } from "react-dom";
 import { call, inTauri } from "./api";
 import { BridgeSetup } from "./BridgeSetup";
-import { ChangesView, useChangeLog } from "./ChangesView";
+import { ChangesView, useChangeFilter, useChangeLog } from "./ChangesView";
 import { ClubBrowser } from "./ClubBrowser";
 import { CommandPalette, Keys, SearchIcon, type Command, type Found, type FoundKind } from "./CommandPalette";
 import { CompatibilityNotice } from "./CompatibilityNotice";
@@ -128,6 +128,8 @@ function App() {
   // The players picked for a comparison: in the player list's profiles and in those opened from a club's squad.
   const comparison = useComparison();
   const { log, error: logError, reload: reloadLog } = useChangeLog();
+  // The search and the filters of the Changes view stay when another view is shown, as a list's search does.
+  const [changeFilter, setChangeFilter] = useChangeFilter();
   // The Changes tab counts what this connection wrote: the earlier changes of the history are not news.
   const sessionChanges = log.filter((change) => !change.earlier).length;
   const update = useUpdateCheck();
@@ -310,7 +312,8 @@ function App() {
 
   const game = detection?.games[0];
   const idle = busy === null;
-  const searchable = connection !== null && (view === "players" || view === "staff" || view === "clubs");
+  const searchable =
+    connection !== null && (view === "players" || view === "staff" || view === "clubs" || view === "changes");
 
   // What the palette lists, read when it opens: the commands of the profile on show, then the lists, then the rest.
   const commands: Command[] = [];
@@ -523,7 +526,16 @@ function App() {
                   request={request?.kind === "club" ? request.ask : null}
                 />
                 <ScoutingBrowser version={dataVersion} active={view === "scouting"} gameDate={connection.gameDate} />
-                {view === "changes" && <ChangesView log={log} error={logError} reload={reloadLog} onUndone={edited} />}
+                {view === "changes" && (
+                  <ChangesView
+                    log={log}
+                    error={logError}
+                    reload={reloadLog}
+                    onUndone={edited}
+                    filter={changeFilter}
+                    onFilter={setChangeFilter}
+                  />
+                )}
               </div>
             </ComparisonContext.Provider>
           </EditorContext.Provider>

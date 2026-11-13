@@ -23,6 +23,7 @@ import type {
   MassPreview,
   OpportunityKind,
   PlayerSort,
+  SessionChoice,
   SquadSort,
   StaffSort,
   Storefront,
@@ -1492,6 +1493,28 @@ export const en = {
     next: "Next",
     /** Between the buttons: the rows on show and how many there are, e.g. "101–200 of 450". */
     range: (first: number, last: number, total: number) => `${format(first)}–${format(last)} of ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "Search changes by name, UID, field or club",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Session",
+    sessions: { all: "All", this: "This session", earlier: "Earlier sessions" } satisfies Record<SessionChoice, string>,
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Not undone",
+    notUndoneTitle: "Only the changes that are still in place",
+    notInGameFilterTitle: "Only the earlier changes the game did not hold when the data was last read",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Clear filter",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching: number, total: number, undone: number) => {
+      const count = `${format(matching)} of ${changeCount(total)}`;
+      return undone === 0 ? count : `${count} · ${format(undone)} undone`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching: number, total: number) => `${format(matching)} of ${format(total)} match`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "No change matches the search and the filters.",
   },
 
   /** Exporting players or clubs to a file: the button in the toolbar of the player and club lists and its dialog. */
@@ -1558,6 +1581,24 @@ export const en = {
     show: "Show in folder",
     showTitle: "Show the file in its folder",
     close: "Close",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Write the changes the list shows to a CSV file, for a spreadsheet or a script",
+      title: "Export changes",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count: number, filtering: boolean) =>
+        count === 0
+          ? "No change matches the search and the filters."
+          : filtering
+            ? `${changeCount(count)}: what the search and the filters select, newest first.`
+            : `${changeCount(count)}: the whole history of this career, newest first.`,
+      contents:
+        "Each change's time (local, with its offset from UTC), name and UID, the field, its old and new value as " +
+        "the game stores them and as shown here, what the list says under them, the mass edit it was part of, when " +
+        "it was undone, and whether it is from an earlier session and in the game. Nothing in the game changes.",
+      done: (count: number, file: string) => `Exported ${changeCount(count)} to ${file}`,
+    },
   },
 
   /** Mass editing: the button in the toolbar of a list and the dialog it opens. */

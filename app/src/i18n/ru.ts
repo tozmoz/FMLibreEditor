@@ -1392,6 +1392,28 @@ export const ru: Strings = {
     previous: "Назад",
     next: "Вперёд",
     range: (first, last, total) => `${format(first)}–${format(last)} из ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "Поиск изменений по имени, UID, полю или клубу",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Сеанс",
+    sessions: { all: "Все", this: "Этот сеанс", earlier: "Прошлые сеансы" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Не отменённые",
+    notUndoneTitle: "Только изменения, которые всё ещё в силе",
+    notInGameFilterTitle: "Только прошлые изменения, которых не было в игре при последнем чтении данных",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Сбросить фильтр",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching, total, undone) => {
+      const count = `${format(matching)} из ${counted(total, "изменения", "изменений", "изменений")}`;
+      return undone === 0 ? count : `${count} · отменено ${format(undone)}`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching, total) => `Совпадений: ${format(matching)} из ${format(total)}`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "Нет изменений, подходящих под поиск и фильтры.",
   },
 
   export: {
@@ -1446,6 +1468,25 @@ export const ru: Strings = {
     show: "Показать в папке",
     showTitle: "Показать файл в его папке",
     close: "Закрыть",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Записать изменения, показанные в списке, в файл CSV для таблицы или скрипта",
+      title: "Экспорт изменений",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count, filtering) =>
+        count === 0
+          ? "Нет изменений, подходящих под поиск и фильтры."
+          : filtering
+            ? `${changeCount(count)}: всё, что выбрано поиском и фильтрами, сначала новые.`
+            : `${changeCount(count)}: вся история этой карьеры, сначала новые.`,
+      contents:
+        "Для каждого изменения: время (местное, со смещением от UTC), имя и UID, поле, старое и новое значение так, " +
+        "как их хранит игра и как они показаны здесь, пояснения под ними, массовое изменение, к которому оно " +
+        "относилось, когда оно было отменено, а также относится ли оно к прошлому сеансу и есть ли оно в игре. " +
+        "В игре ничего не меняется.",
+      done: (count, file) => `Экспортировано: ${changeCount(count)} в ${file}`,
+    },
   },
 
   massEdit: {

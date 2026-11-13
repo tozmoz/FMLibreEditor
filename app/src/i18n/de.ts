@@ -1481,6 +1481,28 @@ export const de: Strings = {
     previous: "Zurück",
     next: "Weiter",
     range: (first, last, total) => `${format(first)}–${format(last)} von ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "Änderungen nach Name, UID, Feld oder Verein suchen",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Sitzung",
+    sessions: { all: "Alle", this: "Diese Sitzung", earlier: "Frühere Sitzungen" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Nicht rückgängig gemacht",
+    notUndoneTitle: "Nur Änderungen, die noch in Kraft sind",
+    notInGameFilterTitle: "Nur frühere Änderungen, die das Spiel beim letzten Lesen der Daten nicht hatte",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Filter zurücksetzen",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching, total, undone) => {
+      const count = `${format(matching)} von ${changeCount(total)}`;
+      return undone === 0 ? count : `${count} · ${format(undone)} rückgängig gemacht`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching, total) => `${format(matching)} von ${format(total)} passen`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "Keine Änderung passt zur Suche und zu den Filtern.",
   },
 
   export: {
@@ -1545,6 +1567,25 @@ export const de: Strings = {
     show: "Im Ordner zeigen",
     showTitle: "Zeigt die Datei in ihrem Ordner",
     close: "Schließen",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Die Änderungen, die die Liste zeigt, in eine CSV-Datei schreiben, für eine Tabellenkalkulation oder ein Skript",
+      title: "Änderungen exportieren",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count, filtering) =>
+        count === 0
+          ? "Keine Änderung passt zur Suche und zu den Filtern."
+          : filtering
+            ? `${changeCount(count)}: was die Suche und die Filter auswählen, neueste zuerst.`
+            : `${changeCount(count)}: der gesamte Verlauf dieser Karriere, neueste zuerst.`,
+      contents:
+        "Von jeder Änderung: die Zeit (lokal, mit Abweichung von UTC), Name und UID, das Feld, der alte und der " +
+        "neue Wert, wie das Spiel sie speichert und wie sie hier angezeigt werden, die Hinweise, die die Liste " +
+        "darunter zeigt, die Massenbearbeitung, zu der sie gehörte, wann sie rückgängig gemacht wurde und ob sie " +
+        "aus einer früheren Sitzung stammt und im Spiel ist. Im Spiel ändert sich nichts.",
+      done: (count, file) => `${changeCount(count)} in ${file} exportiert`,
+    },
   },
 
   massEdit: {

@@ -1362,6 +1362,28 @@ export const ja: Strings = {
     previous: "前へ",
     next: "次へ",
     range: (first: number, last: number, total: number) => `${format(total)}件中 ${format(first)}–${format(last)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "名前、UID、項目、クラブで変更を検索",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "セッション",
+    sessions: { all: "すべて", this: "このセッション", earlier: "以前のセッション" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "元に戻していない",
+    notUndoneTitle: "まだ有効な変更のみ",
+    notInGameFilterTitle: "データを最後に読み込んだとき、ゲームが保持していなかった以前の変更のみ",
+    /** Takes the search text and every choice away. */
+    clearFilter: "フィルターを解除",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching: number, total: number, undone: number) => {
+      const count = `${changes(total)}のうち${format(matching)}件`;
+      return undone === 0 ? count : `${count} · ${format(undone)}件を元に戻し済み`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching: number, total: number) => `${format(total)}件中${format(matching)}件が一致`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "検索とフィルターに一致する変更はありません。",
   },
 
   export: {
@@ -1414,6 +1436,24 @@ export const ja: Strings = {
     show: "フォルダで表示",
     showTitle: "ファイルをフォルダで表示します",
     close: "閉じる",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "一覧に表示されている変更を、表計算ソフトやスクリプト向けのCSVファイルに書き出します",
+      title: "変更を書き出し",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count: number, filtering: boolean) =>
+        count === 0
+          ? "検索とフィルターに一致する変更はありません。"
+          : filtering
+            ? `${changes(count)}：検索とフィルターで選ばれたもの（新しい順）。`
+            : `${changes(count)}：このキャリアの履歴すべて（新しい順）。`,
+      contents:
+        "各変更の時刻（ローカル時刻、UTCとの差つき）、名前とUID、項目、変更前と変更後の値（ゲームが保存している形と、" +
+        "ここでの表示）、一覧がその下に示す補足、含まれていた一括編集、元に戻した時刻、以前のセッションのものか、" +
+        "ゲーム内にあるか。ゲームは何も変更されません。",
+      done: (count: number, file: string) => `${changes(count)}を ${file} に書き出しました`,
+    },
   },
 
   massEdit: {

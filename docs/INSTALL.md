@@ -37,7 +37,11 @@ extract it and run **FMLibreEditor.exe**.
    **Apply**.
 
 The game shows a change after you press **Continue** in FM. The **Changes** view lists what
-you did, and **Undo** puts the old value back.
+you did, and **Undo** puts the old value back. It keeps the changes of each career, so they
+are listed again after a restart, and the search box and the choices beside it (this session or
+earlier ones, only what is not undone, only what the game does not hold) narrow the list down
+to a person, a club or a field. **Export** there writes the changes the list shows to a CSV
+file in the same folder as the other exports.
 
 **Export**, above the player, staff and club lists, writes what the list shows (with its
 search, filters and order) to a CSV or JSON file in `Documents\FMLibreEditor\Exports`

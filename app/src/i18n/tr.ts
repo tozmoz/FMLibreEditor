@@ -1373,6 +1373,28 @@ export const tr: Strings = {
     previous: "Önceki",
     next: "Sonraki",
     range: (first, last, total) => `${format(first)}–${format(last)} / ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "İsim, UID, alan veya kulüp ile değişiklik ara",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Oturum",
+    sessions: { all: "Tümü", this: "Bu oturum", earlier: "Önceki oturumlar" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Geri alınmamış",
+    notUndoneTitle: "Yalnızca hâlâ yerinde olan değişiklikler",
+    notInGameFilterTitle: "Yalnızca veriler son okunduğunda oyunun tutmadığı önceki değişiklikler",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Filtreyi temizle",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching, total, undone) => {
+      const count = `${format(matching)} / ${changes(total)}`;
+      return undone === 0 ? count : `${count} · ${format(undone)} geri alındı`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching, total) => `${format(matching)} / ${format(total)} eşleşiyor`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "Arama ve filtrelere uyan değişiklik yok.",
   },
 
   export: {
@@ -1426,6 +1448,25 @@ export const tr: Strings = {
     show: "Klasörde göster",
     showTitle: "Dosyayı klasöründe göster",
     close: "Kapat",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Listenin gösterdiği değişiklikleri bir hesap tablosu veya betik için CSV dosyasına yaz",
+      title: "Değişiklikleri dışa aktar",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count, filtering) =>
+        count === 0
+          ? "Arama ve filtrelere uyan değişiklik yok."
+          : filtering
+            ? `${changes(count)}: arama ve filtrelerin seçtikleri, en yenisi başta.`
+            : `${changes(count)}: bu kariyerin tüm geçmişi, en yenisi başta.`,
+      contents:
+        "Her değişikliğin saati (yerel saat, UTC'ye göre farkıyla), adı ve UID'si, alanı, eski ve yeni değeri " +
+        "(oyunun sakladığı gibi ve burada gösterildiği gibi), listenin bunların altına yazdığı notlar, dahil olduğu " +
+        "toplu düzenleme, geri alındıysa ne zaman alındığı, önceki bir oturumdan olup olmadığı ve oyunda olup " +
+        "olmadığı. Oyunda hiçbir şey değişmez.",
+      done: (count, file) => `${changes(count)} ${file} dosyasına aktarıldı`,
+    },
   },
 
   massEdit: {

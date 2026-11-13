@@ -1269,21 +1269,97 @@ const changes: LoggedChange[] = (() => {
     { ...morale(fourth, true), batch: 9001 },
     { ...morale(fifth, false), batch: 9001 },
     { ...morale(sixth, true), batch: 9001 },
+    {
+      // This one was taken back, from this app, a day after it was written.
+      ...earlier({
+        at: Date.now() - 3 * day,
+        name: seventh.name,
+        entity: "player",
+        uid: seventh.uid,
+        field: "attribute.passing",
+        old: 60,
+        new: 90,
+        undoable: true,
+      }),
+      undoneAt: Date.now() - 2 * day,
+    },
+    // What the search looks through beside a person's name: the names of a rename, of a stadium, the clubs of a staff
+    // move, and the players of a captaincy.
     earlier({
-      at: Date.now() - 3 * day,
-      name: seventh.name,
+      at: Date.now() - 2.8 * day,
+      name: players[7].name,
       entity: "player",
-      uid: seventh.uid,
-      field: "attribute.passing",
-      old: 60,
-      new: 90,
-      undoable: true,
+      uid: players[7].uid,
+      field: "name.last",
+      old: 4,
+      new: 9,
+      personName: { from: "Kaya", to: "Yıldırım" },
+      undoable: false,
+    }),
+    earlier({
+      at: Date.now() - 2.6 * day,
+      name: CLUBS[3],
+      entity: "club",
+      uid: club(3).uid,
+      field: "stadium.name",
+      old: 13,
+      new: 14,
+      stadium: { from: "Lindenau Park", to: "Lindenau Arena" },
+      undoable: false,
+    }),
+    earlier({
+      at: Date.now() - 2.4 * day,
+      name: staff[1].name,
+      entity: "staff",
+      uid: staff[1].uid,
+      field: "club",
+      old: club(2).uid,
+      new: club(0).uid,
+      moved: { from: club(2).name, to: club(0).name },
+      undoable: false,
+      inGame: true,
+    }),
+    earlier({
+      at: Date.now() - 2.2 * day,
+      name: CLUBS[1],
+      entity: "club",
+      uid: club(1).uid,
+      field: "vice_captain",
+      old: players[3].uid,
+      new: players[8].uid,
+      captaincy: { team: 0, kind: 0, ageLimit: null, from: players[3].name, to: players[8].name, swapped: false },
+      undoable: false,
     }),
   ];
-  const logged = entries.map((entry, index): LoggedChange => ({ ...entry, id: index + 1 }));
-  // The last one was taken back, from this app, a day after it was written.
-  logged[logged.length - 1].undoneAt = Date.now() - 2 * day;
-  return logged;
+  // `?longlog` puts a long history before those: twenty thousand changes, half of them in a hundred mass edits of a
+  // hundred changes each, none in reach of an Undo, to see the paging and the search work through a log that long.
+  if (new URLSearchParams(window.location.search).has("longlog")) {
+    const fieldsOf = [
+      { field: "attribute.finishing", old: 55, new: 80 },
+      { field: "attribute.passing", old: 60, new: 75 },
+      { field: "morale", old: 10, new: 20 },
+      { field: "contract.wage", old: 40_000, new: 90_000 },
+    ];
+    const long: Omit<LoggedChange, "id">[] = [];
+    // Oldest first, as the log is kept.
+    for (let i = 19_999; i >= 0; i--) {
+      const player = players[i % players.length];
+      long.push({
+        at: Date.now() - 10 * day - i * 60_000,
+        name: player.name,
+        entity: "player",
+        uid: player.uid,
+        ...fieldsOf[i % fieldsOf.length],
+        undoneAt: i % 7 === 0 ? Date.now() - 9 * day : null,
+        batch: i % 2 === 0 ? 9100 + Math.floor(i / 200) : null,
+        earlier: true,
+        undoable: false,
+        ...(i % 7 === 0 || i % 5 === 0 ? {} : { inGame: i % 3 !== 0 }),
+      });
+    }
+    entries.unshift(...long);
+  }
+  return entries.map((entry, index): LoggedChange => ({ ...entry, id: index + 1 }));
 })();
 
 /** A generated profile with the values written through the editor on top. */
@@ -3443,6 +3519,18 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       const stem = gameDate ? `${what}-${gameDate.year}-${two(gameDate.month)}-${two(gameDate.day)}` : what;
       const file = `${stem}.${args?.format === "json" ? "json" : "csv"}`;
       const report: ExportReport = { path: `${folder}\\${file}`, file, folder, count: selected.length, skipped: 0 };
+      return report as T;
+    }
+    case "export_changes": {
+      // Nothing is written in a browser: the report names the file a real export would have, and the rows the window
+      // sent are kept in `window.lastChangesExport` for a look.
+      const rows = (args?.rows ?? []) as unknown[];
+      (window as unknown as { lastChangesExport?: unknown }).lastChangesExport = { rows, format: args?.format };
+      const folder = "C:\\Users\\you\\Documents\\FMLibreEditor\\Exports";
+      const two = (n: number) => String(n).padStart(2, "0");
+      const stem = gameDate ? `changes-${gameDate.year}-${two(gameDate.month)}-${two(gameDate.day)}` : "changes";
+      const file = `${stem}.csv`;
+      const report: ExportReport = { path: `${folder}\\${file}`, file, folder, count: rows.length, skipped: 0 };
       return report as T;
     }
     case "open_export":
