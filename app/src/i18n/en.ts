@@ -1263,9 +1263,7 @@ export const en = {
     unknownBuildText:
       "The game has probably been updated. FMLibreEditor found the game's data and checked it, but it does not " +
       "write to a version it was not tested with until you allow it. A new FMLibreEditor usually follows within days.",
-    /** Once Edit anyway was pressed. */
-    allowedText: "Editing is on for this session, as far as the checks allow. Keep a backup of your save.",
-    /** The headline when checks did not pass on a version the editor knows, and what may help. */
+    /** The headline when checks did not pass on a version the editor knows or may edit, and what may help. */
     failedTitle: "Some of the game's data did not check out",
     reloadHint: "If a save was still loading, Reload data checks again.",
     /** The in-game date did not check out: shown apart, as it leaves nothing read-only. */

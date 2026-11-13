@@ -1237,9 +1237,6 @@ export const es: Strings = {
       "Probablemente el juego se ha actualizado. FMLibreEditor ha encontrado los datos del juego y los ha comprobado, " +
       "pero no escribe en una versión con la que no se ha probado hasta que tú lo permitas. Una nueva versión de " +
       "FMLibreEditor que la conozca suele salir en pocos días.",
-    allowedText:
-      "La edición está activada en esta sesión, en la medida en que lo permiten las comprobaciones. Guarda una copia " +
-      "de tu partida.",
     failedTitle: "Algunos datos del juego no han superado las comprobaciones",
     reloadHint: "Si una partida aún se estaba cargando, «Recargar datos» vuelve a comprobarlo.",
     noDate: "La fecha del juego no ha superado las comprobaciones, así que no se muestran las edades.",

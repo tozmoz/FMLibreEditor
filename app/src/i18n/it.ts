@@ -1276,7 +1276,6 @@ export const it: Strings = {
       "Probabilmente il gioco è stato aggiornato. FMLibreEditor ha trovato i dati del gioco e li ha controllati, ma non " +
       "scrive in una versione con cui non è stato provato finché non lo consenti tu. Di solito un nuovo FMLibreEditor " +
       "arriva entro pochi giorni.",
-    allowedText: "La modifica è attiva per questa sessione, nei limiti dei controlli. Tieni un backup del salvataggio.",
     failedTitle: "Alcuni dati del gioco non hanno superato i controlli",
     reloadHint: "Se un salvataggio era ancora in caricamento, Ricarica i dati controlla di nuovo.",
     noDate: "La data del gioco non ha superato i controlli, quindi le età non sono mostrate.",

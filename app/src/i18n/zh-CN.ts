@@ -1343,9 +1343,7 @@ export const zhCN: Strings = {
     unknownBuild: (game: string) => `FMLibreEditor 尚未验证 ${game}`,
     unknownBuildText:
       "游戏可能已更新。FMLibreEditor 已找到并检查游戏数据，但在你明确启用前，不会向未经验证的版本写入。新版本的 FMLibreEditor 通常会在数日内推出。",
-    /** Once Edit anyway was pressed. */
-    allowedText: "本次会话已启用编辑，具体范围取决于安全检查结果。请保留存档备份。",
-    /** The headline when checks did not pass on a version the editor knows, and what may help. */
+    /** The headline when checks did not pass on a version the editor knows or may edit, and what may help. */
     failedTitle: "游戏中的部分数据未通过检查",
     reloadHint: "如果存档仍在载入，请点击“重新读取数据”再次检查。",
     /** The in-game date did not check out: shown apart, as it leaves nothing read-only. */
