@@ -118,15 +118,47 @@ export type ExportFormat = "csv" | "csvSemicolon" | "json";
 /** What can be exported: the player, staff and club lists. */
 export type ExportEntity = Entity;
 
+/** Which changes the Changes view lists: all of them, those of this connection, or the earlier ones from the history. */
+export type SessionChoice = "all" | "this" | "earlier";
+
 /** What an export wrote, and where: the file, its name and its folder. */
 export interface ExportReport {
   path: string;
   file: string;
   folder: string;
-  /** The players, staff or clubs written. */
+  /** The players, staff, clubs or changes written. */
   count: number;
   /** Players, staff or clubs whose objects changed while they were read: left out. */
   skipped: number;
+}
+
+/**
+ * One change of the Changes view as its export to CSV sends it (`ChangeRow` in export.rs): what the log holds of it,
+ * and the texts only this window has, since they depend on its language, its currency and its time zone.
+ */
+export interface ChangeExportRow {
+  /** When it was written: the local time with its offset from UTC, ISO 8601 ("2026-11-13T16:06:09+03:00"). */
+  time: string;
+  name: string;
+  uid: number;
+  entity: Entity;
+  /** The field's key. */
+  field: string;
+  /** The field's name in the language of the window. */
+  fieldLabel: string;
+  /** The values as stored. */
+  old: number;
+  new: number;
+  /** The same values as the Changes view shows them. */
+  oldShown: string;
+  newShown: string;
+  /** What the view says under them, apart by " | ": the other player of a swap, a fee. */
+  notes: string;
+  batch: number | null;
+  /** When it was undone, written as `time` is. */
+  undoneAt: string | null;
+  earlier: boolean;
+  inGame?: boolean;
 }
 
 /**

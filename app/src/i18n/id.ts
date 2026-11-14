@@ -1336,6 +1336,28 @@ export const id: Strings = {
     next: "Berikutnya",
     range: (first: number, last: number, total: number) =>
       `${format(first)}–${format(last)} dari ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "Cari perubahan berdasarkan nama, UID, kolom, atau klub",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Sesi",
+    sessions: { all: "Semua", this: "Sesi ini", earlier: "Sesi sebelumnya" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Belum diurungkan",
+    notUndoneTitle: "Hanya perubahan yang masih berlaku",
+    notInGameFilterTitle: "Hanya perubahan sebelumnya yang tidak dimiliki game saat data terakhir dibaca",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Hapus filter",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching: number, total: number, undone: number) => {
+      const count = `${format(matching)} dari ${changeCount(total)}`;
+      return undone === 0 ? count : `${count} · ${format(undone)} diurungkan`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching: number, total: number) => `${format(matching)} dari ${format(total)} cocok`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "Tidak ada perubahan yang cocok dengan pencarian dan filter.",
   },
 
   export: {
@@ -1392,6 +1414,25 @@ export const id: Strings = {
     show: "Tampilkan di folder",
     showTitle: "Tampilkan berkas di foldernya",
     close: "Tutup",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Tulis perubahan yang ditampilkan daftar ke file CSV, untuk spreadsheet atau skrip",
+      title: "Ekspor perubahan",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count: number, filtering: boolean) =>
+        count === 0
+          ? "Tidak ada perubahan yang cocok dengan pencarian dan filter."
+          : filtering
+            ? `${changeCount(count)}: yang dipilih pencarian dan filter, dari yang terbaru.`
+            : `${changeCount(count)}: seluruh riwayat karier ini, dari yang terbaru.`,
+      contents:
+        "Untuk setiap perubahan: waktunya (waktu lokal, beserta selisihnya dari UTC), nama dan UID, kolomnya, nilai " +
+        "lama dan barunya seperti disimpan game dan seperti ditampilkan di sini, catatan di bawahnya, edit massal " +
+        "yang menjadi bagiannya, kapan diurungkan, serta apakah berasal dari sesi sebelumnya dan ada di game. " +
+        "Tidak ada yang berubah di game.",
+      done: (count: number, file: string) => `${changeCount(count)} diekspor ke ${file}`,
+    },
   },
 
   massEdit: {

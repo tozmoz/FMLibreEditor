@@ -9,15 +9,16 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use fmlibre_core::{
-    ArraySource, Buyer, COHESION_RANGE, CaptainRole, CaptainSet, Change, Clause, ClauseSet, ClubDetails, ClubFilter,
-    ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet, EditError, Entity, EntityArrays, ExportFormat, ExportHeader,
-    Exported, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsCounts, GraphicsIndex, HOMEGROWN_RULES,
-    Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted, Listed, Loan, Lock, MoveError, MovePlan, MoveTerms,
-    NameChange, NameKind, Nation, NewContract, NewStaffContract, Operation, Paid, People, PersonNames, Picture,
-    Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, ROLES, RelationSet, RetirementSet,
-    Role, SCOUT_POSITIONS, ScoutError, ScoutPosition, ScoutRequest, Scouted, SearchIndex, Session, SessionError,
-    Skipped, SquadReport, StadiumName, StadiumRename, StaffChange, StaffDetails, StaffFilter, StaffIndex, StaffOrder,
-    StaffPlan, TacticsSet, Target, Tie, TieTarget, diagnostics_report, find_game, nations, sort_players, sort_staff,
+    ArraySource, Buyer, COHESION_RANGE, CaptainRole, CaptainSet, Change, ChangeRow, Clause, ClauseSet, ClubDetails,
+    ClubFilter, ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet, EditError, Entity, EntityArrays, ExportFormat,
+    ExportHeader, Exported, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsCounts, GraphicsIndex,
+    HOMEGROWN_RULES, Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted, Listed, Loan, Lock, MoveError,
+    MovePlan, MoveTerms, NameChange, NameKind, Nation, NewContract, NewStaffContract, Operation, Paid, People,
+    PersonNames, Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, ROLES,
+    RelationSet, RetirementSet, Role, SCOUT_POSITIONS, ScoutError, ScoutPosition, ScoutRequest, Scouted, SearchIndex,
+    Session, SessionError, Skipped, SquadReport, StadiumName, StadiumRename, StaffChange, StaffDetails, StaffFilter,
+    StaffIndex, StaffOrder, StaffPlan, TacticsSet, Target, Tie, TieTarget, diagnostics_report, find_game, nations,
+    sort_players, sort_staff,
 };
 use fmlibre_mem::{Process, find_processes, is_current_process_elevated, list_modules};
 use serde::{Deserialize, Serialize};
@@ -2870,8 +2871,25 @@ async fn export_clubs(
     .await
 }
 
-/// Writes an export of `what` ("players", "staff", "clubs") with `write` to a new file in the exports folder, named after it and
-/// the in-game date. Only reads memory.
+/// Writes the changes `rows` to a new file in the exports folder as CSV, with commas or with semicolons (`format`), a row
+/// each: what the Changes view lists for them, with the in-game date in the file's name ("changes-2027-01-02.csv"; a
+/// second export that day "changes-2027-01-02-2.csv"). The window sends the rows its search and filters show, since it
+/// alone has the texts that go with them: the values as shown, the field's name, the time in its zone. Nothing in the
+/// game changes.
+#[tauri::command]
+async fn export_changes(
+    app: tauri::AppHandle,
+    rows: Vec<ChangeRow>,
+    format: ExportFormat,
+) -> Result<ExportReport, Failure> {
+    if format == ExportFormat::Json {
+        return Err(Failure::new("export.format", "The changes are exported as CSV."));
+    }
+    export_list(app, "changes", format, move |_, _, out| fmlibre_core::export_changes(rows, format, out)).await
+}
+
+/// Writes an export of `what` ("players", "staff", "clubs", "changes") with `write` to a new file in the exports
+/// folder, named after it and the in-game date. Only reads memory.
 async fn export_list(
     app: tauri::AppHandle,
     what: &'static str,
@@ -2914,8 +2932,8 @@ fn export_failure(folder: &Path, err: std::io::Error) -> Failure {
     }
 }
 
-/// A new file for an export of `what` ("players", "staff", "clubs") in `folder`, named after the in-game date: the first of
-/// "players-2027-01-02.json", "players-2027-01-02-2.json", ... that is not there yet.
+/// A new file for an export of `what` ("players", "staff", "clubs", "changes") in `folder`, named after the in-game date:
+/// the first of "players-2027-01-02.json", "players-2027-01-02-2.json", ... that is not there yet.
 fn new_export_file(
     folder: &Path,
     what: &str,
@@ -4446,6 +4464,7 @@ pub fn run() {
             export_players,
             export_staff,
             export_clubs,
+            export_changes,
             open_export,
             show_export,
             player_details,

@@ -1500,6 +1500,28 @@ export const fr: Strings = {
     previous: "Précédent",
     next: "Suivant",
     range: (first, last, total) => `${format(first)}–${format(last)} sur ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "Rechercher des modifications par nom, UID, champ ou club",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Session",
+    sessions: { all: "Toutes", this: "Cette session", earlier: "Sessions précédentes" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Non annulées",
+    notUndoneTitle: "Seulement les modifications toujours en place",
+    notInGameFilterTitle: "Seulement les modifications précédentes que le jeu n'avait pas à la dernière lecture des données",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Effacer le filtre",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching, total, undone) => {
+      const count = `${format(matching)} sur ${changeCount(total)}`;
+      return undone === 0 ? count : `${count} · ${format(undone)} annulée${agree(undone)}`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching, total) => `${format(matching)} sur ${format(total)} ${plural(matching) ? "correspondent" : "correspond"}`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "Aucune modification ne correspond à la recherche et aux filtres.",
   },
 
   export: {
@@ -1562,6 +1584,25 @@ export const fr: Strings = {
     show: "Afficher dans le dossier",
     showTitle: "Afficher le fichier dans son dossier",
     close: "Fermer",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Écrire les modifications affichées par la liste dans un fichier CSV, pour un tableur ou un script",
+      title: "Exporter les modifications",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count, filtering) =>
+        count === 0
+          ? "Aucune modification ne correspond à la recherche et aux filtres."
+          : filtering
+            ? `${changeCount(count)}\u00a0: ce que sélectionnent la recherche et les filtres, de la plus récente à la plus ancienne.`
+            : `${changeCount(count)}\u00a0: tout l'historique de cette carrière, de la plus récente à la plus ancienne.`,
+      contents:
+        "Pour chaque modification\u00a0: l'heure (locale, avec son décalage par rapport à UTC), le nom et l'UID, le " +
+        "champ, l'ancienne et la nouvelle valeur telles que le jeu les garde et telles qu'elles sont affichées ici, " +
+        "les notes que la liste met dessous, la modification groupée dont elle faisait partie, le moment où elle a " +
+        "été annulée, et si elle date d'une session précédente et se trouve dans le jeu. Rien ne change dans le jeu.",
+      done: (count, file) => `${changeCount(count)} exportée${agree(count)} dans ${file}`,
+    },
   },
 
   massEdit: {

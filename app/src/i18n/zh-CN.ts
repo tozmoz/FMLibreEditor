@@ -1565,6 +1565,28 @@ export const zhCN: Strings = {
     next: "下一页",
     /** Between the buttons: the rows on show and how many there are, e.g. "101–200 of 450". */
     range: (first: number, last: number, total: number) => `${format(first)}–${format(last)} / ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "按姓名、UID、字段或俱乐部搜索改动",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "会话",
+    sessions: { all: "全部", this: "本次会话", earlier: "以往会话" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "未撤销",
+    notUndoneTitle: "仅显示仍然有效的改动",
+    notInGameFilterTitle: "仅显示上次读取数据时游戏中没有的以往改动",
+    /** Takes the search text and every choice away. */
+    clearFilter: "清除筛选",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching: number, total: number, undone: number) => {
+      const count = `${changeCount(total)}中的 ${format(matching)} 项`;
+      return undone === 0 ? count : `${count} · 已撤销 ${format(undone)} 项`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching: number, total: number) => `${format(total)} 项中有 ${format(matching)} 项匹配`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "没有符合搜索和筛选条件的改动。",
   },
 
   /** Exporting players or clubs to a file: the button in the toolbar of the player and club lists and its dialog. */
@@ -1621,6 +1643,23 @@ export const zhCN: Strings = {
     show: "在文件夹中显示",
     showTitle: "在所在文件夹中显示该文件",
     close: "关闭",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "将列表中显示的改动写入 CSV 文件，供表格或脚本使用",
+      title: "导出改动",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count: number, filtering: boolean) =>
+        count === 0
+          ? "没有符合搜索和筛选条件的改动。"
+          : filtering
+            ? `${changeCount(count)}（按搜索和筛选结果，最新的在前）。`
+            : `${changeCount(count)}（此存档的全部历史，最新的在前）。`,
+      contents:
+        "每项改动的时间（本地时间，含与 UTC 的偏移）、姓名和 UID、字段、旧值和新值（分别为游戏中的存储值和此处显示的值）、" +
+        "列表在其下方显示的说明、所属的批量编辑、撤销时间，以及是否来自以往会话、是否在游戏中。游戏中不会有任何改动。",
+      done: (count: number, file: string) => `已将 ${changeCount(count)} 导出到 ${file}`,
+    },
   },
 
   /** Mass editing: the button in the toolbar of a list and the dialog it opens. */
