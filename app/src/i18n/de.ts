@@ -2944,5 +2944,58 @@ export const de: Strings = {
     },
   },
 
+  /** What's new: what a version brings (see en.ts). */
+  whatsNew: {
+    title: (version: string) => `Neu in ${version}`,
+    updated: "FMLibreEditor wurde aktualisiert.",
+    version: (version: string) => `Version ${version}`,
+    thanks: (names: string) => `Danke an ${names}.`,
+    allChanges: "Alle Änderungen",
+    allChangesTitle: "Die vollständigen Hinweise zu dieser Version auf GitHub öffnen",
+    close: "Verstanden",
+    link: "Neuigkeiten",
+    command: "Neu in dieser Version",
+    versions: {
+      "0.5.2": [
+        {
+          title: "Mein Verein.",
+          text: "Die App öffnet sich mit dem Verein, den Sie trainieren: wer Aufmerksamkeit braucht, die Finanzen und die Aktionen für den Kader an einem Ort. Ohne eigenen Verein können Sie einem Verein folgen.",
+        },
+        {
+          title: "Befehlspalette.",
+          text: "Strg+K (⌘K auf dem Mac) findet einen Spieler, einen Mitarbeiter, einen Verein oder einen Befehl, und mit Tastenkürzeln wechseln Sie zwischen den Tabs.",
+        },
+        {
+          title: "Scouting.",
+          text: "Chancen auf dem Markt, Spieler wie einer, den Sie abgeben würden, ein Vergleich mit Ihrer Nummer 1 auf seiner Position, Scoutingberichte zum Speichern als Bild oder PDF, der Kader auf dem Spielfeld und die Jugendaufnahmen.",
+        },
+        {
+          title: "Spieler umbenennen.",
+          text: "Vorname, Nachname, allgemeiner Name und vollständiger Name. Das Spiel behält den neuen Namen in seinen Spielständen.",
+        },
+        {
+          title: "Verträge und Mitarbeiter.",
+          text: "Verlängern Sie einen Vertrag mit einem Klick um fünf Jahre, oder fügen Sie in einer Massenbearbeitung bei vielen Jahre hinzu. Lösen Sie den Vertrag eines Mitarbeiters oder aller Mitarbeiter eines Vereins auf und holen Sie sie mit einem Rückgängig zurück.",
+        },
+        {
+          title: "Taktik maximieren.",
+          text: "Im Tab Kader eines Vereins setzt es die taktische Vertrautheit der Mannschaft auf den Höchstwert. Gründe für Unzufriedenheit stehen jetzt so da, wie das Spiel sie formuliert.",
+        },
+        {
+          title: "Ihre Änderungen bleiben.",
+          text: "Die Änderungen jeder Karriere bleiben nach einem Neustart im Tab Änderungen erhalten, und Sie können sie durchsuchen, filtern und exportieren.",
+        },
+        {
+          title: "Vereinsfilter.",
+          text: "Land, Liga und Ansehen. Massenbearbeitung und Exportieren nehmen die Vereine, die die Liste zeigt.",
+        },
+        {
+          title: "Russisch und Japanisch.",
+          text: "Zwei weitere Sprachen. Auch das Steam-Update vom 12. November ist jetzt ein bekannter Build.",
+        },
+      ],
+    } as Record<string, { title: string; text: string }[]>,
+  },
+
   errors,
 };

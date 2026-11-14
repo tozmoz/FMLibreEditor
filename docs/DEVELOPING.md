@@ -272,6 +272,12 @@ with the same quoting, separator and byte order mark as the lists.
    - `app/src-tauri/tauri.conf.json`.
 
    Commit the bump.
+
+   **What's new:** before that, add the version to `whatsNew.versions` in `app/src/i18n/en.ts`
+   (a few short lines, each led by a few words in bold) and in the other languages, and the
+   people to thank to `THANKS` in `app/src/whatsNew.ts`. The app shows them once, the first
+   time it starts after it was updated to that version; a language without the version shows
+   it in English, and a version with no notes shows nothing.
 2. **Tag it and push the tag:** `git tag v0.1.0` and `git push origin v0.1.0`.
 3. **The `Release` workflow** (`.github/workflows/release.yml`) runs the checks and builds,
    on GitHub's Windows and macOS machines:

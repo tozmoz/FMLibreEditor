@@ -3135,6 +3135,59 @@ export const zhCN: Strings = {
     },
   },
 
+  /** What's new: what a version brings (see en.ts). */
+  whatsNew: {
+    title: (version: string) => `${version} 版本的新功能`,
+    updated: "FMLibreEditor 已更新。",
+    version: (version: string) => `版本 ${version}`,
+    thanks: (names: string) => `感谢 ${names}。`,
+    allChanges: "所有更改",
+    allChangesTitle: "在 GitHub 上打开此版本的完整说明",
+    close: "知道了",
+    link: "新功能",
+    command: "此版本的新功能",
+    versions: {
+      "0.5.2": [
+        {
+          title: "我的俱乐部：",
+          text: "应用会打开你执教的俱乐部页面：谁需要关注、俱乐部的资金和阵容操作，都在同一处。如果没有自己的俱乐部，可以关注一家。",
+        },
+        {
+          title: "命令面板：",
+          text: "Ctrl+K（Mac 上为 ⌘K）可查找球员、职员、俱乐部或命令，快捷键可在各标签页之间切换。",
+        },
+        {
+          title: "球探：",
+          text: "市场上的机会、与你打算放走的球员相似的球员、与同位置一号球员的对比、可保存为图片或 PDF 的球探报告、球场上的阵容，以及青训新人。",
+        },
+        {
+          title: "重命名球员：",
+          text: "名、姓、常用名和全名。游戏会在存档中保留新名字。",
+        },
+        {
+          title: "合同与职员：",
+          text: "一键将合同延长五年，或用批量编辑为多名球员增加年限。可以解约一名职员或俱乐部的全部职员，并用一次撤销把他们找回来。",
+        },
+        {
+          title: "战术拉满：",
+          text: "在俱乐部的“阵容”标签页中，将球队的战术熟悉度提到最高。不满的原因现在也按游戏自己的措辞显示。",
+        },
+        {
+          title: "保留你的更改：",
+          text: "每个生涯的更改在重启后仍保留在“改动记录”标签页中，你可以搜索、筛选并导出。",
+        },
+        {
+          title: "俱乐部筛选：",
+          text: "国家、联赛和声望。批量编辑和导出会使用列表中显示的俱乐部。",
+        },
+        {
+          title: "俄语和日语：",
+          text: "新增两种语言。Steam 11 月 12 日的更新现在也是已知的版本。",
+        },
+      ],
+    } as Record<string, { title: string; text: string }[]>,
+  },
+
   errors,
 };
 

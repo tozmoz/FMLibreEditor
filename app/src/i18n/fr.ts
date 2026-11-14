@@ -2971,5 +2971,58 @@ export const fr: Strings = {
     },
   },
 
+  /** What's new: what a version brings (see en.ts). */
+  whatsNew: {
+    title: (version: string) => `Nouveautés de la version ${version}`,
+    updated: "FMLibreEditor a été mis à jour.",
+    version: (version: string) => `Version ${version}`,
+    thanks: (names: string) => `Merci à ${names}.`,
+    allChanges: "Tous les changements",
+    allChangesTitle: "Ouvrir sur GitHub les notes complètes de cette version",
+    close: "Compris",
+    link: "Nouveautés",
+    command: "Nouveautés de cette version",
+    versions: {
+      "0.5.2": [
+        {
+          title: "Mon club.",
+          text: "L'application s'ouvre sur le club que vous dirigez. Qui demande votre attention, son argent et les actions sur l'effectif, tout au même endroit. Sans club à vous, vous pouvez en suivre un.",
+        },
+        {
+          title: "Palette de commandes.",
+          text: "Ctrl+K (⌘K sur un Mac) trouve un joueur, un membre du staff, un club ou une commande, et les raccourcis permettent de passer d'un onglet à l'autre.",
+        },
+        {
+          title: "Recrutement.",
+          text: "Des occasions sur le marché, des joueurs proches de celui que vous laisseriez partir, une comparaison avec votre numéro 1 à son poste, des rapports de recruteur à enregistrer en image ou en PDF, l'effectif sur un terrain et les arrivées des jeunes.",
+        },
+        {
+          title: "Renommer un joueur.",
+          text: "Prénom, nom, nom utilisé communément et nom complet. Le jeu garde le nouveau nom dans ses sauvegardes.",
+        },
+        {
+          title: "Contrats et staff.",
+          text: "Prolongez un contrat de cinq ans en un clic, ou ajoutez des années à beaucoup d'autres avec une modification groupée. Libérez un membre du staff, ou tout le staff d'un club, et récupérez-les d'un seul Annuler.",
+        },
+        {
+          title: "Tactique au maximum.",
+          text: "Dans l'onglet Effectif d'un club, ce bouton monte la familiarité tactique de l'équipe au maximum. Les raisons du mécontentement sont maintenant écrites comme le jeu les écrit.",
+        },
+        {
+          title: "Vos modifications restent.",
+          text: "Les modifications de chaque carrière restent dans l'onglet Modifications après un redémarrage, et vous pouvez les rechercher, les filtrer et les exporter.",
+        },
+        {
+          title: "Filtres de clubs.",
+          text: "Pays, championnat et réputation. Modification groupée et Exporter prennent les clubs que la liste affiche.",
+        },
+        {
+          title: "Russe et japonais.",
+          text: "Deux langues de plus. La mise à jour de Steam du 12 novembre est aussi une version connue.",
+        },
+      ],
+    } as Record<string, { title: string; text: string }[]>,
+  },
+
   errors,
 };
