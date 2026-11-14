@@ -22,6 +22,7 @@ import {
   scoutingText,
   staffListText,
   updateText,
+  whatsNewText,
 } from "./labels";
 import type { ListRequest } from "./ListBrowser";
 import { PlayerBrowser } from "./PlayerBrowser";
@@ -46,6 +47,8 @@ import { UpdateCheck, UpdateNotice } from "./UpdateNotice";
 import { ComparisonContext, useComparison } from "./useComparison";
 import { modalOpen, topModal } from "./useModal";
 import { askToLeave, EditorContext, profileOnTop } from "./useProfileEditing";
+import { useWhatsNew } from "./whatsNew";
+import { WhatsNewDialog } from "./WhatsNewDialog";
 import "./App.css";
 
 type View = "home" | "players" | "staff" | "clubs" | "scouting" | "changes";
@@ -133,6 +136,8 @@ function App() {
   // The Changes tab counts what this connection wrote: the earlier changes of the history are not news.
   const sessionChanges = log.filter((change) => !change.earlier).length;
   const update = useUpdateCheck();
+  // What this version brings: told once after an update, and again from the foot of the window or the palette.
+  const whatsNew = useWhatsNew(update.current);
   // Whether Check for updates was pressed: only then does the foot of the window say what was found.
   const [askedUpdate, setAskedUpdate] = useState(false);
   // Whether the game has loaded a save, or gone back to its main menu, since the data was read.
@@ -352,6 +357,9 @@ function App() {
     if (update.current) {
       commands.push({ id: "updates", label: updateText.check, run: checkUpdates });
     }
+    if (whatsNew.available) {
+      commands.push({ id: "whats-new", label: whatsNewText.command, run: whatsNew.show });
+    }
   }
 
   // The keyboard shortcuts. A dialog that is up has the keys to itself, but for a profile opened as one: Edit and
@@ -557,6 +565,11 @@ function App() {
             FMLibreEditor{update.current && ` ${update.current}`} · {appText.stage}
           </span>
           {update.current && <UpdateCheck state={update.state} asked={askedUpdate} onCheck={checkUpdates} />}
+          {whatsNew.available && (
+            <button type="button" className="update-link whats-new-link" onClick={whatsNew.show}>
+              {whatsNewText.link}
+            </button>
+          )}
           {connection && <CopyDiagnostics className="update-link" />}
           <span className={`status ${connection ? "on" : ""}`}>
             <span className="dot" />
@@ -580,6 +593,10 @@ function App() {
           <GraphicsStatus />
         </div>
       </footer>
+
+      {whatsNew.shown && (
+        <WhatsNewDialog notes={whatsNew.shown} updated={whatsNew.updated} onClose={whatsNew.close} />
+      )}
 
       {paletteOpen && (
         <CommandPalette

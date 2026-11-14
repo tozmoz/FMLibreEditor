@@ -2870,6 +2870,34 @@ button.danger:hover:not(:disabled) {
   width: min(620px, 100%);
 }
 
+/* What's new (`WhatsNewDialog`): a list of short lines, each led by a few words in bold, and the thanks under it. */
+.modal.whats-new {
+  width: min(600px, 100%);
+}
+
+.whats-new-version h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.whats-new-version ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.45;
+}
+
+.whats-new-version li::marker {
+  color: var(--muted);
+}
+
+.whats-new-thanks {
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+
 .export-formats {
   display: grid;
   gap: 10px;

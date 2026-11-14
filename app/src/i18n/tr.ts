@@ -2786,5 +2786,58 @@ export const tr: Strings = {
     },
   },
 
+  /** What's new: what a version brings (see en.ts). */
+  whatsNew: {
+    title: (version) => `${version} sürümündeki yenilikler`,
+    updated: "FMLibreEditor güncellendi.",
+    version: (version) => `Sürüm ${version}`,
+    thanks: (names) => `Katkıları için teşekkürler: ${names}.`,
+    allChanges: "Tüm değişiklikler",
+    allChangesTitle: "Bu sürümün notlarının tamamını GitHub'da aç",
+    close: "Tamam",
+    link: "Yenilikler",
+    command: "Bu sürümdeki yenilikler",
+    versions: {
+      "0.5.2": [
+        {
+          title: "Kulübüm.",
+          text: "Uygulama yönettiğiniz kulüple açılıyor: ilgilenmeniz gereken oyuncular, kulübün parası ve kadro işlemleri tek yerde. Kendi kulübünüz yoksa bir kulübü takip edebilirsiniz.",
+        },
+        {
+          title: "Komut paleti.",
+          text: "Ctrl+K (Mac'te ⌘K) bir oyuncuyu, personeli, kulübü ya da bir komutu bulur; kısayollarla sekmeler arasında geçebilirsiniz.",
+        },
+        {
+          title: "Gözlem.",
+          text: "Piyasadaki fırsatlar, gözden çıkaracağınız bir oyuncuya benzeyenler, mevkisindeki 1 numaranızla karşılaştırma, resim ya da PDF olarak kaydedilen gözlem raporları, sahada kadro ve altyapı alımları.",
+        },
+        {
+          title: "Oyuncuyu yeniden adlandırın.",
+          text: "Ad, soyad, bilinen ad ve tam ad. Oyun yeni adı kayıtlarında tutar.",
+        },
+        {
+          title: "Sözleşmeler ve personel.",
+          text: "Bir sözleşmeyi tek tıkla beş yıl uzatın ya da toplu düzenlemede birçoğuna yıl ekleyin. Bir personeli ya da kulübün bütün personelini serbest bırakın, tek Geri al ile geri getirin.",
+        },
+        {
+          title: "Taktiği tamamla.",
+          text: "Kulübün Kadro sekmesinde takımın taktik aşinalığını en üste çıkarır. Mutsuzluk nedenleri de artık oyunun kendi sözleriyle yazılıyor.",
+        },
+        {
+          title: "Değişiklikleriniz kalıyor.",
+          text: "Her kariyerin değişiklikleri uygulamayı yeniden açtıktan sonra da Değişiklikler sekmesinde; arayabilir, süzebilir ve dışa aktarabilirsiniz.",
+        },
+        {
+          title: "Kulüp filtreleri.",
+          text: "Ülke, lig ve itibar; Toplu düzenleme ve Dışa aktar, listenin gösterdiği kulüpleri alır.",
+        },
+        {
+          title: "Rusça ve Japonca.",
+          text: "İki dil daha. Steam'in 12 Kasım güncellemesi de artık tanınan bir sürüm.",
+        },
+      ],
+    },
+  },
+
   errors,
 };

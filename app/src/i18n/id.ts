@@ -2710,5 +2710,58 @@ export const id: Strings = {
     },
   },
 
+  /** What's new: what a version brings (see en.ts). */
+  whatsNew: {
+    title: (version: string) => `Yang baru di ${version}`,
+    updated: "FMLibreEditor sudah diperbarui.",
+    version: (version: string) => `Versi ${version}`,
+    thanks: (names: string) => `Terima kasih kepada ${names}.`,
+    allChanges: "Semua perubahan",
+    allChangesTitle: "Buka catatan lengkap versi ini di GitHub",
+    close: "Mengerti",
+    link: "Yang baru",
+    command: "Yang baru di versi ini",
+    versions: {
+      "0.5.2": [
+        {
+          title: "Klubku.",
+          text: "Aplikasi terbuka di klub yang kamu latih: siapa yang perlu dilihat, keuangannya, dan aksi untuk skuad, semuanya di satu tempat. Kalau belum punya klub sendiri, kamu bisa mengikuti satu klub.",
+        },
+        {
+          title: "Palet perintah.",
+          text: "Ctrl+K (⌘K di Mac) mencari pemain, anggota staf, klub, atau perintah, dan pintasan memindahkan kamu antar tab.",
+        },
+        {
+          title: "Pemanduan Bakat.",
+          text: "Peluang di pasar, pemain yang mirip dengan pemain yang akan kamu lepas, perbandingan dengan pemain nomor 1 milikmu di posisinya, laporan pemandu bakat untuk disimpan sebagai gambar atau PDF, skuad di lapangan, dan lulusan akademi.",
+        },
+        {
+          title: "Ganti nama pemain.",
+          text: "Nama depan, nama belakang, nama umum, dan nama lengkap. Game menyimpan nama baru itu di save-nya.",
+        },
+        {
+          title: "Kontrak dan staf.",
+          text: "Perpanjang kontrak lima tahun dengan satu klik, atau tambahkan tahun ke banyak kontrak lewat edit massal. Lepas seorang staf, atau seluruh staf sebuah klub, lalu kembalikan dengan satu Urungkan.",
+        },
+        {
+          title: "Maksimalkan taktik.",
+          text: "Di tab Skuad sebuah klub, tombol ini menaikkan pemahaman taktik tim ke tingkat tertinggi. Alasan ketidakpuasan sekarang ditulis seperti yang ditulis game.",
+        },
+        {
+          title: "Perubahanmu tersimpan.",
+          text: "Perubahan tiap karier tetap ada di tab Perubahan setelah dimulai ulang, dan kamu bisa mencari, menyaring, dan mengekspornya.",
+        },
+        {
+          title: "Filter klub.",
+          text: "Negara, liga, dan reputasi. Edit massal dan Ekspor memakai klub yang ditampilkan daftar.",
+        },
+        {
+          title: "Bahasa Rusia dan Jepang.",
+          text: "Dua bahasa lagi. Update Steam tanggal 12 November juga sekarang termasuk build yang dikenal.",
+        },
+      ],
+    } as Record<string, { title: string; text: string }[]>,
+  },
+
   errors,
 };

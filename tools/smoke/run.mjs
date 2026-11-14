@@ -32,10 +32,11 @@ import * as staff from "./tests/staff.mjs";
 import * as tactics from "./tests/tactics.mjs";
 import * as ties from "./tests/ties.mjs";
 import * as unknown from "./tests/unknown.mjs";
+import * as whatsnew from "./tests/whatsnew.mjs";
 
 /** In the order they run: the ones that only read first. */
 const TESTS = [
-  connect, home, dialog, palette, scouting, clubs, edit, history, mass, changes, contract, move, sign, medical, loan, stadium, names, ties,
+  connect, home, dialog, palette, scouting, clubs, whatsnew, edit, history, mass, changes, contract, move, sign, medical, loan, stadium, names, ties,
   staff, release, tactics, freeze, unknown,
 ];
 
