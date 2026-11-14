@@ -1199,6 +1199,8 @@ export const it: Strings = {
     women: "Donne",
     columns: {
       name: "Nome",
+      nation: "Nazione",
+      league: "Campionato",
       reputation: "Reputazione",
       founded: "Fondazione",
       uid: "UID",
@@ -1208,6 +1210,14 @@ export const it: Strings = {
       all: "Tutte le società",
       men: "Club maschili",
       women: "Club femminili",
+      nation: "Nazione",
+      league: "Campionato",
+      anyLeague: "Qualsiasi campionato",
+      leagueTitle: "Il campionato in cui gioca la prima squadra in questa stagione",
+      reputation: "Reputazione",
+      reputationTitle: "Da 0 a 10.000, come la conserva il gioco",
+      minReputation: "Reputazione minima",
+      maxReputation: "Reputazione massima",
     },
   },
 
@@ -1551,7 +1561,7 @@ export const it: Strings = {
         "contratto (stipendio e date), con la data del gioco. Il denaro è in sterline, come lo tiene il gioco. Nel gioco " +
         "non cambia nulla.",
       club:
-        "Per ogni società: reputazione, anno di fondazione, abbonamenti, follower sui social media, composizione e " +
+        "Per ogni società: nazione, campionato, reputazione, anno di fondazione, abbonamenti, follower sui social media, composizione e " +
         "caratteristiche dei tifosi, strutture, stadio e finanze (saldo, budget trasferimenti, spesa e budget " +
         "settimanali per gli stipendi, prezzo del biglietto), con la data del gioco. FM tiene le finanze solo per le " +
         "società dei campionati in gioco. Il denaro è in sterline, come lo tiene il gioco. Nel gioco non cambia nulla.",

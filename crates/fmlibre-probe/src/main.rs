@@ -6390,6 +6390,14 @@ fn club(session: &Session, uid: u32) -> Result<()> {
     let teams = session.process.read_u64(summary.address + session.layout.club.teams).unwrap_or(0);
     println!("  addresses      object {:#x}, teams {teams:#x}", summary.address);
     println!("  short name     {}", c.short_name.as_deref().unwrap_or("-"));
+    let uid_of = |uid: Option<u32>| uid.map_or_else(String::new, |uid| format!(" ({uid})"));
+    println!("  nation         {}{}", c.nation.as_deref().unwrap_or("-"), uid_of(c.nation_uid));
+    println!(
+        "  league         {}{}{}",
+        c.league.as_deref().unwrap_or("-"),
+        uid_of(c.league_uid),
+        c.league_nation.as_deref().map_or_else(String::new, |nation| format!(", {nation}"))
+    );
     println!("  reputation     {}", c.reputation.map_or_else(|| "-".to_owned(), |r| r.to_string()));
     println!("  founded        {}", c.founded.map_or_else(|| "-".to_owned(), |y| y.to_string()));
     if session.layout.team.manager.is_some() {

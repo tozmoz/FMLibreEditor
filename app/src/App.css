@@ -1097,6 +1097,18 @@ input::placeholder {
   min-width: 0;
 }
 
+/* League names run long ("Indonesian Championship Group II"): the club list's league gets two cells where the bar
+   has room for three (the bar is the container, see `.club-filter-bar`), and one where it has not. */
+.club-filter-bar {
+  container-type: inline-size;
+}
+
+@container (min-width: 34rem) {
+  .filter-field:has(> .league-select) {
+    grid-column: span 2;
+  }
+}
+
 /* Freezing a club's money: the box and its words, under the amounts. */
 .freeze-toggle {
   display: flex;
@@ -1442,12 +1454,31 @@ input::placeholder {
 }
 
 /*
- * The clubs table is short: with a profile open only UID drops out (above), and Founded when the
- * list gets very narrow. A long name wraps instead of pushing the other columns out.
+ * The clubs table: with a profile open UID and League drop out, then Nation (above); League also goes when the list
+ * gets narrow, and Founded when it gets very narrow.
  */
-.club-grid td.col-name {
-  width: 100%;
+/* Name, nation and league share the width; a long one is cut short, with the whole text in the cell's hover. */
+.club-grid td:is(.col-name, .col-nation, .col-league) {
   max-width: 0;
+}
+
+.club-grid td.col-name {
+  width: 44%;
+}
+
+.club-grid td.col-nation {
+  width: 20%;
+}
+
+.club-grid td.col-league {
+  width: 36%;
+}
+
+.club-grid td.col-league,
+.club-grid .col-nation .with-picture-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .club-grid .col-name .name {
@@ -1467,6 +1498,34 @@ input::placeholder {
 .club-grid .col-name .tag.women {
   flex: none;
   margin-left: 0;
+}
+
+/* League goes before Founded, and sooner beside an open profile, where the list is for picking the next club by name;
+   Nation goes there too (above), and the name then has the room. */
+@container (max-width: 780px) {
+  .with-profile .club-grid .col-league {
+    display: none;
+  }
+
+  .with-profile .club-grid td.col-name {
+    width: 70%;
+  }
+}
+
+@container (max-width: 640px) {
+  .club-grid .col-league {
+    display: none;
+  }
+
+  .club-grid td.col-name {
+    width: 70%;
+  }
+}
+
+@container (max-width: 580px) {
+  .with-profile .club-grid td.col-name {
+    width: 100%;
+  }
 }
 
 @container (max-width: 420px) {

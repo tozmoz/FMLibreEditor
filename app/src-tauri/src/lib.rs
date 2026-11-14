@@ -2805,6 +2805,17 @@ fn search_clubs(
     Ok(page(&connection.clubs, &query, limit, |c| filter.matches(c), |_| {}))
 }
 
+/// The leagues the clubs `filter` selects play in this season, for the club list's league filter: grouped by their
+/// nation, a nation's best known first. The filter's own league is left out of it, so that every league its other
+/// filters allow is offered. Only reads what the club list holds.
+#[tauri::command]
+fn club_leagues(state: State<'_, AppState>, filter: Option<ClubFilter>) -> Result<Vec<fmlibre_core::League>, Failure> {
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    let filter = ClubFilter { league_uid: None, ..filter.unwrap_or_default() };
+    Ok(fmlibre_core::leagues(connection.clubs.search("").into_iter().filter(|club| filter.matches(club))))
+}
+
 /// Writes the players `query` and `filter` select, in `order`, to a new file in the exports folder as `format`: what
 /// their profiles hold, with the in-game date in the file and in its name ("players-2027-01-02.csv"; a second export
 /// that day "players-2027-01-02-2.csv"). Only reads memory.
@@ -4555,6 +4566,7 @@ pub fn run() {
             search_players,
             search_staff,
             search_clubs,
+            club_leagues,
             export_players,
             export_staff,
             export_clubs,

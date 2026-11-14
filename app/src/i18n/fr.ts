@@ -1247,6 +1247,8 @@ export const fr: Strings = {
     women: "Féminin",
     columns: {
       name: "Nom",
+      nation: "Pays",
+      league: "Championnat",
       reputation: "Réputation",
       founded: "Établi en",
       uid: "UID",
@@ -1256,6 +1258,14 @@ export const fr: Strings = {
       all: "Tous les clubs",
       men: "Clubs masculins",
       women: "Clubs féminins",
+      nation: "Pays",
+      league: "Championnat",
+      anyLeague: "Tous les championnats",
+      leagueTitle: "Le championnat que joue l’équipe première cette saison",
+      reputation: "Réputation",
+      reputationTitle: "De 0 à 10 000, comme le jeu la conserve",
+      minReputation: "Réputation minimale",
+      maxReputation: "Réputation maximale",
     },
   },
 
@@ -1613,7 +1623,7 @@ export const fr: Strings = {
         "r\u00e9putation et contrat (salaire et dates), avec la date du jeu. L'argent est en livres, comme le jeu le garde. " +
         "Rien ne change dans le jeu.",
       club:
-        "Pour chaque club\u00a0: réputation, année de fondation, abonnements, followers sur les réseaux sociaux, profil " +
+        "Pour chaque club\u00a0: pays, championnat, réputation, année de fondation, abonnements, followers sur les réseaux sociaux, profil " +
         "et caractéristiques des supporters, infrastructures, stade et finances (solde, budget transferts, dépenses " +
         "salariales et budget salarial hebdomadaires, prix des places), avec la date du jeu. FM ne garde les finances " +
         "que pour les clubs des championnats joués. L'argent est en livres, comme le jeu le garde. Rien ne change dans " +

@@ -229,6 +229,26 @@ export interface ClubSummary {
   /** 0–10000. */
   reputation: number | null;
   founded: number | null;
+  /** The nation the club is from, as its profile in the game names it (Wales for Cardiff City), and its UID. */
+  nation: string | null;
+  nationUid: number | null;
+  /** The league its first team plays in this season, its UID and the nation whose league it is; none outside them. */
+  league: string | null;
+  leagueUid: number | null;
+  leagueNation: string | null;
+}
+
+/** A league the clubs play in, for the club list's filter (see `club_leagues`). */
+export interface League {
+  uid: number;
+  /** In the game's language. */
+  name: string;
+  /** The nation whose league it is. */
+  nation: string | null;
+  /** How many of the clubs play in it. */
+  clubs: number;
+  /** The highest reputation among them, 0–10000. */
+  reputation: number;
 }
 
 export interface ClubPage {
@@ -474,6 +494,13 @@ export interface StaffOrder {
 export interface ClubFilter {
   /** true: women's clubs only; false: men's clubs only. */
   women?: boolean;
+  /** Part of the name of the nation the club is from, accents and case ignored. */
+  nation?: string;
+  /** The UID of the league the club's first team plays in this season. */
+  leagueUid?: number;
+  /** Bounds on the reputation, 0–10000. */
+  minReputation?: number;
+  maxReputation?: number;
 }
 
 /** An attribute as stored (`raw`, 0–100) and as FM shows it (`value`, 1–20). */

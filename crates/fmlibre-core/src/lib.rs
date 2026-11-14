@@ -58,7 +58,8 @@ pub use clauses::{
     release_clause_expiry, release_clause_never_expires,
 };
 pub use clubs::{
-    ClubDetails, ClubIndex, ClubSummary, Finances, SUPPORTER_MIX, SUPPORTER_TRAITS, read_club_details, read_clubs,
+    ClubDetails, ClubIndex, ClubSummary, Finances, League, SUPPORTER_MIX, SUPPORTER_TRAITS, leagues, read_club_details,
+    read_clubs,
 };
 pub use coded::Coded;
 pub use cohesion::{COHESION_RANGE, CohesionPlan, CohesionSet};

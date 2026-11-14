@@ -1185,16 +1185,30 @@ export const en = {
     women: "Women",
     columns: {
       name: "Name",
+      nation: "Nation",
+      league: "League",
       reputation: "Reputation",
       founded: "Founded",
       uid: "UID",
     },
     filters: {
-      /** The name of the select, which has no label of its own. */
+      /** The label of the select of which clubs to show. */
       kind: "Clubs to show",
       all: "All clubs",
       men: "Men's clubs",
       women: "Women's clubs",
+      nation: "Nation",
+      league: "League",
+      /** The first entry of the league select. */
+      anyLeague: "Any league",
+      /** The hover text of the league select. */
+      leagueTitle: "The league the first team plays in this season",
+      reputation: "Reputation",
+      /** The hover text of the reputation range. */
+      reputationTitle: "From 0 to 10,000, as the game keeps it",
+      /** The names of the two ends of the range, which have no labels of their own. */
+      minReputation: "Lowest reputation",
+      maxReputation: "Highest reputation",
     },
   },
 
@@ -1633,7 +1647,8 @@ export const en = {
         "and contract (wage and dates), with the in-game date. Money is in pounds, as the game keeps it. Nothing in " +
         "the game changes.",
       club:
-        "Each club's reputation, founding year, season tickets, social media followers, supporter mix and traits, " +
+        "Each club's nation, league, reputation, founding year, season tickets, social media followers, supporter " +
+        "mix and traits, " +
         "facilities, stadium, and finances: balance, transfer budget, weekly wage spend and wage budget, and ticket " +
         "price, with the in-game date. FM keeps finances only for clubs in the leagues being played. Money is in " +
         "pounds, as the game keeps it. Nothing in the game changes.",
