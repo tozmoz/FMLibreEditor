@@ -127,7 +127,9 @@ function App() {
   const viewChosen = useRef(restored("view", (value) => value !== undefined));
   // The players picked for a comparison: in the player list's profiles and in those opened from a club's squad.
   const comparison = useComparison();
-  const { log, error: logError, reload: reloadLog, clear: clearLog } = useChangeLog();
+  const { log, error: logError, reload: reloadLog } = useChangeLog();
+  // The Changes tab counts what this connection wrote: the earlier changes of the history are not news.
+  const sessionChanges = log.filter((change) => !change.earlier).length;
   const update = useUpdateCheck();
   // Whether Check for updates was pressed: only then does the foot of the window say what was found.
   const [askedUpdate, setAskedUpdate] = useState(false);
@@ -158,12 +160,12 @@ function App() {
   const connect = () =>
     run(appText.connecting, async () => {
       const { refrozen: again, ...connected } = await call<ConnectionInfo>("connect");
-      // A new connection has an empty change log, and its field tables may differ. Its lists start afresh, with no one
-      // picked for a comparison.
+      // A new connection lists the history of the career the game has loaded, and its field tables may differ. Its
+      // lists start afresh, with no one picked for a comparison.
       forgetFieldTables();
-      clearLog();
       comparison.clear();
       setConnection(connected);
+      void reloadLog();
       setRefrozen(again ?? null);
       setDataVersion((v) => v + 1);
     });
@@ -173,6 +175,8 @@ function App() {
       try {
         const { refrozen: again, ...reloaded } = await call<ReloadInfo>("reload");
         setConnection((c) => c && { ...c, ...reloaded });
+        // Reading the game again may have found another career, whose history replaces the list.
+        void reloadLog();
         if (again) {
           setRefrozen(again);
         }
@@ -424,7 +428,7 @@ function App() {
               onClick={() => show(id)}
             >
               {label}
-              {id === "changes" && log.length > 0 && <small>{log.length}</small>}
+              {id === "changes" && sessionChanges > 0 && <small>{sessionChanges}</small>}
             </button>
           ))}
         </nav>

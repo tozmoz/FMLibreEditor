@@ -243,7 +243,15 @@ The app remembers what was frozen in each save in `frozen.json` in its data fold
 apart by the storefront and the UIDs of its human managers. To test without touching that
 file, set `FMLIBRE_DATA` to another folder before starting the app.
 
-The same file keeps the names the editor gave stadiums. The game keeps no stadium names in
+The changes written to each career are kept in the same data folder, in
+`history\<storefront>-<UIDs of the human managers>.jsonl`: one JSON line per change or undo, added
+to the end as they are made, so the Changes view lists them again after a restart (see `History`
+in `app/src-tauri/src/lib.rs`). A change from an earlier session is undone as a new edit back to
+its old value, with every check; one whose undo needed the game's memory as it was (a move,
+healing, a tie, a clause, a name...) stays as history. Clear history in the Changes view empties
+the file.
+
+The same file as the freezes (`frozen.json`) keeps the names the editor gave stadiums. The game keeps no stadium names in
 its saves and gives each stadium the name in its database whenever it loads one, so the app
 gives the new names again: on connecting, on a reload, and from its hold, which every 2 s
 notices when the game has loaded a save (the clubs' array has moved), checks it is the same

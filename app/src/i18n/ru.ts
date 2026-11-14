@@ -292,6 +292,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Эти данные изменились в игре; ${reload}.`,
   "app.noChange": (p) => `Изменения ${p.id} не существует.`,
   "app.alreadyUndone": () => "Это изменение уже отменено.",
+  "app.historyOnly": () => "Это изменение сделано до последнего подключения приложения, и для отмены нужна была память игры в том виде, как была тогда: верните значение вручную.",
+  "app.history": (p) => `Не удалось очистить историю: ${p.reason}`,
   "export.failed": (p) => `Не удалось записать файл: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor не может записывать в ${p.folder}. Если macOS спрашивала, можно ли использовать папку «Документы», ` +
@@ -1325,8 +1327,31 @@ export const ru: Strings = {
 
   changes: {
     nav: "Изменения",
-    title: "Изменения за сеанс",
-    hint: "Сначала новые. Изменение можно отменить, только пока в игре остаётся записанное им значение.",
+    title: "Изменения",
+    hint:
+      "Сначала новые. Приложение хранит изменения каждой карьеры, поэтому после перезапуска они снова в списке. Изменение можно отменить, только пока в игре остаётся записанное им значение.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count, missing) =>
+      `${changeCount(count)} из прошлых сеансов` + (missing > 0 ? `, ${format(missing)} из них не было в игре при чтении данных` : "") + ". Переходы, лечение, связи, пункты и имена остаются как история, без отмены.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Ранее",
+    earlierTitle: "Записано до последнего подключения приложения и хранится в истории этой карьеры",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "В игре",
+    inGameTitle: "При последнем чтении данных в игре было это значение",
+    notInGame: "Нет в игре",
+    notInGameTitle: "При последнем чтении данных в игре не было этого значения: игру не сохранили после изменения или она с тех пор изменила значение",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "История",
+    historyOnlyTitle: "Сделано до последнего подключения приложения: для отмены нужна была память игры в том виде, как была тогда",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count) => `${format(count)} нет в игре`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Очистить историю",
+    clearHistoryTitle: "Очистить этот список и забыть историю этой карьеры. Изменения остаются в игре.",
+    confirmClear: "Очистить историю этой карьеры? Изменения останутся в игре, но отсюда их уже нельзя будет отменить.",
+    keepHistory: "Оставить",
+    clearConfirm: "Очистить",
     continueHint: "Игра показывает изменение после продвижения: нажмите «Продолжить» в игре.",
     swappedWith: (name) => `Обмен на ${name}`,
     released: (name) => `${name} отпущен`,

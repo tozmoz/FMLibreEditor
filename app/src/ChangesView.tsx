@@ -1,15 +1,18 @@
-// The Changes view: everything written to the game this session, newest first, with an Undo for each change. A mass
-// edit is one row, with an Undo of the whole mass edit and a toggle that opens its changes. One mass edit can log
-// thousands of changes, so the list, and the changes of a mass edit that is open, are shown a page at a time.
+// The Changes view: everything written to the career the game has loaded, newest first: this connection's changes and
+// the earlier ones the app keeps in its history. A change that can be taken back has an Undo, one that cannot (an
+// earlier move, say) stays as history. A mass edit is one row, with an Undo of the whole mass edit and a toggle that
+// opens its changes. One mass edit can log thousands of changes, so the list, and the changes of a mass edit that is
+// open, are shown a page at a time.
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { clauseLine } from "./ClauseList";
 import { valueText } from "./editDraft";
-import { changeLog, dateFromNumber, isStoredFiner, shownValue, undoBatch, undoChange } from "./editing";
+import { changeLog, clearHistory, dateFromNumber, isStoredFiner, shownValue, undoBatch, undoChange } from "./editing";
 import { fieldTable } from "./fieldTables";
 import { describeError, formatDate, formatDateTime, formatMoney, formatTime } from "./format";
 import {
   changesText as text,
+  editText,
   fieldLabel,
   jobLabel,
   massEditText,
@@ -23,8 +26,8 @@ import { ruleLabel } from "./TiesGroup";
 import type { Clause, EditField, Entity, LoggedChange } from "./types";
 
 /**
- * This session's change log. `reload` reads it again; when several reads overlap, the answer to the last one asked
- * is the one kept. `clear` forgets it, as a new connection starts with an empty log.
+ * The change log of the career the game has loaded: this connection's changes and the earlier ones from the app's
+ * history. `reload` reads it again; when several reads overlap, the answer to the last one asked is the one kept.
  */
 export function useChangeLog() {
   const [log, setLog] = useState<LoggedChange[]>([]);
@@ -46,13 +49,7 @@ export function useChangeLog() {
     }
   }, []);
 
-  const clear = useCallback(() => {
-    asked.current++;
-    setLog([]);
-    setError(null);
-  }, []);
-
-  return { log, error, reload, clear };
+  return { log, error, reload };
 }
 
 /**
@@ -111,6 +108,10 @@ interface Batch {
   changes: LoggedChange[];
   /** How many of them are not undone. */
   remaining: number;
+  /** How many of those not undone Undo can take back (an earlier move, say, it cannot). */
+  undoable: number;
+  /** How many of those not undone are earlier ones the game did not hold when the data was last read. */
+  notInGame: number;
   /** The names of the fields it changed, each once, in the order they were written. */
   fields: string[];
 }
@@ -132,13 +133,27 @@ function entriesOf(log: readonly LoggedChange[]): Entry[] {
     }
     let batch = batches.get(change.batch);
     if (batch === undefined) {
-      batch = { id: change.batch, entity: change.entity, changes: [], remaining: 0, fields: [] };
+      batch = {
+        id: change.batch,
+        entity: change.entity,
+        changes: [],
+        remaining: 0,
+        undoable: 0,
+        notInGame: 0,
+        fields: [],
+      };
       batches.set(change.batch, batch);
       entries.push({ kind: "batch", batch });
     }
     batch.changes.push(change);
     if (change.undoneAt === null) {
       batch.remaining++;
+      if (change.undoable) {
+        batch.undoable++;
+      }
+      if (change.earlier && change.inGame === false) {
+        batch.notInGame++;
+      }
     }
   }
   for (const batch of batches.values()) {
@@ -169,10 +184,16 @@ interface ChangesViewProps {
   onUndone: () => void;
 }
 
-/** The table of this session's changes. It reads the log again whenever it is shown. */
+/** The table of the career's changes, earlier ones included. It reads the log again whenever it is shown. */
 export function ChangesView({ log, error, reload, onUndone }: ChangesViewProps) {
   const { fields, error: fieldsError } = useFieldIndex();
   const [undoing, setUndoing] = useState(false);
+  // Whether the question before clearing the history is up, and whether the clearing is under way.
+  const [confirming, setConfirming] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  // Why clearing the history failed.
+  const [clearError, setClearError] = useState<string | null>(null);
+  const keepButton = useRef<HTMLButtonElement>(null);
   // Why an undo failed, by change id.
   const [failures, setFailures] = useState<Record<number, string>>({});
   // What undoing a whole mass edit did, by batch: it is shown on the row of the mass edit.
@@ -232,6 +253,31 @@ export function ChangesView({ log, error, reload, onUndone }: ChangesViewProps) 
     }
   };
 
+  // Keep has the focus when the question appears, so that the safe answer is the one at hand.
+  useEffect(() => {
+    if (confirming) {
+      keepButton.current?.focus();
+    }
+  }, [confirming]);
+
+  const clearAll = async () => {
+    setClearing(true);
+    setClearError(null);
+    try {
+      await clearHistory();
+      setFailures({});
+      setOutcomes({});
+      setOpen({});
+      setPage(0);
+      reload();
+    } catch (e) {
+      setClearError(describeError(e));
+    } finally {
+      setConfirming(false);
+      setClearing(false);
+    }
+  };
+
   const showPage = (next: number) => {
     setPage(next);
     // A page starts at its top.
@@ -255,7 +301,10 @@ export function ChangesView({ log, error, reload, onUndone }: ChangesViewProps) 
   // Stored values are turned into shown ones with the field tables, so the rows wait for them.
   const ready = fields !== null || fieldsError !== null;
   const undone = log.filter((change) => change.undoneAt !== null).length;
-  const problem = error ?? fieldsError;
+  const earlierChanges = log.filter((change) => change.earlier);
+  // Earlier changes the game did not hold when the data was last read, and that are still to be undone.
+  const missingCount = earlierChanges.filter((change) => change.undoneAt === null && change.inGame === false).length;
+  const problem = clearError ?? error ?? fieldsError;
   const shownPage = withinPages(page, entries.length);
 
   const changeRow = (change: LoggedChange, inBatch: boolean) => (
@@ -276,9 +325,53 @@ export function ChangesView({ log, error, reload, onUndone }: ChangesViewProps) 
         <div className="toolbar">
           <h2 className="view-title">{text.title}</h2>
           <span className="count">{text.count(log.length, undone)}</span>
+          {confirming ? (
+            <>
+              <span className="clear-question">{text.confirmClear}</span>
+              <button
+                type="button"
+                ref={keepButton}
+                disabled={clearing}
+                onClick={() => setConfirming(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setConfirming(false);
+                  }
+                }}
+              >
+                {text.keepHistory}
+              </button>
+              <button
+                type="button"
+                className="danger"
+                disabled={clearing}
+                onClick={() => void clearAll()}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setConfirming(false);
+                  }
+                }}
+              >
+                {text.clearConfirm}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="clear-history"
+              title={text.clearHistoryTitle}
+              disabled={log.length === 0 || undoing || clearing}
+              onClick={() => setConfirming(true)}
+            >
+              {text.clearHistory}
+            </button>
+          )}
         </div>
         <p className="view-note">{text.hint}</p>
         <p className="view-note">{text.continueHint}</p>
+        {earlierChanges.length > 0 && (
+          <p className="view-note">{text.earlierNote(earlierChanges.length, missingCount)}</p>
+        )}
         {problem && (
           <div className="banner" role="alert">
             {problem}
@@ -411,28 +504,36 @@ interface BatchRowProps {
 function BatchRow({ batch, open, undoing, outcome, onToggle, onUndo }: BatchRowProps) {
   // The newest change gives the time: the mass edit is as old as its last write.
   const newest = batch.changes[0];
+  // A mass edit made before this connection is dated as an old one is: it may be days old.
+  const earlier = batch.changes.every((change) => change.earlier);
 
   return (
     <tr className={batch.remaining === 0 ? "batch-row undone" : "batch-row"}>
       <td className="date" title={formatDateTime(newest.at)}>
-        {formatTime(newest.at)}
+        {earlier ? formatDateTime(newest.at) : formatTime(newest.at)}
       </td>
       <td className="col-person col-batch" colSpan={3}>
         <div className="name">
           {batch.fields.join(", ")}
           <span className="tag kind">{text.kinds[batch.entity]}</span>
           <span className="tag batch">{text.batch}</span>
+          {earlier && (
+            <span className="tag earlier" title={text.earlierTitle}>
+              {text.earlierTag}
+            </span>
+          )}
         </div>
         <div className="sub">{text.batchCount(batch.changes.length, batch.remaining)}</div>
+        {batch.notInGame > 0 && <div className="sub in-game missing">{text.batchNotInGame(batch.notInGame)}</div>}
       </td>
       <td className="col-status">
         <div className="row-actions">
-          {batch.remaining > 0 && (
+          {batch.undoable > 0 && (
             <button
               type="button"
               className="batch-undo"
               disabled={undoing}
-              title={text.undoBatchTitle(batch.remaining)}
+              title={text.undoBatchTitle(batch.undoable)}
               onClick={() => onUndo(batch.id)}
             >
               {text.undoBatch}
@@ -500,6 +601,7 @@ function ChangeRow({ change, field, failure, undoing, onUndo, inBatch }: ChangeR
   const shown = (stored: number) => (field ? shownValue(field, stored) : stored);
   // An attribute or a percentage is stored on a finer scale than it is shown: its hover text has the values as stored.
   const storedNote = isStoredFiner(field) ? text.stored(valueChange(change.old, change.new)) : undefined;
+  const unknownObject = change.field === "nation" ? editText.unknownNation : editText.unknownCity;
   const className = [change.undoneAt !== null && "undone", inBatch && "in-batch"].filter(Boolean).join(" ");
   // A move to another club is logged with the clubs' UIDs as its values: their names say more (a release has no new
   // club: he became a free agent), and so do the players' for a captaincy. A heal is logged as a change of his
@@ -519,6 +621,8 @@ function ChangeRow({ change, field, failure, undoing, onUndo, inBatch }: ChangeR
         ? valueChange(change.stadium.from, change.stadium.to)
       : change.personName
         ? valueChange(change.personName.from ?? profileText.none, change.personName.to ?? profileText.none)
+      : change.objects
+        ? valueChange(change.objects.from ?? unknownObject, change.objects.to ?? unknownObject)
       : change.field === "injuries"
         ? text.healed(change.old)
         : change.field === "bans"
@@ -532,12 +636,17 @@ function ChangeRow({ change, field, failure, undoing, onUndo, inBatch }: ChangeR
   return (
     <tr className={className || undefined}>
       <td className="date" title={formatDateTime(change.at)}>
-        {formatTime(change.at)}
+        {change.earlier ? formatDateTime(change.at) : formatTime(change.at)}
       </td>
       <td className="col-person">
         <div className="name">
           {change.name}
           <span className="tag kind">{text.kinds[change.entity]}</span>
+          {change.earlier && (
+            <span className="tag earlier" title={text.earlierTitle}>
+              {text.earlierTag}
+            </span>
+          )}
         </div>
         <div className="sub uid">
           {change.entity === "staff" ? profileText.id : profileText.uid} {change.uid}
@@ -561,13 +670,28 @@ function ChangeRow({ change, field, failure, undoing, onUndo, inBatch }: ChangeR
       <td className="col-status">
         <div className="row-actions">
           {change.undoneAt === null ? (
-            <button type="button" disabled={undoing} title={text.undoTitle(label)} onClick={() => onUndo(change)}>
-              {text.undo}
-            </button>
+            change.undoable ? (
+              <button type="button" disabled={undoing} title={text.undoTitle(label)} onClick={() => onUndo(change)}>
+                {text.undo}
+              </button>
+            ) : (
+              <span className="history-only" title={text.historyOnlyTitle}>
+                {text.historyOnly}
+              </span>
+            )
           ) : (
-            text.undone(formatTime(change.undoneAt))
+            // An earlier change may have been undone days ago.
+            text.undone(change.earlier ? formatDateTime(change.undoneAt) : formatTime(change.undoneAt))
           )}
         </div>
+        {change.undoneAt === null && change.earlier && change.inGame !== undefined && (
+          <div
+            className={change.inGame ? "in-game" : "in-game missing"}
+            title={change.inGame ? text.inGameTitle : text.notInGameTitle}
+          >
+            {change.inGame ? text.inGame : text.notInGame}
+          </div>
+        )}
         {change.undoneAt === null && failure !== undefined && (
           <span className="row-error" role="alert">
             {failure}

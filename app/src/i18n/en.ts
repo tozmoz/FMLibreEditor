@@ -1401,8 +1401,33 @@ export const en = {
   changes: {
     /** The entry in the sidebar. */
     nav: "Changes",
-    title: "Changes this session",
-    hint: "Newest first. A change can be undone only while the game still holds the value it wrote.",
+    title: "Changes",
+    hint: "Newest first. The app keeps the changes of each career, so they are listed again after a restart. A change can be undone only while the game still holds the value it wrote.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count: number, missing: number) =>
+      `${changeCount(count)} from earlier sessions` +
+      (missing > 0 ? `, ${format(missing)} of them not in the game when the data was read` : "") +
+      ". Moves, heals, ties, clauses and names among them are kept as history, without Undo.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Earlier",
+    earlierTitle: "Written before the app last connected, and kept in the history of this career",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "In the game",
+    inGameTitle: "The game held this value when the data was last read",
+    notInGame: "Not in the game",
+    notInGameTitle:
+      "The game did not hold this value when the data was last read: the game was not saved after the change, or it has changed the value since",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "History",
+    historyOnlyTitle: "Made before the app last connected: undoing it needed the game's memory as it was then",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count: number) => `${format(count)} not in the game`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Clear history",
+    clearHistoryTitle: "Empty this list and forget the history of this career. The changes stay in the game.",
+    confirmClear: "Clear the history of this career? The changes stay in the game, but can no longer be undone from here.",
+    keepHistory: "Keep",
+    clearConfirm: "Clear",
     /** Under the hint: a change shows in the game only after it has moved on once. */
     continueHint: "The game shows a change once it moves on: press Continue in the game.",
     /** Under a move to another club that was a swap: the player who went the other way. */

@@ -410,6 +410,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Questi dati sono cambiati nel gioco; ${reload}.`,
   "app.noChange": (p) => `La modifica ${p.id} non esiste.`,
   "app.alreadyUndone": () => "Questa modifica è già stata annullata.",
+  "app.historyOnly": () => "Questa modifica è stata fatta prima dell'ultima connessione dell'app e per annullarla serviva la memoria del gioco com'era allora: rimettila a mano.",
+  "app.history": (p) => `Impossibile cancellare la cronologia: ${p.reason}`,
   "export.failed": (p) => `Non è stato possibile scrivere il file: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor non può scrivere in ${p.folder}. Se macOS ha chiesto se può usare la tua cartella Documenti, ` +
@@ -1372,8 +1374,31 @@ export const it: Strings = {
 
   changes: {
     nav: "Modifiche",
-    title: "Modifiche di questa sessione",
-    hint: "Dalla più recente. Una modifica si può annullare solo finché il gioco ha ancora il valore che ha scritto.",
+    title: "Modifiche",
+    hint:
+      "Dalla più recente. L'app conserva le modifiche di ogni carriera, quindi vengono elencate di nuovo dopo un riavvio. Una modifica si può annullare solo finché il gioco ha ancora il valore che ha scritto.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count, missing) =>
+      `${changeCount(count)} di sessioni precedenti` + (missing > 0 ? `, ${format(missing)} di queste non erano nel gioco quando sono stati letti i dati` : "") + ". Trasferimenti, cure, vincoli, clausole e nomi restano come cronologia, senza Ripristina.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Precedente",
+    earlierTitle: "Scritta prima dell'ultima connessione dell'app e conservata nella cronologia di questa carriera",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "Nel gioco",
+    inGameTitle: "Il gioco aveva questo valore quando i dati sono stati letti l'ultima volta",
+    notInGame: "Non nel gioco",
+    notInGameTitle: "Il gioco non aveva questo valore quando i dati sono stati letti l'ultima volta: il gioco non è stato salvato dopo la modifica, oppure da allora ha cambiato il valore",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Cronologia",
+    historyOnlyTitle: "Fatta prima dell'ultima connessione dell'app: per annullarla serviva la memoria del gioco com'era allora",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count) => `${format(count)} non nel gioco`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Cancella cronologia",
+    clearHistoryTitle: "Svuota questo elenco e dimentica la cronologia di questa carriera. Le modifiche restano nel gioco.",
+    confirmClear: "Cancellare la cronologia di questa carriera? Le modifiche restano nel gioco, ma da qui non si potranno più annullare.",
+    keepHistory: "Mantieni",
+    clearConfirm: "Cancella",
     continueHint: "Il gioco mostra una modifica quando va avanti: premi Continua nel gioco.",
     swappedWith: (name) => `Scambiato con ${name}`,
     released: (name) => `${name} svincolato`,

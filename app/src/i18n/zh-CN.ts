@@ -178,6 +178,8 @@ const errors: ErrorTexts = {
 
   // The app and its change log
   "app.alreadyUndone": () => "此改动已撤销。",
+  "app.historyOnly": () => "此改动是在应用上次连接之前做出的，撤销它需要当时的游戏内存：请手动改回。",
+  "app.history": (p) => `无法清除历史记录：${p.reason}`,
   "app.dataChanged": () => `游戏中的这些数据已发生变化；${reload}。`,
   "app.internal": () => "应用发生了意外错误。",
   "app.noChange": (p) => `改动 ${p.id} 不存在。`,
@@ -1476,8 +1478,31 @@ export const zhCN: Strings = {
   changes: {
     /** The entry in the sidebar. */
     nav: "改动记录",
-    title: "本次会话的改动",
-    hint: "按时间从新到旧排列。只有游戏中的值仍与写入值一致时，才能撤销改动。",
+    title: "改动",
+    hint:
+      "按时间从新到旧排列。应用会保存每个存档的改动，重启后仍会列出。只有游戏中的值仍与写入值一致时，才能撤销改动。",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count: number, missing: number) =>
+      `来自以往会话的${changeCount(count)}` + (missing > 0 ? `，其中 ${format(missing)} 项在读取数据时不在游戏中` : "") + "。其中的转会、治疗、关联、条款和姓名改动仅作为历史记录保留，无法撤销。",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "以往",
+    earlierTitle: "写入于应用上次连接之前，保存在此存档的历史记录中",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "在游戏中",
+    inGameTitle: "上次读取数据时，游戏中是这个值",
+    notInGame: "不在游戏中",
+    notInGameTitle: "上次读取数据时，游戏中不是这个值：改动后没有保存游戏，或者游戏此后又改了这个值",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "历史",
+    historyOnlyTitle: "在应用上次连接之前做出：撤销它需要当时的游戏内存",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count: number) => `${format(count)} 项不在游戏中`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "清除历史",
+    clearHistoryTitle: "清空此列表并忘记此存档的历史记录。改动仍保留在游戏中。",
+    confirmClear: "清除此存档的历史记录？改动仍保留在游戏中，但无法再从这里撤销。",
+    keepHistory: "保留",
+    clearConfirm: "清除",
     /** Under the hint: a change shows in the game only after it has moved on once. */
     continueHint: "在游戏中点击“继续”后，改动才会显示。",
     /** Under a move to another club that was a swap: the player who went the other way. */

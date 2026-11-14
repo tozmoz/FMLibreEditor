@@ -7406,3 +7406,46 @@ kbd {
   width: min(520px, 100%);
   margin-top: 24px;
 }
+
+/* Changes: the history of earlier sessions */
+
+/* Marks a change written before the app last connected: a quiet outline, apart from the mass edit's ink one. */
+.changes-grid .tag.earlier {
+  margin-left: 6px;
+  border-style: dashed;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+/* What stands in the place of Undo for an earlier change that cannot be undone from here. */
+.changes-grid .history-only {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Under the status: whether the game held the value when the data was last read. */
+.changes-grid .in-game {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* The value the game does not hold (any more): the attention colour, as an edit not yet applied has. */
+.changes-grid .in-game.missing {
+  color: var(--pending);
+}
+
+/* Clear history sits at the end of the toolbar; the question that replaces it stays there. */
+.toolbar .clear-history {
+  margin-left: auto;
+}
+
+.toolbar .clear-question {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.toolbar .clear-question ~ button {
+  flex: none;
+}

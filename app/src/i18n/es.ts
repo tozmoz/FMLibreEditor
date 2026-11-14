@@ -367,6 +367,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Estos datos han cambiado en el juego; ${reload}.`,
   "app.noChange": (p) => `No existe el cambio ${p.id}.`,
   "app.alreadyUndone": () => "Este cambio ya se ha deshecho.",
+  "app.historyOnly": () => "Este cambio se hizo antes de la última conexión de la aplicación y deshacerlo requería la memoria del juego tal como estaba entonces: devuélvelo a mano.",
+  "app.history": (p) => `No se pudo borrar el historial: ${p.reason}`,
   "export.failed": (p) => `No se ha podido escribir el archivo: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor no puede escribir en ${p.folder}. Si macOS ha preguntado si puede usar tu carpeta Documentos, ` +
@@ -1337,9 +1339,31 @@ export const es: Strings = {
 
   changes: {
     nav: "Cambios",
-    title: "Cambios de esta sesión",
+    title: "Cambios",
     hint:
-      "Los más recientes primero. Un cambio solo se puede deshacer mientras el juego conserve el valor que escribió.",
+      "Los más recientes primero. La aplicación guarda los cambios de cada carrera, así que se vuelven a mostrar tras reiniciarla. Un cambio solo se puede deshacer mientras el juego conserve el valor que escribió.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count, missing) =>
+      `${changeCount(count)} de sesiones anteriores` + (missing > 0 ? `, ${format(missing)} de ellos no estaban en el juego cuando se leyeron los datos` : "") + ". Los traspasos, curaciones, vínculos, cláusulas y nombres entre ellos se conservan como historial, sin Deshacer.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Anterior",
+    earlierTitle: "Escrito antes de la última conexión de la aplicación y guardado en el historial de esta carrera",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "En el juego",
+    inGameTitle: "El juego tenía este valor cuando se leyeron los datos por última vez",
+    notInGame: "No está en el juego",
+    notInGameTitle: "El juego no tenía este valor cuando se leyeron los datos por última vez: no se guardó la partida tras el cambio, o el juego ha cambiado el valor desde entonces",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Historial",
+    historyOnlyTitle: "Hecho antes de la última conexión de la aplicación: deshacerlo requería la memoria del juego tal como estaba entonces",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count) => `${format(count)} no están en el juego`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Borrar historial",
+    clearHistoryTitle: "Vacía esta lista y olvida el historial de esta carrera. Los cambios siguen en el juego.",
+    confirmClear: "¿Borrar el historial de esta carrera? Los cambios siguen en el juego, pero ya no se podrán deshacer desde aquí.",
+    keepHistory: "Conservar",
+    clearConfirm: "Borrar",
     continueHint: "El juego muestra un cambio cuando avanza: pulsa Continuar en el juego.",
     swappedWith: (name) => `Intercambiado por ${name}`,
     released: (name) => `Contrato rescindido: ${name}`,
