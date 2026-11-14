@@ -1530,7 +1530,7 @@ export const es: Strings = {
         "contrato (salario y fechas), con la fecha del juego. El dinero va en libras, como lo guarda el juego. No cambia " +
         "nada en el juego.",
       club:
-        "De cada club: reputación, año de fundación, abonados, seguidores en redes sociales, composición y rasgos de " +
+        "De cada club: país, liga, reputación, año de fundación, abonados, seguidores en redes sociales, composición y rasgos de " +
         "la afición, instalaciones, estadio y finanzas (saldo, presupuesto de fichajes, gasto y presupuesto salarial " +
         "por semana y precio de la entrada), con la fecha del juego. FM guarda las finanzas solo de los clubes de " +
         "las ligas en juego. El dinero va en libras, como lo guarda el juego. No cambia nada en el juego.",

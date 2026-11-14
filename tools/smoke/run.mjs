@@ -10,6 +10,7 @@ import { App } from "./lib/app.mjs";
 import { Probe } from "./lib/probe.mjs";
 import { Report } from "./lib/report.mjs";
 import * as changes from "./tests/changes.mjs";
+import * as clubs from "./tests/clubs.mjs";
 import * as connect from "./tests/connect.mjs";
 import * as contract from "./tests/contract.mjs";
 import * as dialog from "./tests/dialog.mjs";
@@ -34,7 +35,7 @@ import * as unknown from "./tests/unknown.mjs";
 
 /** In the order they run: the ones that only read first. */
 const TESTS = [
-  connect, home, dialog, palette, scouting, edit, history, mass, changes, contract, move, sign, medical, loan, stadium, names, ties,
+  connect, home, dialog, palette, scouting, clubs, edit, history, mass, changes, contract, move, sign, medical, loan, stadium, names, ties,
   staff, release, tactics, freeze, unknown,
 ];
 

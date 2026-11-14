@@ -1605,7 +1605,7 @@ export const de: Strings = {
         "Vertrag (Gehalt und Daten), mit dem Spieldatum. Geldbeträge sind in Pfund, wie das Spiel sie speichert. Im " +
         "Spiel ändert sich nichts.",
       club:
-        "Für jeden Verein: Ansehen, Gründungsjahr, Dauerkarten, Follower in sozialen Medien, Fantypen und " +
+        "Für jeden Verein: Land, Liga, Ansehen, Gründungsjahr, Dauerkarten, Follower in sozialen Medien, Fantypen und " +
         "Fan-Eigenschaften, Einrichtungen, Stadion und Finanzen (Kontostand, Transferbudget, wöchentliche " +
         "Gehaltsausgaben und Gehaltsbudget, Ticketpreis), mit dem Spieldatum. FM führt Finanzen nur für Vereine in den " +
         "gespielten Ligen. Geldbeträge sind in Pfund, wie das Spiel sie speichert. Im Spiel ändert sich nichts.",

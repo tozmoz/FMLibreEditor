@@ -140,7 +140,7 @@ export function ClubFilterBar({ fields, onChange, active, version }: ClubFilterB
   const reputation = useId();
 
   return (
-    <FilterBar active={active} onClear={() => onChange(NO_CLUB_FILTERS)}>
+    <FilterBar active={active} onClear={() => onChange(NO_CLUB_FILTERS)} className="club-filter-bar">
       <label className="filter-field">
         <span>{text.kind}</span>
         <select value={fields.kind} onChange={(e) => set("kind", e.currentTarget.value as ClubKind)}>

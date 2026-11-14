@@ -133,17 +133,19 @@ interface FilterBarProps {
   onClear: () => void;
   /** More controls after Clear in the head of the bar, e.g. those of the saved filters. */
   actions?: ReactNode;
+  /** A class of the bar's own, besides `filter-bar`, for a list whose inputs are laid out differently. */
+  className?: string;
   /** The inputs, shown while the bar is open. */
   children: ReactNode;
 }
 
 /** The head of the bar, with the inputs under it while it is open. */
-export function FilterBar({ active, onClear, actions, children }: FilterBarProps) {
+export function FilterBar({ active, onClear, actions, className, children }: FilterBarProps) {
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className="filter-bar">
+    <div className={className ? `filter-bar ${className}` : "filter-bar"}>
       <div className="filter-head">
         <button
           ref={toggle}

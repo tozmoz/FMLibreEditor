@@ -1647,7 +1647,8 @@ export const en = {
         "and contract (wage and dates), with the in-game date. Money is in pounds, as the game keeps it. Nothing in " +
         "the game changes.",
       club:
-        "Each club's reputation, founding year, season tickets, social media followers, supporter mix and traits, " +
+        "Each club's nation, league, reputation, founding year, season tickets, social media followers, supporter " +
+        "mix and traits, " +
         "facilities, stadium, and finances: balance, transfer budget, weekly wage spend and wage budget, and ticket " +
         "price, with the in-game date. FM keeps finances only for clubs in the leagues being played. Money is in " +
         "pounds, as the game keeps it. Nothing in the game changes.",

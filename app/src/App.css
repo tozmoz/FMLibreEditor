@@ -1097,6 +1097,18 @@ input::placeholder {
   min-width: 0;
 }
 
+/* League names run long ("Indonesian Championship Group II"): the club list's league gets two cells where the bar
+   has room for three (the bar is the container, see `.club-filter-bar`), and one where it has not. */
+.club-filter-bar {
+  container-type: inline-size;
+}
+
+@container (min-width: 34rem) {
+  .filter-field:has(> .league-select) {
+    grid-column: span 2;
+  }
+}
+
 /* Freezing a club's money: the box and its words, under the amounts. */
 .freeze-toggle {
   display: flex;

@@ -1454,7 +1454,7 @@ export const id: Strings = {
         "(gaji dan tanggal), dengan tanggal dalam game. Uang dalam pound, seperti yang disimpan game. Tidak ada yang " +
         "berubah di game.",
       club:
-        "Reputasi setiap klub, tahun berdiri, tiket musiman, pengikut media sosial, komposisi dan sifat suporter, " +
+        "Negara, liga, reputasi setiap klub, tahun berdiri, tiket musiman, pengikut media sosial, komposisi dan sifat suporter, " +
         "fasilitas, stadion, dan keuangan: saldo, anggaran transfer, pengeluaran dan anggaran gaji mingguan, serta " +
         "harga tiket, dengan tanggal dalam game. FM hanya menyimpan keuangan klub di liga yang dimainkan. Uang dalam " +
         "pound, seperti yang disimpan game. Tidak ada yang berubah di game.",

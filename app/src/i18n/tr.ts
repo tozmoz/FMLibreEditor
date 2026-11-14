@@ -1490,7 +1490,7 @@ export const tr: Strings = {
         "Her personelin görevi ve kulübü, yetenekleri, 1–20 ölçeğinde özellikleri, kişiliği, itibarı ve sözleşmesi (maaş " +
         "ve tarihler); oyun tarihiyle birlikte. Paralar oyunun tuttuğu gibi sterlin. Oyunda hiçbir şey değişmez.",
       club:
-        "Her kulübün itibarı, kuruluş yılı, kombine bilet sayısı, sosyal medya takipçileri, taraftar dağılımı ve " +
+        "Her kulübün ülkesi, ligi, itibarı, kuruluş yılı, kombine bilet sayısı, sosyal medya takipçileri, taraftar dağılımı ve " +
         "özellikleri, tesisleri, stadyumu ve mali durumu: bakiye, transfer bütçesi, haftalık maaş harcaması ile maaş " +
         "bütçesi ve bilet fiyatı; oyun tarihiyle birlikte. FM mali durumu yalnızca oynanan liglerdeki kulüpler için tutar. " +
         "Paralar oyunun tuttuğu gibi sterlin. Oyunda hiçbir şey değişmez.",

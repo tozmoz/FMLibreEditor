@@ -1561,7 +1561,7 @@ export const it: Strings = {
         "contratto (stipendio e date), con la data del gioco. Il denaro è in sterline, come lo tiene il gioco. Nel gioco " +
         "non cambia nulla.",
       club:
-        "Per ogni società: reputazione, anno di fondazione, abbonamenti, follower sui social media, composizione e " +
+        "Per ogni società: nazione, campionato, reputazione, anno di fondazione, abbonamenti, follower sui social media, composizione e " +
         "caratteristiche dei tifosi, strutture, stadio e finanze (saldo, budget trasferimenti, spesa e budget " +
         "settimanali per gli stipendi, prezzo del biglietto), con la data del gioco. FM tiene le finanze solo per le " +
         "società dei campionati in gioco. Il denaro è in sterline, come lo tiene il gioco. Nel gioco non cambia nulla.",
