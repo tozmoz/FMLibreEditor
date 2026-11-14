@@ -301,12 +301,15 @@ signature against the public key in the same file.
   the new version.
 - **macOS:** the app in `FMLibreEditor-macOS.app.tar.gz` takes the place of the running
   one's bundle (macOS asks for an administrator's password where the user may not change
-  it), and the app starts again (`restart_app`). At startup an app run from its bundle puts
-  its bridge and launcher in place of the installed ones where they differ
-  (`bridge_setup::refresh`), so the game loads the new bridge the next time it starts.
+  it), and the app starts again (`restart_app`). An app opened where it was downloaded runs
+  from a read-only copy (App Translocation): the bundle it was copied from, which the
+  Security framework names, is the one replaced and started again
+  (`app/src-tauri/src/self_update.rs`). The new bundle is not quarantined, so macOS runs it
+  where it is from then on. At startup an app run from its bundle puts its bridge and
+  launcher in place of the installed ones where they differ (`bridge_setup::refresh`), so
+  the game loads the new bridge the next time it starts.
 
-Portable copies, a macOS app that macOS runs from where it was downloaded (App
-Translocation) and development builds open the release's page instead (`can_self_update`).
+Portable copies and development builds open the release's page instead (`can_self_update`).
 
 The workflow signs the installer and the macOS archive with the private key in the
 repository's secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`,
