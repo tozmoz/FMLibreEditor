@@ -449,6 +449,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Ces données ont changé dans le jeu\u00a0; ${reload}.`,
   "app.noChange": (p) => `La modification ${p.id} n'existe pas.`,
   "app.alreadyUndone": () => "Cette modification a déjà été annulée.",
+  "app.historyOnly": () => "Cette modification a été faite avant la dernière connexion de l'application et l'annuler demandait la mémoire du jeu telle qu'elle était alors\u00a0: remettez-la à la main.",
+  "app.history": (p) => `L'historique n'a pas pu être effacé\u00a0: ${p.reason}`,
   "export.failed": (p) => `Impossible d'écrire le fichier\u00a0: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor ne peut pas écrire dans ${p.folder}. Si macOS a demandé s'il pouvait utiliser votre dossier ` +
@@ -1381,9 +1383,6 @@ export const fr: Strings = {
       "Le jeu a probablement été mis à jour. FMLibreEditor a trouvé les données du jeu et les a vérifiées, mais il " +
       "n'écrit pas dans une version avec laquelle il n'a pas été testé tant que vous ne l'autorisez pas. Un nouveau " +
       "FMLibreEditor suit généralement en quelques jours.",
-    allowedText:
-      "La modification est activée pour cette session, dans la limite des vérifications. Gardez une copie de " +
-      "sauvegarde de votre partie.",
     failedTitle: "Certaines données du jeu n'ont pas passé les vérifications",
     reloadHint: "Si une partie était encore en cours de chargement, «\u00a0Recharger les données\u00a0» vérifie à nouveau.",
     noDate: "La date du jeu n'a pas passé les vérifications\u00a0: aucun âge n'est donc affiché.",
@@ -1481,10 +1480,31 @@ export const fr: Strings = {
 
   changes: {
     nav: "Modifications",
-    title: "Modifications de cette session",
+    title: "Modifications",
     hint:
-      "Les plus récentes d'abord. Une modification ne peut être annulée que tant que le jeu garde la valeur qu'elle a " +
-      "écrite.",
+      "Les plus récentes d'abord. L'application garde les modifications de chaque carrière, elles sont donc listées de nouveau après un redémarrage. Une modification ne peut être annulée que tant que le jeu garde la valeur qu'elle a écrite.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count, missing) =>
+      `${changeCount(count)} de sessions précédentes` + (missing > 0 ? `, dont ${format(missing)} absente${agree(missing)} du jeu à la lecture des données` : "") + ". Les transferts, soins, liens, clauses et noms restent dans l'historique, sans Annuler.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Précédente",
+    earlierTitle: "Écrite avant la dernière connexion de l'application et gardée dans l'historique de cette carrière",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "Dans le jeu",
+    inGameTitle: "Le jeu avait cette valeur à la dernière lecture des données",
+    notInGame: "Pas dans le jeu",
+    notInGameTitle: "Le jeu n'avait pas cette valeur à la dernière lecture des données\u00a0: il n'a pas été sauvegardé après la modification, ou il a changé la valeur depuis",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Historique",
+    historyOnlyTitle: "Faite avant la dernière connexion de l'application\u00a0: l'annuler demandait la mémoire du jeu telle qu'elle était alors",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count) => `${format(count)} absente${agree(count)} du jeu`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Effacer l'historique",
+    clearHistoryTitle: "Vider cette liste et oublier l'historique de cette carrière. Les modifications restent dans le jeu.",
+    confirmClear: "Effacer l'historique de cette carrière\u00a0? Les modifications restent dans le jeu, mais ne pourront plus être annulées d'ici.",
+    keepHistory: "Garder",
+    clearConfirm: "Effacer",
     continueHint: "Le jeu affiche une modification une fois qu'il avance\u00a0: appuyez sur Continuer dans le jeu.",
     swappedWith: (name) => `Échange avec ${name}`,
     released: (name) => `Libération ${de(name)}`,
@@ -1528,6 +1548,28 @@ export const fr: Strings = {
     previous: "Précédent",
     next: "Suivant",
     range: (first, last, total) => `${format(first)}–${format(last)} sur ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "Rechercher des modifications par nom, UID, champ ou club",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Session",
+    sessions: { all: "Toutes", this: "Cette session", earlier: "Sessions précédentes" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Non annulées",
+    notUndoneTitle: "Seulement les modifications toujours en place",
+    notInGameFilterTitle: "Seulement les modifications précédentes que le jeu n'avait pas à la dernière lecture des données",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Effacer le filtre",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching, total, undone) => {
+      const count = `${format(matching)} sur ${changeCount(total)}`;
+      return undone === 0 ? count : `${count} · ${format(undone)} annulée${agree(undone)}`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching, total) => `${format(matching)} sur ${format(total)} ${plural(matching) ? "correspondent" : "correspond"}`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "Aucune modification ne correspond à la recherche et aux filtres.",
   },
 
   export: {
@@ -1590,6 +1632,25 @@ export const fr: Strings = {
     show: "Afficher dans le dossier",
     showTitle: "Afficher le fichier dans son dossier",
     close: "Fermer",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Écrire les modifications affichées par la liste dans un fichier CSV, pour un tableur ou un script",
+      title: "Exporter les modifications",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count, filtering) =>
+        count === 0
+          ? "Aucune modification ne correspond à la recherche et aux filtres."
+          : filtering
+            ? `${changeCount(count)}\u00a0: ce que sélectionnent la recherche et les filtres, de la plus récente à la plus ancienne.`
+            : `${changeCount(count)}\u00a0: tout l'historique de cette carrière, de la plus récente à la plus ancienne.`,
+      contents:
+        "Pour chaque modification\u00a0: l'heure (locale, avec son décalage par rapport à UTC), le nom et l'UID, le " +
+        "champ, l'ancienne et la nouvelle valeur telles que le jeu les garde et telles qu'elles sont affichées ici, " +
+        "les notes que la liste met dessous, la modification groupée dont elle faisait partie, le moment où elle a " +
+        "été annulée, et si elle date d'une session précédente et se trouve dans le jeu. Rien ne change dans le jeu.",
+      done: (count, file) => `${changeCount(count)} exportée${agree(count)} dans ${file}`,
+    },
   },
 
   massEdit: {

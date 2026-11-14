@@ -252,6 +252,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Bu veriler oyunda değişti; ${reload}.`,
   "app.noChange": (p) => `${p.id} numaralı bir değişiklik yok.`,
   "app.alreadyUndone": () => "Bu değişiklik zaten geri alındı.",
+  "app.historyOnly": () => "Bu değişiklik uygulama son bağlandığından önce yapıldı ve geri almak için oyunun belleğinin o anki hâli gerekiyordu: elle geri değiştir.",
+  "app.history": (p) => `Geçmiş temizlenemedi: ${p.reason}`,
   "export.failed": (p) => `Dosya yazılamadı: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor ${p.folder} klasörüne yazamıyor. macOS, Belgeler klasörünü kullanıp kullanamayacağını sorduysa ` +
@@ -1254,7 +1256,6 @@ export const tr: Strings = {
     unknownBuildText:
       "Oyun büyük ihtimalle güncellendi. FMLibreEditor oyunun verilerini buldu ve denetledi, ama denenmediği bir sürüme " +
       "siz izin vermeden yazmaz. Bu sürümü tanıyan yeni bir FMLibreEditor genellikle birkaç gün içinde çıkar.",
-    allowedText: "Düzenleme bu oturum için açık, denetimlerin izin verdiği kadarıyla. Kayıt dosyanızın yedeğini saklayın.",
     failedTitle: "Oyunun verilerinin bir kısmı denetimden geçmedi",
     reloadHint: "Kayıt hâlâ yükleniyorduysa “Verileri yeniden oku” yeniden denetler.",
     noDate: "Oyun içi tarih denetimden geçmedi, bu yüzden yaşlar gösterilmiyor.",
@@ -1349,8 +1350,33 @@ export const tr: Strings = {
 
   changes: {
     nav: "Değişiklikler",
-    title: "Bu oturumdaki değişiklikler",
-    hint: "En yeniler üstte. Bir değişiklik yalnızca oyun yazdığı değeri hâlâ tutuyorsa geri alınabilir.",
+    title: "Değişiklikler",
+    hint:
+      "En yenisi en üstte. Uygulama her kariyerin değişikliklerini saklar; yeniden başlatınca da listelenirler. Bir değişiklik, ancak oyun yazdığı değeri hâlâ tutuyorsa geri alınabilir.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count, missing) =>
+      `Önceki oturumlardan ${format(count)} değişiklik` +
+      (missing > 0 ? `; ${format(missing)} tanesi veriler okunduğunda oyunda yoktu` : "") +
+      ". Bunlar arasındaki transferler, iyileştirmeler, bağlar, maddeler ve isimler geçmiş olarak durur, geri alınamaz.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Önceki",
+    earlierTitle: "Uygulama son bağlandığından önce yazıldı; bu kariyerin geçmişinde saklanıyor",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "Oyunda",
+    inGameTitle: "Veriler son okunduğunda oyun bu değeri tutuyordu",
+    notInGame: "Oyunda değil",
+    notInGameTitle: "Veriler son okunduğunda oyun bu değeri tutmuyordu: değişiklikten sonra oyun kaydedilmedi ya da oyun değeri o zamandan beri değiştirdi",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Geçmiş",
+    historyOnlyTitle: "Uygulama son bağlandığından önce yapıldı: geri almak için oyunun belleğinin o anki hâli gerekiyordu",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count) => `${format(count)} tanesi oyunda değil`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Geçmişi temizle",
+    clearHistoryTitle: "Bu listeyi boşalt ve bu kariyerin geçmişini unut. Değişiklikler oyunda kalır.",
+    confirmClear: "Bu kariyerin geçmişi temizlensin mi? Değişiklikler oyunda kalır, ama artık buradan geri alınamaz.",
+    keepHistory: "Vazgeç",
+    clearConfirm: "Temizle",
     continueHint: "Oyun değişiklikleri bir kez ilerleyince gösterir: oyunda Devam'a basın.",
     swappedWith: (name) => `Takas: ${name}`,
     released: (name) => `${name} serbest bırakıldı`,
@@ -1394,6 +1420,28 @@ export const tr: Strings = {
     previous: "Önceki",
     next: "Sonraki",
     range: (first, last, total) => `${format(first)}–${format(last)} / ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "İsim, UID, alan veya kulüp ile değişiklik ara",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Oturum",
+    sessions: { all: "Tümü", this: "Bu oturum", earlier: "Önceki oturumlar" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Geri alınmamış",
+    notUndoneTitle: "Yalnızca hâlâ yerinde olan değişiklikler",
+    notInGameFilterTitle: "Yalnızca veriler son okunduğunda oyunun tutmadığı önceki değişiklikler",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Filtreyi temizle",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching, total, undone) => {
+      const count = `${format(matching)} / ${changes(total)}`;
+      return undone === 0 ? count : `${count} · ${format(undone)} geri alındı`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching, total) => `${format(matching)} / ${format(total)} eşleşiyor`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "Arama ve filtrelere uyan değişiklik yok.",
   },
 
   export: {
@@ -1447,6 +1495,25 @@ export const tr: Strings = {
     show: "Klasörde göster",
     showTitle: "Dosyayı klasöründe göster",
     close: "Kapat",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Listenin gösterdiği değişiklikleri bir hesap tablosu veya betik için CSV dosyasına yaz",
+      title: "Değişiklikleri dışa aktar",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count, filtering) =>
+        count === 0
+          ? "Arama ve filtrelere uyan değişiklik yok."
+          : filtering
+            ? `${changes(count)}: arama ve filtrelerin seçtikleri, en yenisi başta.`
+            : `${changes(count)}: bu kariyerin tüm geçmişi, en yenisi başta.`,
+      contents:
+        "Her değişikliğin saati (yerel saat, UTC'ye göre farkıyla), adı ve UID'si, alanı, eski ve yeni değeri " +
+        "(oyunun sakladığı gibi ve burada gösterildiği gibi), listenin bunların altına yazdığı notlar, dahil olduğu " +
+        "toplu düzenleme, geri alındıysa ne zaman alındığı, önceki bir oturumdan olup olmadığı ve oyunda olup " +
+        "olmadığı. Oyunda hiçbir şey değişmez.",
+      done: (count, file) => `${changes(count)} ${file} dosyasına aktarıldı`,
+    },
   },
 
   massEdit: {

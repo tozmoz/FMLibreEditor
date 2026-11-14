@@ -458,9 +458,11 @@ dd,
 }
 
 /* A segmented switch: two or three buttons in one frame; the pressed one is the choice in effect. The mode switch of
-   the move dialog (see Moving a player) is one, and so is the switch between the teams of a squad (see Club squad). */
+   the move dialog (see Moving a player) is one, so is the switch between the teams of a squad (see Club squad), and so
+   is the choice of sessions in the Changes view (see Changes: search and filters). */
 .move-mode,
-.squad-teams {
+.squad-teams,
+.change-session {
   display: inline-flex;
   align-self: flex-start;
   overflow: hidden;
@@ -469,7 +471,8 @@ dd,
 }
 
 .move-mode button,
-.squad-teams button {
+.squad-teams button,
+.change-session button {
   min-width: 40px;
   min-height: 26px;
   padding: 3px 10px;
@@ -483,24 +486,28 @@ dd,
 }
 
 .move-mode button + button,
-.squad-teams button + button {
+.squad-teams button + button,
+.change-session button + button {
   border-left: 1px solid var(--border-strong);
 }
 
 .move-mode button:hover:not(:disabled, [aria-pressed="true"]),
-.squad-teams button:hover:not(:disabled, [aria-pressed="true"]) {
+.squad-teams button:hover:not(:disabled, [aria-pressed="true"]),
+.change-session button:hover:not(:disabled, [aria-pressed="true"]) {
   background: var(--hover);
   color: var(--text);
 }
 
 .move-mode button[aria-pressed="true"],
-.squad-teams button[aria-pressed="true"] {
+.squad-teams button[aria-pressed="true"],
+.change-session button[aria-pressed="true"] {
   background: var(--accent);
   color: var(--on-accent);
 }
 
 .move-mode button:focus-visible,
-.squad-teams button:focus-visible {
+.squad-teams button:focus-visible,
+.change-session button:focus-visible {
   outline-offset: -2px;
 }
 
@@ -2793,8 +2800,9 @@ button.danger:hover:not(:disabled) {
   margin-left: auto;
 }
 
-/* Export comes first in the player list's toolbar; Mass edit stays beside it. */
-.toolbar .export-toggle + .mass-edit-toggle {
+/* Export comes first in the player list's toolbar; Mass edit stays beside it, and Clear history in the Changes view. */
+.toolbar .export-toggle + .mass-edit-toggle,
+.toolbar .export-toggle + .clear-history {
   margin-left: 0;
 }
 
@@ -7405,4 +7413,69 @@ kbd {
   align-self: center;
   width: min(520px, 100%);
   margin-top: 24px;
+}
+
+/* Changes: the history of earlier sessions */
+
+/* Marks a change written before the app last connected: a quiet outline, apart from the mass edit's ink one. */
+.changes-grid .tag.earlier {
+  margin-left: 6px;
+  border-style: dashed;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+/* What stands in the place of Undo for an earlier change that cannot be undone from here. */
+.changes-grid .history-only {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Under the status: whether the game held the value when the data was last read. */
+.changes-grid .in-game {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* The value the game does not hold (any more): the attention colour, as an edit not yet applied has. */
+.changes-grid .in-game.missing {
+  color: var(--pending);
+}
+
+/* Changes: search and filters */
+
+/* The search box and the filters under the notes, over the table: the search as wide as a list's, and the rest beside
+   it as long as they fit. The title's toolbar above has little air under it; this one has the table's. */
+.changes .changes-filters {
+  margin-bottom: 10px;
+}
+
+/* A switch that sits level with the search box. */
+.changes-filters .change-session {
+  align-self: center;
+}
+
+.changes-filters .filter-field {
+  font-size: 13px;
+}
+
+.changes-filters input[type="checkbox"] {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+/* Clear history sits at the end of the toolbar; the question that replaces it stays there. */
+.toolbar .clear-history {
+  margin-left: auto;
+}
+
+.toolbar .clear-question {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.toolbar .clear-question ~ button {
+  flex: none;
 }

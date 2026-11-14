@@ -367,6 +367,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Estos datos han cambiado en el juego; ${reload}.`,
   "app.noChange": (p) => `No existe el cambio ${p.id}.`,
   "app.alreadyUndone": () => "Este cambio ya se ha deshecho.",
+  "app.historyOnly": () => "Este cambio se hizo antes de la última conexión de la aplicación y deshacerlo requería la memoria del juego tal como estaba entonces: devuélvelo a mano.",
+  "app.history": (p) => `No se pudo borrar el historial: ${p.reason}`,
   "export.failed": (p) => `No se ha podido escribir el archivo: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor no puede escribir en ${p.folder}. Si macOS ha preguntado si puede usar tu carpeta Documentos, ` +
@@ -1285,9 +1287,6 @@ export const es: Strings = {
       "Probablemente el juego se ha actualizado. FMLibreEditor ha encontrado los datos del juego y los ha comprobado, " +
       "pero no escribe en una versión con la que no se ha probado hasta que tú lo permitas. Una nueva versión de " +
       "FMLibreEditor que la conozca suele salir en pocos días.",
-    allowedText:
-      "La edición está activada en esta sesión, en la medida en que lo permiten las comprobaciones. Guarda una copia " +
-      "de tu partida.",
     failedTitle: "Algunos datos del juego no han superado las comprobaciones",
     reloadHint: "Si una partida aún se estaba cargando, «Recargar datos» vuelve a comprobarlo.",
     noDate: "La fecha del juego no ha superado las comprobaciones, así que no se muestran las edades.",
@@ -1388,9 +1387,31 @@ export const es: Strings = {
 
   changes: {
     nav: "Cambios",
-    title: "Cambios de esta sesión",
+    title: "Cambios",
     hint:
-      "Los más recientes primero. Un cambio solo se puede deshacer mientras el juego conserve el valor que escribió.",
+      "Los más recientes primero. La aplicación guarda los cambios de cada carrera, así que se vuelven a mostrar tras reiniciarla. Un cambio solo se puede deshacer mientras el juego conserve el valor que escribió.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count, missing) =>
+      `${changeCount(count)} de sesiones anteriores` + (missing > 0 ? `, ${format(missing)} de ellos no estaban en el juego cuando se leyeron los datos` : "") + ". Los traspasos, curaciones, vínculos, cláusulas y nombres entre ellos se conservan como historial, sin Deshacer.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Anterior",
+    earlierTitle: "Escrito antes de la última conexión de la aplicación y guardado en el historial de esta carrera",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "En el juego",
+    inGameTitle: "El juego tenía este valor cuando se leyeron los datos por última vez",
+    notInGame: "No está en el juego",
+    notInGameTitle: "El juego no tenía este valor cuando se leyeron los datos por última vez: no se guardó la partida tras el cambio, o el juego ha cambiado el valor desde entonces",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Historial",
+    historyOnlyTitle: "Hecho antes de la última conexión de la aplicación: deshacerlo requería la memoria del juego tal como estaba entonces",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count) => `${format(count)} no están en el juego`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Borrar historial",
+    clearHistoryTitle: "Vacía esta lista y olvida el historial de esta carrera. Los cambios siguen en el juego.",
+    confirmClear: "¿Borrar el historial de esta carrera? Los cambios siguen en el juego, pero ya no se podrán deshacer desde aquí.",
+    keepHistory: "Conservar",
+    clearConfirm: "Borrar",
     continueHint: "El juego muestra un cambio cuando avanza: pulsa Continuar en el juego.",
     swappedWith: (name) => `Intercambiado por ${name}`,
     released: (name) => `Contrato rescindido: ${name}`,
@@ -1437,6 +1458,28 @@ export const es: Strings = {
     previous: "Anterior",
     next: "Siguiente",
     range: (first, last, total) => `${format(first)}–${format(last)} de ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "Buscar cambios por nombre, UID, campo o club",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Sesión",
+    sessions: { all: "Todos", this: "Esta sesión", earlier: "Sesiones anteriores" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "No deshechos",
+    notUndoneTitle: "Solo los cambios que siguen en vigor",
+    notInGameFilterTitle: "Solo los cambios anteriores que el juego no tenía cuando se leyeron los datos por última vez",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Quitar filtro",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching, total, undone) => {
+      const count = `${format(matching)} de ${changeCount(total)}`;
+      return undone === 0 ? count : `${count} · ${undone === 1 ? "1 deshecho" : `${format(undone)} deshechos`}`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching, total) => `${format(matching)} de ${format(total)} ${matching === 1 ? "coincide" : "coinciden"}`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "Ningún cambio coincide con la búsqueda y los filtros.",
   },
 
   export: {
@@ -1496,6 +1539,25 @@ export const es: Strings = {
     show: "Mostrar en la carpeta",
     showTitle: "Mostrar el archivo en su carpeta",
     close: "Cerrar",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Escribir los cambios que muestra la lista en un archivo CSV, para una hoja de cálculo o un script",
+      title: "Exportar cambios",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count, filtering) =>
+        count === 0
+          ? "Ningún cambio coincide con la búsqueda y los filtros."
+          : filtering
+            ? `${changeCount(count)}: lo que seleccionan la búsqueda y los filtros, del más reciente al más antiguo.`
+            : `${changeCount(count)}: todo el historial de esta carrera, del más reciente al más antiguo.`,
+      contents:
+        "De cada cambio: la hora (local, con su desfase respecto a UTC), el nombre y el UID, el campo, su valor " +
+        "anterior y el nuevo tal como los guarda el juego y tal como se muestran aquí, las notas que la lista pone " +
+        "debajo, la edición masiva de la que formaba parte, cuándo se deshizo y si es de una sesión anterior y " +
+        "está en el juego. No cambia nada en el juego.",
+      done: (count, file) => `${changeCount(count)} ${count === 1 ? "exportado" : "exportados"} a ${file}`,
+    },
   },
 
   massEdit: {

@@ -119,11 +119,17 @@ export const applyEdits = (entity: Entity, uid: number, edits: FieldEdit[]) =>
 export const extendContract = (entity: Entity, uid: number, years: number) =>
   call<LoggedChange>("extend_contract", { entity, uid, years });
 
-/** Every change written this session, newest first. */
+/** Every change written to the career the game has loaded, this connection's and the earlier ones, newest first. */
 export const changeLog = () => call<LoggedChange[]>("change_log");
 
 /** Writes back the old value of a logged change; fails if the game has changed the value since. */
 export const undoChange = (id: number) => call<LoggedChange>("undo_change", { id });
+
+/**
+ * Forgets the history of the career the game has loaded, this connection's changes with it: the list is empty
+ * afterwards, while every change stays in the game.
+ */
+export const clearHistory = () => call<void>("clear_history");
 
 /** The whole percentage the game shows (0–100) for a stored one (0–10000), for a profile that has no field table. */
 export const wholePercent = (stored: number): number => Math.floor((stored + 50) / 100);

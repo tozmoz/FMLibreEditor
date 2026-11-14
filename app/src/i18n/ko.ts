@@ -396,6 +396,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `이 데이터가 게임에서 바뀌었습니다. ${reload}.`,
   "app.noChange": (p) => `변경 사항 ${p.id}번이 없습니다.`,
   "app.alreadyUndone": () => "이 변경 사항은 이미 되돌렸습니다.",
+  "app.historyOnly": () => "이 변경은 앱이 마지막으로 연결되기 전에 했으며, 되돌리려면 당시의 게임 메모리가 필요했습니다. 직접 원래대로 바꿔 주세요.",
+  "app.history": (p) => `기록을 지우지 못했습니다: ${p.reason}`,
   "export.failed": (p) => `파일을 쓸 수 없습니다: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor가 ${p.folder}에 쓸 수 없습니다. macOS가 문서 폴더 사용 여부를 물었다면 시스템 설정 › 개인정보 보호 및 ` +
@@ -1279,7 +1281,6 @@ export const ko: Strings = {
     unknownBuildText:
       "게임이 업데이트된 것으로 보입니다. FMLibreEditor가 게임 데이터를 찾아 검사했지만, 테스트하지 않은 버전에는 " +
       "허용하기 전까지 쓰지 않습니다. 보통 며칠 안에 새 FMLibreEditor가 나옵니다.",
-    allowedText: "이번 세션에서는 검사가 허용하는 범위에서 편집할 수 있습니다. 세이브 백업을 유지하세요.",
     failedTitle: "게임 데이터 일부가 검사를 통과하지 못했습니다",
     reloadHint: "세이브를 불러오는 중이었다면 '데이터 다시 불러오기'로 다시 검사할 수 있습니다.",
     noDate: "게임 내 날짜가 검사를 통과하지 못해 나이를 표시하지 않습니다.",
@@ -1373,8 +1374,31 @@ export const ko: Strings = {
 
   changes: {
     nav: "변경 내역",
-    title: "이번 세션의 변경 내역",
-    hint: "최근 것부터 표시합니다. 변경은 게임에 기록한 값이 그대로 남아 있을 때만 되돌릴 수 있습니다.",
+    title: "변경 내역",
+    hint:
+      "최근 것부터 표시합니다. 앱은 커리어별로 변경 내역을 보관하므로 다시 시작해도 목록에 나타납니다. 변경은 게임에 기록한 값이 그대로 남아 있을 때만 되돌릴 수 있습니다.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count, missing) =>
+      `이전 세션의 ${changeCount(count)}` + (missing > 0 ? `, 그중 ${format(missing)}건은 데이터를 읽을 때 게임에 없었습니다` : "") + ". 이적, 치료, 연결, 조항, 이름 변경은 되돌리기 없이 기록으로만 남습니다.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "이전",
+    earlierTitle: "앱이 마지막으로 연결되기 전에 기록되었으며, 이 커리어의 기록에 보관됩니다",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "게임에 있음",
+    inGameTitle: "데이터를 마지막으로 읽었을 때 게임에 이 값이 있었습니다",
+    notInGame: "게임에 없음",
+    notInGameTitle: "데이터를 마지막으로 읽었을 때 게임에 이 값이 없었습니다. 변경 후 게임을 저장하지 않았거나, 그 뒤 게임이 값을 바꾼 것입니다",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "기록",
+    historyOnlyTitle: "앱이 마지막으로 연결되기 전에 한 변경입니다. 되돌리려면 당시의 게임 메모리가 필요했습니다",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count) => `${format(count)}건 게임에 없음`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "기록 지우기",
+    clearHistoryTitle: "이 목록을 비우고 이 커리어의 기록을 잊습니다. 변경 사항은 게임에 남습니다.",
+    confirmClear: "이 커리어의 기록을 지울까요? 변경 사항은 게임에 남지만, 더 이상 여기서 되돌릴 수 없습니다.",
+    keepHistory: "유지",
+    clearConfirm: "지우기",
     continueHint: "변경은 게임이 한 번 진행된 뒤에 게임에 표시됩니다. 게임에서 '진행하기'를 누르세요.",
     swappedWith: (name) => `${name}와(과) 맞교환`,
     released: (name) => `${name} 방출됨`,
@@ -1417,6 +1441,28 @@ export const ko: Strings = {
     previous: "이전",
     next: "다음",
     range: (first, last, total) => `${format(total)}건 중 ${format(first)}–${format(last)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "이름, UID, 항목, 구단으로 변경 사항 검색",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "세션",
+    sessions: { all: "전체", this: "이번 세션", earlier: "이전 세션" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "되돌리지 않음",
+    notUndoneTitle: "아직 적용 중인 변경 사항만",
+    notInGameFilterTitle: "데이터를 마지막으로 읽었을 때 게임에 없던 이전 변경 사항만",
+    /** Takes the search text and every choice away. */
+    clearFilter: "필터 해제",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching, total, undone) => {
+      const count = `${changes(total)} 중 ${format(matching)}건`;
+      return undone === 0 ? count : `${count} · ${format(undone)}건 되돌림`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching, total) => `${format(total)}건 중 ${format(matching)}건 일치`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "검색과 필터에 맞는 변경 사항이 없습니다.",
   },
 
   export: {
@@ -1469,6 +1515,24 @@ export const ko: Strings = {
     show: "폴더에서 보기",
     showTitle: "파일이 있는 폴더에서 파일을 표시합니다",
     close: "닫기",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "목록에 표시된 변경 사항을 스프레드시트나 스크립트에서 쓸 CSV 파일로 저장합니다",
+      title: "변경 사항 내보내기",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count, filtering) =>
+        count === 0
+          ? "검색과 필터에 맞는 변경 사항이 없습니다."
+          : filtering
+            ? `${changes(count)}: 검색과 필터로 선택된 항목을 최신순으로 내보냅니다.`
+            : `${changes(count)}: 이 커리어의 전체 기록을 최신순으로 내보냅니다.`,
+      contents:
+        "각 변경 사항의 시각(현지 시간, UTC와의 차이 포함), 이름과 UID, 항목, 게임이 저장하는 형태와 여기에 표시되는 " +
+        "형태의 이전 값과 새 값, 목록이 아래에 보여 주는 설명, 속해 있던 일괄 편집, 되돌린 시각, 이전 세션의 " +
+        "변경인지와 게임에 있는지 여부가 담깁니다. 게임에는 아무것도 바뀌지 않습니다.",
+      done: (count, file) => `${changes(count)}을 ${file}에 내보냈습니다`,
+    },
   },
 
   massEdit: {

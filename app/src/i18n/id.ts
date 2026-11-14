@@ -241,6 +241,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Data ini sudah berubah di game; ${reload}.`,
   "app.noChange": (p) => `Tidak ada perubahan nomor ${p.id}.`,
   "app.alreadyUndone": () => "Perubahan ini sudah diurungkan.",
+  "app.historyOnly": () => "Perubahan ini dibuat sebelum aplikasi terakhir tersambung, dan untuk mengurungkannya perlu memori game seperti saat itu: ubah kembali secara manual.",
+  "app.history": (p) => `Riwayat tidak bisa dihapus: ${p.reason}`,
   "export.failed": (p) => `Berkas tidak bisa ditulis: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor tidak boleh menulis ke ${p.folder}. Jika macOS bertanya apakah aplikasi ini boleh memakai folder ` +
@@ -1220,7 +1222,6 @@ export const id: Strings = {
     unknownBuildText:
       "Game kemungkinan baru diperbarui. FMLibreEditor menemukan data game dan memeriksanya, tetapi tidak menulis ke " +
       "versi yang belum diuji sampai kamu mengizinkannya. FMLibreEditor versi baru biasanya menyusul dalam beberapa hari.",
-    allowedText: "Pengeditan menyala untuk sesi ini, sejauh pemeriksaan mengizinkan. Simpan cadangan save-mu.",
     failedTitle: "Sebagian data game tidak lolos pemeriksaan",
     reloadHint: "Jika save masih dimuat, Muat ulang data akan memeriksanya lagi.",
     noDate: "Tanggal dalam game tidak lolos pemeriksaan, jadi usia tidak ditampilkan.",
@@ -1313,8 +1314,31 @@ export const id: Strings = {
 
   changes: {
     nav: "Perubahan",
-    title: "Perubahan sesi ini",
-    hint: "Terbaru di atas. Perubahan hanya bisa diurungkan selama game masih menyimpan nilai yang ditulisnya.",
+    title: "Perubahan",
+    hint:
+      "Terbaru di atas. Aplikasi menyimpan perubahan tiap karier, jadi daftar ini muncul lagi setelah aplikasi dimulai ulang. Perubahan hanya bisa diurungkan selama game masih menyimpan nilai yang ditulisnya.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count: number, missing: number) =>
+      `${changeCount(count)} dari sesi sebelumnya` + (missing > 0 ? `, ${format(missing)} di antaranya tidak ada di game saat data dibaca` : "") + ". Transfer, penyembuhan, ikatan, klausul, dan nama di antaranya disimpan sebagai riwayat, tanpa Urungkan.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Sebelumnya",
+    earlierTitle: "Ditulis sebelum aplikasi terakhir tersambung, dan disimpan dalam riwayat karier ini",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "Ada di game",
+    inGameTitle: "Game menyimpan nilai ini saat data terakhir dibaca",
+    notInGame: "Tidak ada di game",
+    notInGameTitle: "Game tidak menyimpan nilai ini saat data terakhir dibaca: game belum disimpan setelah perubahan, atau game sudah mengubah nilainya sejak itu",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Riwayat",
+    historyOnlyTitle: "Dibuat sebelum aplikasi terakhir tersambung: untuk mengurungkannya perlu memori game seperti saat itu",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count: number) => `${format(count)} tidak ada di game`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Hapus riwayat",
+    clearHistoryTitle: "Kosongkan daftar ini dan lupakan riwayat karier ini. Perubahannya tetap ada di game.",
+    confirmClear: "Hapus riwayat karier ini? Perubahannya tetap ada di game, tetapi tidak bisa lagi diurungkan dari sini.",
+    keepHistory: "Pertahankan",
+    clearConfirm: "Hapus",
     continueHint: "Game menampilkan perubahan setelah waktu berjalan: tekan Lanjutkan di game.",
     swappedWith: (name: string) => `Ditukar dengan ${name}`,
     released: (name: string) => `${name} dilepas`,
@@ -1358,6 +1382,28 @@ export const id: Strings = {
     next: "Berikutnya",
     range: (first: number, last: number, total: number) =>
       `${format(first)}–${format(last)} dari ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "Cari perubahan berdasarkan nama, UID, kolom, atau klub",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Sesi",
+    sessions: { all: "Semua", this: "Sesi ini", earlier: "Sesi sebelumnya" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Belum diurungkan",
+    notUndoneTitle: "Hanya perubahan yang masih berlaku",
+    notInGameFilterTitle: "Hanya perubahan sebelumnya yang tidak dimiliki game saat data terakhir dibaca",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Hapus filter",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching: number, total: number, undone: number) => {
+      const count = `${format(matching)} dari ${changeCount(total)}`;
+      return undone === 0 ? count : `${count} · ${format(undone)} diurungkan`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching: number, total: number) => `${format(matching)} dari ${format(total)} cocok`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "Tidak ada perubahan yang cocok dengan pencarian dan filter.",
   },
 
   export: {
@@ -1414,6 +1460,25 @@ export const id: Strings = {
     show: "Tampilkan di folder",
     showTitle: "Tampilkan berkas di foldernya",
     close: "Tutup",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Tulis perubahan yang ditampilkan daftar ke file CSV, untuk spreadsheet atau skrip",
+      title: "Ekspor perubahan",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count: number, filtering: boolean) =>
+        count === 0
+          ? "Tidak ada perubahan yang cocok dengan pencarian dan filter."
+          : filtering
+            ? `${changeCount(count)}: yang dipilih pencarian dan filter, dari yang terbaru.`
+            : `${changeCount(count)}: seluruh riwayat karier ini, dari yang terbaru.`,
+      contents:
+        "Untuk setiap perubahan: waktunya (waktu lokal, beserta selisihnya dari UTC), nama dan UID, kolomnya, nilai " +
+        "lama dan barunya seperti disimpan game dan seperti ditampilkan di sini, catatan di bawahnya, edit massal " +
+        "yang menjadi bagiannya, kapan diurungkan, serta apakah berasal dari sesi sebelumnya dan ada di game. " +
+        "Tidak ada yang berubah di game.",
+      done: (count: number, file: string) => `${changeCount(count)} diekspor ke ${file}`,
+    },
   },
 
   massEdit: {

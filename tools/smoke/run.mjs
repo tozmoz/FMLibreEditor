@@ -9,11 +9,13 @@ import { parseArgs } from "node:util";
 import { App } from "./lib/app.mjs";
 import { Probe } from "./lib/probe.mjs";
 import { Report } from "./lib/report.mjs";
+import * as changes from "./tests/changes.mjs";
 import * as connect from "./tests/connect.mjs";
 import * as contract from "./tests/contract.mjs";
 import * as dialog from "./tests/dialog.mjs";
 import * as edit from "./tests/edit.mjs";
 import * as freeze from "./tests/freeze.mjs";
+import * as history from "./tests/history.mjs";
 import * as home from "./tests/home.mjs";
 import * as loan from "./tests/loan.mjs";
 import * as mass from "./tests/mass.mjs";
@@ -32,8 +34,8 @@ import * as unknown from "./tests/unknown.mjs";
 
 /** In the order they run: the ones that only read first. */
 const TESTS = [
-  connect, home, dialog, palette, scouting, edit, mass, contract, move, sign, medical, loan, stadium, names, ties, staff,
-  release, tactics, freeze, unknown,
+  connect, home, dialog, palette, scouting, edit, history, mass, changes, contract, move, sign, medical, loan, stadium, names, ties,
+  staff, release, tactics, freeze, unknown,
 ];
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
