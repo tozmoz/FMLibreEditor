@@ -1025,8 +1025,20 @@ impl Session {
     /// The UID of another player of the team the player `target` plays for who wears the
     /// squad number `number`, among the players who play for that team now.
     fn squad_number_holder(&self, target: &Target, number: i64) -> Result<Option<u32>, EditError> {
+        let team = self.process.read_u64(target.address + self.layout.player.team)?;
+        Ok(self.squad_number_holder_in(team, target.address, number)?)
+    }
+
+    /// The UID of a player who plays for `team`, other than the one at `except`, and wears the squad number `number`:
+    /// of the players its list holds, those whose own team it is. The ones it has lent out keep their numbers and do
+    /// not count.
+    pub(crate) fn squad_number_holder_in(
+        &self,
+        team: u64,
+        except: u64,
+        number: i64,
+    ) -> fmlibre_mem::Result<Option<u32>> {
         let (p, c) = (&self.layout.player, &self.layout.contract);
-        let team = self.process.read_u64(target.address + p.team)?;
         if !is_user_pointer(team) {
             return Ok(None);
         }
@@ -1038,7 +1050,7 @@ impl Session {
         }
         for element in self.process.read_bytes(begin, (end - begin) as usize)?.as_chunks::<8>().0 {
             let player = u64::from_le_bytes(*element);
-            if player == target.address || self.process.read_u64(player + p.team)? != team {
+            if player == except || self.process.read_u64(player + p.team)? != team {
                 continue;
             }
             let shift = crate::players::person_shift(&self.process, p, player);
@@ -1269,31 +1281,22 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn a_squad_number_goes_back_only_while_no_team_mate_wears_it() {
-        // Eight blocks of 0x800 bytes: the team, three players, their three contracts and the team's list of players.
-        const BLOCK: u64 = 0x800;
-        let memory = vec![0u64; 8 * BLOCK as usize / size_of::<u64>()];
-        let block = |index: u64| memory.as_ptr() as u64 + index * BLOCK;
+        use crate::session::Blocks;
+
+        // Eight blocks: the team, three players, their three contracts and the team's list of players.
+        let memory = Blocks::new(8);
         let layout = crate::layout_for(27).expect("FM27 layout");
         let process =
             fmlibre_mem::Process::open_read_write(std::process::id()).expect("the test opens its own process");
         let session = Session::over(process, layout);
-        let (p, c, t) = (&session.layout.player, &session.layout.contract, &session.layout.team);
-        let put = |at: u64, bytes: &[u8]| session.process.write_bytes(at, bytes).expect("memory of the test's own");
-        let put_pointer = |at: u64, value: u64| put(at, &value.to_le_bytes());
 
         // A wears 10, B 7 and C 5. C is on loan: he is in this team's list, but plays for another team.
-        let (team, list) = (block(0), block(7));
-        let (players, uids, numbers) = ([block(1), block(2), block(3)], [11u32, 22, 33], [10u8, 7, 5]);
-        let end = list + 8 * players.len() as u64;
-        put(team + t.players, &[list, end, end].iter().flat_map(|word| word.to_le_bytes()).collect::<Vec<u8>>());
+        let (team, list) = (memory.at(0), memory.at(7));
+        let (players, uids, numbers) = ([memory.at(1), memory.at(2), memory.at(3)], [11u32, 22, 33], [10u8, 7, 5]);
+        session.lay_out_team(team, list, &players);
         for (i, &player) in players.iter().enumerate() {
-            let contract = block(4 + i as u64);
-            put_pointer(list + 8 * i as u64, player);
-            put(player + p.uid, &uids[i].to_le_bytes());
-            put_pointer(player + p.team, if i == 2 { list } else { team });
-            put_pointer(player + p.contract, contract);
-            put_pointer(contract + c.owner, player + p.identity());
-            put(contract + c.squad_number, &[numbers[i]]);
+            let plays_for = if i == 2 { list } else { team };
+            session.lay_out_player(player, memory.at(4 + i as u64), uids[i], plays_for, numbers[i]);
         }
 
         let number = session.field(Entity::Player, "contract.squad_number").expect("a player's squad number");

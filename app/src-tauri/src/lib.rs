@@ -1705,7 +1705,8 @@ impl Connection {
                 self.session.refund_fee(&moved.paid)?;
                 if let Err(err) = self.session.undo_club_move(&moved.done) {
                     let _ = self.session.repay_fee(&moved.paid);
-                    return Err(err.into());
+                    // A squad number a team-mate has been given since is refused, naming him.
+                    return Err(self.with_names(err.into()));
                 }
                 for row in moved.rows {
                     self.players.update(row.uid, |player| {
