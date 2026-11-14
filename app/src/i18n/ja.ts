@@ -253,6 +253,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `このデータはゲーム内で変更されました。${reload}。`,
   "app.noChange": (p) => `変更 ${p.id} はありません。`,
   "app.alreadyUndone": () => "この変更はすでに元に戻されています。",
+  "app.historyOnly": () => "この変更はアプリが最後に接続する前に行われ、元に戻すには当時のゲームのメモリが必要でした：手動で元に戻してください。",
+  "app.history": (p) => `履歴を消去できませんでした：${p.reason}`,
   "export.failed": (p) => `ファイルを書き込めませんでした：${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor は ${p.folder} に書き込めません。macOS から書類フォルダの使用について確認された場合は、` +
@@ -1202,7 +1204,6 @@ export const ja: Strings = {
     unknownBuildText:
       "ゲームがアップデートされた可能性があります。FMLibreEditor はゲームのデータを見つけて検査しましたが、テストされていない" +
       "バージョンには、許可するまで書き込みません。新しい FMLibreEditor は通常、数日以内に公開されます。",
-    allowedText: "検査が許す範囲で、このセッションでの編集を有効にしました。セーブデータのバックアップを取っておいてください。",
     failedTitle: "ゲームのデータの一部が検査に合格しませんでした",
     reloadHint: "セーブの読み込み中だった場合は、「データを再読み込み」で再度検査します。",
     noDate: "ゲーム内の日付が検査に合格しなかったため、年齢は表示されません。",
@@ -1294,8 +1295,31 @@ export const ja: Strings = {
 
   changes: {
     nav: "変更履歴",
-    title: "このセッションの変更",
-    hint: "新しい順。ゲームが書き込んだ値をまだ保持している間だけ、変更を元に戻せます。",
+    title: "変更",
+    hint:
+      "新しい順。アプリはキャリアごとに変更を保存するため、再起動後も一覧に表示されます。ゲームが書き込んだ値をまだ保持している間だけ、変更を元に戻せます。",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count: number, missing: number) =>
+      `以前のセッションの${changeCount(count)}` + (missing > 0 ? `（うち${format(missing)}件はデータ読み込み時にゲーム内にありませんでした）` : "") + "。移籍、治療、結びつき、条項、名前の変更は履歴として残り、元に戻せません。",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "以前",
+    earlierTitle: "アプリが最後に接続する前に書き込まれ、このキャリアの履歴に保存されています",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "ゲーム内",
+    inGameTitle: "データを最後に読み込んだとき、ゲームはこの値を保持していました",
+    notInGame: "ゲーム内になし",
+    notInGameTitle: "データを最後に読み込んだとき、ゲームはこの値を保持していませんでした：変更後にゲームを保存しなかったか、その後ゲームが値を変えました",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "履歴",
+    historyOnlyTitle: "アプリが最後に接続する前に行われた変更：元に戻すには当時のゲームのメモリが必要でした",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count: number) => `${format(count)}件はゲーム内になし`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "履歴を消去",
+    clearHistoryTitle: "この一覧を空にし、このキャリアの履歴を消去します。変更はゲームに残ります。",
+    confirmClear: "このキャリアの履歴を消去しますか？変更はゲームに残りますが、ここからは元に戻せなくなります。",
+    keepHistory: "残す",
+    clearConfirm: "消去",
     continueHint: "変更はゲームが進行した後に表示されます：ゲームで「続ける」を押してください。",
     swappedWith: (name: string) => `${name}とトレード`,
     released: (name: string) => `${name}を契約解除`,
@@ -1337,6 +1361,28 @@ export const ja: Strings = {
     previous: "前へ",
     next: "次へ",
     range: (first: number, last: number, total: number) => `${format(total)}件中 ${format(first)}–${format(last)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "名前、UID、項目、クラブで変更を検索",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "セッション",
+    sessions: { all: "すべて", this: "このセッション", earlier: "以前のセッション" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "元に戻していない",
+    notUndoneTitle: "まだ有効な変更のみ",
+    notInGameFilterTitle: "データを最後に読み込んだとき、ゲームが保持していなかった以前の変更のみ",
+    /** Takes the search text and every choice away. */
+    clearFilter: "フィルターを解除",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching: number, total: number, undone: number) => {
+      const count = `${changes(total)}のうち${format(matching)}件`;
+      return undone === 0 ? count : `${count} · ${format(undone)}件を元に戻し済み`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching: number, total: number) => `${format(total)}件中${format(matching)}件が一致`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "検索とフィルターに一致する変更はありません。",
   },
 
   export: {
@@ -1389,6 +1435,24 @@ export const ja: Strings = {
     show: "フォルダで表示",
     showTitle: "ファイルをフォルダで表示します",
     close: "閉じる",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "一覧に表示されている変更を、表計算ソフトやスクリプト向けのCSVファイルに書き出します",
+      title: "変更を書き出し",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count: number, filtering: boolean) =>
+        count === 0
+          ? "検索とフィルターに一致する変更はありません。"
+          : filtering
+            ? `${changes(count)}：検索とフィルターで選ばれたもの（新しい順）。`
+            : `${changes(count)}：このキャリアの履歴すべて（新しい順）。`,
+      contents:
+        "各変更の時刻（ローカル時刻、UTCとの差つき）、名前とUID、項目、変更前と変更後の値（ゲームが保存している形と、" +
+        "ここでの表示）、一覧がその下に示す補足、含まれていた一括編集、元に戻した時刻、以前のセッションのものか、" +
+        "ゲーム内にあるか。ゲームは何も変更されません。",
+      done: (count: number, file: string) => `${changes(count)}を ${file} に書き出しました`,
+    },
   },
 
   massEdit: {

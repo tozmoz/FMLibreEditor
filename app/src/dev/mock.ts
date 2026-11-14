@@ -586,6 +586,8 @@ function logTie(player: PlayerSummary, before: Tie | null, after: Tie | null, ti
     old: before?.targetUid ?? 0,
     new: after?.targetUid ?? 0,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch: null,
     tie: { from: end(before), to: end(after) },
   };
@@ -751,6 +753,8 @@ function logClause(player: PlayerSummary, before: Clause | null, after: Clause |
     old: before?.amount ?? 0,
     new: after?.amount ?? 0,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch: null,
     clause: { from: before, to: after },
   };
@@ -810,6 +814,8 @@ function renameStadium(uid: number, name: string): LoggedChange {
     old: utf8Bytes(room.name),
     new: bytes,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch: null,
     stadium: { from: room.name, to: name },
   };
@@ -896,6 +902,8 @@ function renamePlayer(uid: number, kind: NameKind, name: string | null): LoggedC
     old: from === null ? 0 : utf8Bytes(from),
     new: name === null ? 0 : utf8Bytes(name),
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch: null,
     personName: { from, to: name },
   };
@@ -985,6 +993,8 @@ function keepPlaying(uid: number): LoggedChange {
     old: retires.year * 10000 + retires.month * 100 + retires.day,
     new: 0,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch: null,
   };
   changes.push(logged);
@@ -1182,8 +1192,175 @@ const written = new Map<string, FieldValues>();
 /** The city of birth a fixture player was set to, if he was. */
 const writtenCity = (uid: number): number | undefined => written.get(`player:${uid}`)?.city_of_birth;
 
-/** Every change written in this browser session, oldest first. */
-const changes: LoggedChange[] = [];
+/**
+ * Every change written in this browser session, oldest first, after the earlier ones the real app would list from its
+ * history file (see `earlier`): the preview shows each kind of row they make.
+ */
+const changes: LoggedChange[] = (() => {
+  const day = 86_400_000;
+  const club = (index: number) => ({ name: CLUBS[index], uid: 500 + index * 7 });
+  const [first, second, third, fourth, fifth, sixth, seventh] = players;
+  const earlier = (rest: Omit<LoggedChange, "id" | "earlier" | "batch" | "undoneAt">): Omit<LoggedChange, "id"> => ({
+    ...rest,
+    earlier: true,
+    batch: null,
+    undoneAt: null,
+  });
+  // A mass edit of the players' morale, made on its own number so that the mass edits of this session cannot clash.
+  const morale = (player: PlayerSummary, inGame: boolean) =>
+    earlier({
+      at: Date.now() - 4 * day,
+      name: player.name,
+      entity: "player",
+      uid: player.uid,
+      field: "morale",
+      old: 12,
+      new: 20,
+      undoable: true,
+      inGame,
+    });
+  const entries: Omit<LoggedChange, "id">[] = [
+    earlier({
+      at: Date.now() - 6 * day,
+      name: first.name,
+      entity: "player",
+      uid: first.uid,
+      field: "attribute.finishing",
+      old: 70,
+      new: 85,
+      undoable: true,
+      inGame: true,
+    }),
+    earlier({
+      at: Date.now() - 5 * day,
+      name: CLUBS[0],
+      entity: "club",
+      uid: club(0).uid,
+      field: "finance.transfer_budget",
+      old: 5_000_000,
+      new: 25_000_000,
+      undoable: true,
+      inGame: false,
+    }),
+    earlier({
+      at: Date.now() - 4.5 * day,
+      name: second.name,
+      entity: "player",
+      uid: second.uid,
+      field: "club",
+      old: club(1).uid,
+      new: club(2).uid,
+      moved: { from: club(1).name, to: club(2).name },
+      undoable: false,
+      inGame: true,
+    }),
+    earlier({
+      at: Date.now() - 4.2 * day,
+      name: third.name,
+      entity: "player",
+      uid: third.uid,
+      field: "nation",
+      old: 0,
+      new: 0,
+      objects: { from: "England", to: "Türkiye" },
+      undoable: false,
+      inGame: true,
+    }),
+    { ...morale(fourth, true), batch: 9001 },
+    { ...morale(fifth, false), batch: 9001 },
+    { ...morale(sixth, true), batch: 9001 },
+    {
+      // This one was taken back, from this app, a day after it was written.
+      ...earlier({
+        at: Date.now() - 3 * day,
+        name: seventh.name,
+        entity: "player",
+        uid: seventh.uid,
+        field: "attribute.passing",
+        old: 60,
+        new: 90,
+        undoable: true,
+      }),
+      undoneAt: Date.now() - 2 * day,
+    },
+    // What the search looks through beside a person's name: the names of a rename, of a stadium, the clubs of a staff
+    // move, and the players of a captaincy.
+    earlier({
+      at: Date.now() - 2.8 * day,
+      name: players[7].name,
+      entity: "player",
+      uid: players[7].uid,
+      field: "name.last",
+      old: 4,
+      new: 9,
+      personName: { from: "Kaya", to: "Yıldırım" },
+      undoable: false,
+    }),
+    earlier({
+      at: Date.now() - 2.6 * day,
+      name: CLUBS[3],
+      entity: "club",
+      uid: club(3).uid,
+      field: "stadium.name",
+      old: 13,
+      new: 14,
+      stadium: { from: "Lindenau Park", to: "Lindenau Arena" },
+      undoable: false,
+    }),
+    earlier({
+      at: Date.now() - 2.4 * day,
+      name: staff[1].name,
+      entity: "staff",
+      uid: staff[1].uid,
+      field: "club",
+      old: club(2).uid,
+      new: club(0).uid,
+      moved: { from: club(2).name, to: club(0).name },
+      undoable: false,
+      inGame: true,
+    }),
+    earlier({
+      at: Date.now() - 2.2 * day,
+      name: CLUBS[1],
+      entity: "club",
+      uid: club(1).uid,
+      field: "vice_captain",
+      old: players[3].uid,
+      new: players[8].uid,
+      captaincy: { team: 0, kind: 0, ageLimit: null, from: players[3].name, to: players[8].name, swapped: false },
+      undoable: false,
+    }),
+  ];
+  // `?longlog` puts a long history before those: twenty thousand changes, half of them in a hundred mass edits of a
+  // hundred changes each, none in reach of an Undo, to see the paging and the search work through a log that long.
+  if (new URLSearchParams(window.location.search).has("longlog")) {
+    const fieldsOf = [
+      { field: "attribute.finishing", old: 55, new: 80 },
+      { field: "attribute.passing", old: 60, new: 75 },
+      { field: "morale", old: 10, new: 20 },
+      { field: "contract.wage", old: 40_000, new: 90_000 },
+    ];
+    const long: Omit<LoggedChange, "id">[] = [];
+    // Oldest first, as the log is kept.
+    for (let i = 19_999; i >= 0; i--) {
+      const player = players[i % players.length];
+      long.push({
+        at: Date.now() - 10 * day - i * 60_000,
+        name: player.name,
+        entity: "player",
+        uid: player.uid,
+        ...fieldsOf[i % fieldsOf.length],
+        undoneAt: i % 7 === 0 ? Date.now() - 9 * day : null,
+        batch: i % 2 === 0 ? 9100 + Math.floor(i / 200) : null,
+        earlier: true,
+        undoable: false,
+        ...(i % 7 === 0 || i % 5 === 0 ? {} : { inGame: i % 3 !== 0 }),
+      });
+    }
+    entries.unshift(...long);
+  }
+  return entries.map((entry, index): LoggedChange => ({ ...entry, id: index + 1 }));
+})();
 
 /** A generated profile with the values written through the editor on top. */
 function withWritten<D extends PlayerDetails | StaffDetails>(entity: Entity, d: D): D {
@@ -1514,6 +1691,8 @@ function applyEdits(entity: Entity, uid: number, edits: FieldEdit[]): ApplyRepor
       old,
       new: edit.value,
       undoneAt: null,
+      earlier: false,
+      undoable: true,
       batch: null,
     };
     changes.push(logged);
@@ -1680,6 +1859,8 @@ function logStaff(member: StaffSummary, field: string, old: number, value: numbe
     old,
     new: value,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch: null,
     ...(moved && { moved }),
   };
@@ -1718,6 +1899,19 @@ function undoChange(id: number): LoggedChange {
   }
   if (entry.undoneAt !== null) {
     throw failure("app.alreadyUndone", "This change has already been undone.");
+  }
+  if (!entry.undoable) {
+    throw failure(
+      "app.historyOnly",
+      "This change was made before the app last connected, and undoing it needed the game's memory as it was then: change it back by hand.",
+    );
+  }
+  if (entry.earlier) {
+    // An earlier change is written back as a new edit would be, but the mock has no memory of the game as it was: it
+    // puts the old value back without looking at what the game holds.
+    writeValue(entry.entity, entry.uid, entry.field, entry.old);
+    entry.undoneAt = Date.now();
+    return { ...entry };
   }
   const staffRow = entry.entity === "staff" ? staffUndo.get(entry.id) : undefined;
   if (staffRow) {
@@ -2019,6 +2213,8 @@ function makeLoanPermanent(uid: number, terms: MoveTerms, fee?: number): LoggedC
     old: preview.from.uid,
     new: preview.to.uid,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch: null,
     moved: { from: preview.from.name, to: preview.to.name, ...(preview.fee && { fee: preview.fee.fee }) },
   };
@@ -2063,6 +2259,8 @@ function movePlayer(uid: number, clubUid: number, terms: MoveTerms, fee?: number
     old: preview.from?.uid ?? 0,
     new: preview.to.uid,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch: null,
     moved: {
       ...(preview.from && { from: preview.from.name }),
@@ -2108,6 +2306,8 @@ function releasePlayer(uid: number): LoggedChange {
     old: from.uid,
     new: 0,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch: null,
     moved: { from: from.name },
   };
@@ -2161,6 +2361,8 @@ function swapPlayers(uid: number, otherUid: number): LoggedChange {
     old: preview.from.uid,
     new: preview.to.uid,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch: null,
     moved: { from: preview.from.name, to: preview.to.name, with: other.name },
   };
@@ -2242,6 +2444,8 @@ function healPlayer(uid: number, batch: number | null = null): LoggedChange {
     old: injuries,
     new: 0,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch,
   };
   changes.push(logged);
@@ -2274,6 +2478,8 @@ function liftBans(uid: number, batch: number | null = null): LoggedChange {
     old: bans,
     new: 0,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch,
   };
   changes.push(logged);
@@ -2425,6 +2631,8 @@ function setCaptain(clubUid: number, index: number, role: CaptainRole, uid: numb
     old: old ?? 0,
     new: uid,
     undoneAt: null,
+    earlier: false,
+    undoable: true,
     batch: null,
     captaincy: {
       team: index,
@@ -2488,6 +2696,8 @@ function teamAction(clubUid: number, index: number, action: TeamAction): MassRep
         old,
         new: 100,
         undoneAt: null,
+        earlier: false,
+        undoable: true,
         batch,
       });
       report.applied++;
@@ -2513,6 +2723,8 @@ function teamAction(clubUid: number, index: number, action: TeamAction): MassRep
         old,
         new: best,
         undoneAt: null,
+        earlier: false,
+        undoable: true,
         batch,
       });
       report.applied++;
@@ -2566,6 +2778,8 @@ function setValues(
       old: now[field],
       new: value,
       undoneAt: null,
+      earlier: false,
+      undoable: true,
       batch: report.batch,
     };
     changes.push(logged);
@@ -2720,7 +2934,16 @@ function applyMass(id: number): MassReport {
       continue;
     }
     writeValue(entity, change.uid, change.field, change.new);
-    changes.push({ ...change, id: changes.length + 1, at: Date.now(), entity, undoneAt: null, batch });
+    changes.push({
+      ...change,
+      id: changes.length + 1,
+      at: Date.now(),
+      entity,
+      undoneAt: null,
+      earlier: false,
+      undoable: true,
+      batch,
+    });
     report.applied++;
   }
   return report;
@@ -3298,6 +3521,18 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       const report: ExportReport = { path: `${folder}\\${file}`, file, folder, count: selected.length, skipped: 0 };
       return report as T;
     }
+    case "export_changes": {
+      // Nothing is written in a browser: the report names the file a real export would have, and the rows the window
+      // sent are kept in `window.lastChangesExport` for a look.
+      const rows = (args?.rows ?? []) as unknown[];
+      (window as unknown as { lastChangesExport?: unknown }).lastChangesExport = { rows, format: args?.format };
+      const folder = "C:\\Users\\you\\Documents\\FMLibreEditor\\Exports";
+      const two = (n: number) => String(n).padStart(2, "0");
+      const stem = gameDate ? `changes-${gameDate.year}-${two(gameDate.month)}-${two(gameDate.day)}` : "changes";
+      const file = `${stem}.csv`;
+      const report: ExportReport = { path: `${folder}\\${file}`, file, folder, count: rows.length, skipped: 0 };
+      return report as T;
+    }
     case "open_export":
     case "show_export":
       return null as T;
@@ -3337,6 +3572,13 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       return changes.map((c) => ({ ...c })).reverse() as T;
     case "undo_change":
       return undoChange(Number(args?.id)) as T;
+    case "clear_history":
+      changes.length = 0;
+      // The undo notes of the changes are keyed by their ids, which start from 1 again.
+      for (const notes of [staffUndo, tieUndo, clauseUndo, captainUndo]) {
+        notes.clear();
+      }
+      return undefined as T;
     case "plan_mass_edit":
       return planMass(
         args?.entity as Entity,

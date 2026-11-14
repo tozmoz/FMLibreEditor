@@ -178,6 +178,8 @@ const errors: ErrorTexts = {
 
   // The app and its change log
   "app.alreadyUndone": () => "此改动已撤销。",
+  "app.historyOnly": () => "此改动是在应用上次连接之前做出的，撤销它需要当时的游戏内存：请手动改回。",
+  "app.history": (p) => `无法清除历史记录：${p.reason}`,
   "app.dataChanged": () => `游戏中的这些数据已发生变化；${reload}。`,
   "app.internal": () => "应用发生了意外错误。",
   "app.noChange": (p) => `改动 ${p.id} 不存在。`,
@@ -1343,9 +1345,7 @@ export const zhCN: Strings = {
     unknownBuild: (game: string) => `FMLibreEditor 尚未验证 ${game}`,
     unknownBuildText:
       "游戏可能已更新。FMLibreEditor 已找到并检查游戏数据，但在你明确启用前，不会向未经验证的版本写入。新版本的 FMLibreEditor 通常会在数日内推出。",
-    /** Once Edit anyway was pressed. */
-    allowedText: "本次会话已启用编辑，具体范围取决于安全检查结果。请保留存档备份。",
-    /** The headline when checks did not pass on a version the editor knows, and what may help. */
+    /** The headline when checks did not pass on a version the editor knows or may edit, and what may help. */
     failedTitle: "游戏中的部分数据未通过检查",
     reloadHint: "如果存档仍在载入，请点击“重新读取数据”再次检查。",
     /** The in-game date did not check out: shown apart, as it leaves nothing read-only. */
@@ -1478,8 +1478,31 @@ export const zhCN: Strings = {
   changes: {
     /** The entry in the sidebar. */
     nav: "改动记录",
-    title: "本次会话的改动",
-    hint: "按时间从新到旧排列。只有游戏中的值仍与写入值一致时，才能撤销改动。",
+    title: "改动",
+    hint:
+      "按时间从新到旧排列。应用会保存每个存档的改动，重启后仍会列出。只有游戏中的值仍与写入值一致时，才能撤销改动。",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count: number, missing: number) =>
+      `来自以往会话的${changeCount(count)}` + (missing > 0 ? `，其中 ${format(missing)} 项在读取数据时不在游戏中` : "") + "。其中的转会、治疗、关联、条款和姓名改动仅作为历史记录保留，无法撤销。",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "以往",
+    earlierTitle: "写入于应用上次连接之前，保存在此存档的历史记录中",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "在游戏中",
+    inGameTitle: "上次读取数据时，游戏中是这个值",
+    notInGame: "不在游戏中",
+    notInGameTitle: "上次读取数据时，游戏中不是这个值：改动后没有保存游戏，或者游戏此后又改了这个值",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "历史",
+    historyOnlyTitle: "在应用上次连接之前做出：撤销它需要当时的游戏内存",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count: number) => `${format(count)} 项不在游戏中`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "清除历史",
+    clearHistoryTitle: "清空此列表并忘记此存档的历史记录。改动仍保留在游戏中。",
+    confirmClear: "清除此存档的历史记录？改动仍保留在游戏中，但无法再从这里撤销。",
+    keepHistory: "保留",
+    clearConfirm: "清除",
     /** Under the hint: a change shows in the game only after it has moved on once. */
     continueHint: "在游戏中点击“继续”后，改动才会显示。",
     /** Under a move to another club that was a swap: the player who went the other way. */
@@ -1542,6 +1565,28 @@ export const zhCN: Strings = {
     next: "下一页",
     /** Between the buttons: the rows on show and how many there are, e.g. "101–200 of 450". */
     range: (first: number, last: number, total: number) => `${format(first)}–${format(last)} / ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "按姓名、UID、字段或俱乐部搜索改动",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "会话",
+    sessions: { all: "全部", this: "本次会话", earlier: "以往会话" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "未撤销",
+    notUndoneTitle: "仅显示仍然有效的改动",
+    notInGameFilterTitle: "仅显示上次读取数据时游戏中没有的以往改动",
+    /** Takes the search text and every choice away. */
+    clearFilter: "清除筛选",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching: number, total: number, undone: number) => {
+      const count = `${changeCount(total)}中的 ${format(matching)} 项`;
+      return undone === 0 ? count : `${count} · 已撤销 ${format(undone)} 项`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching: number, total: number) => `${format(total)} 项中有 ${format(matching)} 项匹配`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "没有符合搜索和筛选条件的改动。",
   },
 
   /** Exporting players or clubs to a file: the button in the toolbar of the player and club lists and its dialog. */
@@ -1598,6 +1643,23 @@ export const zhCN: Strings = {
     show: "在文件夹中显示",
     showTitle: "在所在文件夹中显示该文件",
     close: "关闭",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "将列表中显示的改动写入 CSV 文件，供表格或脚本使用",
+      title: "导出改动",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count: number, filtering: boolean) =>
+        count === 0
+          ? "没有符合搜索和筛选条件的改动。"
+          : filtering
+            ? `${changeCount(count)}（按搜索和筛选结果，最新的在前）。`
+            : `${changeCount(count)}（此存档的全部历史，最新的在前）。`,
+      contents:
+        "每项改动的时间（本地时间，含与 UTC 的偏移）、姓名和 UID、字段、旧值和新值（分别为游戏中的存储值和此处显示的值）、" +
+        "列表在其下方显示的说明、所属的批量编辑、撤销时间，以及是否来自以往会话、是否在游戏中。游戏中不会有任何改动。",
+      done: (count: number, file: string) => `已将 ${changeCount(count)} 导出到 ${file}`,
+    },
   },
 
   /** Mass editing: the button in the toolbar of a list and the dialog it opens. */
