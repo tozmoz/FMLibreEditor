@@ -1,4 +1,5 @@
 mod bridge;
+mod self_update;
 
 use std::cell::OnceCell;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -2397,24 +2398,6 @@ fn graphics_info(graphics: State<'_, Graphics>) -> GraphicsInfo {
     }
 }
 
-/// Whether this copy of the app can update itself: download a new version, check its signature and put it in place.
-/// On Windows, a copy the installer put in place, which has its uninstaller beside it; on macOS, the app run from its
-/// bundle, unless macOS runs it from a read-only copy, as it does an app opened where it was downloaded (App
-/// Translocation). A portable copy and a development build open the release's page instead.
-#[tauri::command]
-fn can_self_update() -> bool {
-    let Ok(exe) = std::env::current_exe() else {
-        return false;
-    };
-    if cfg!(windows) {
-        exe.parent().is_some_and(|folder| folder.join("uninstall.exe").is_file())
-    } else if cfg!(target_os = "macos") {
-        app_bundle(&exe).is_some_and(|bundle| !bundle.to_string_lossy().contains("/AppTranslocation/"))
-    } else {
-        false
-    }
-}
-
 /// The macOS app bundle the executable `exe` is in (`FMLibreEditor.app/Contents/MacOS/FMLibreEditor`); none for a
 /// development build, which runs from the target folder.
 fn app_bundle(exe: &Path) -> Option<&Path> {
@@ -2423,13 +2406,6 @@ fn app_bundle(exe: &Path) -> Option<&Path> {
     let bundle = contents.parent()?;
     let inside = macos.file_name()? == "MacOS" && contents.file_name()? == "Contents" && bundle.extension()? == "app";
     inside.then_some(bundle)
-}
-
-/// Starts the app again: on macOS, once an update has put the new version in place of this one, so that it runs. On
-/// Windows the update's installer starts the new version itself (see app/src/update.ts).
-#[tauri::command]
-fn restart_app(app: tauri::AppHandle) {
-    app.restart();
 }
 
 /// Serves `fmgfx` requests such as `/club/728`, `/face/7458500` or `/flag/765` from the
@@ -4516,7 +4492,7 @@ pub fn run() {
         // Opens the page of a new release in the browser (see app/src/update.ts).
         .plugin(tauri_plugin_opener::init())
         // Downloads a new version, checks its signature against the key in tauri.conf.json and installs it: the
-        // installer on Windows, the app in place of this one on macOS.
+        // installer on Windows, the app in place of this one on macOS (see self_update.rs).
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(AppState::default())
         .manage(Graphics::default())
@@ -4655,8 +4631,9 @@ pub fn run() {
             team_action,
             max_attributes,
             graphics_info,
-            can_self_update,
-            restart_app,
+            self_update::can_self_update,
+            self_update::install_update,
+            self_update::restart_app,
             bridge::bridge_status,
             bridge::set_up_bridge,
             bridge::remove_bridge

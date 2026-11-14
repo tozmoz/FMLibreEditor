@@ -72,9 +72,10 @@ for the latest release; it sends nothing else.
   `FMLibreEditor.exe` in place of the old one.
 - **macOS:** **Update** downloads the new app, checks that it was signed with FMLibreEditor's
   key, and puts it in place of the old one: the app closes and opens again with the new
-  version. macOS may ask for your password if your account cannot change the Applications
-  folder. (Versions up to 0.4.1 have no Update: download the next one by hand and put it in
-  Applications in place of the old one.) To remove it, quit Steam, click **Remove the
+  version, wherever the app is. macOS may ask for your password if your account cannot
+  change the Applications folder. (Versions up to 0.4.1 have no Update, and up to 0.5.1 an
+  app opened where it was downloaded offers Download instead: download the next one by hand
+  and put it in Applications in place of the old one.) To remove it, quit Steam, click **Remove the
   bridge**, then move the app to the Bin.
 
 ## If something goes wrong

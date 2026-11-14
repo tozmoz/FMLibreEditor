@@ -1103,8 +1103,10 @@ dependencies = [
 name = "fmlibre-app"
 version = "0.5.1"
 dependencies = [
+ "core-foundation 0.10.1",
  "fmlibre-core",
  "fmlibre-mem",
+ "libc",
  "serde",
  "serde_json",
  "tauri",
