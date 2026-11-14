@@ -543,6 +543,47 @@ impl Session {
     }
 }
 
+#[cfg(all(test, windows))]
+impl Session {
+    /// A session over `process`, a test's own, with `layout` and no game, profile or arrays behind it: for the writes
+    /// that only follow the pointers a test has laid out in memory of its own, such as an undo (see `Session::revert`),
+    /// which neither the build nor the checks of the game's health are asked about.
+    pub(crate) fn over(process: Process, layout: Layout) -> Self {
+        Self {
+            process,
+            game: GameInfo {
+                pid: 0,
+                exe_path: Default::default(),
+                storefront: crate::game::Storefront::Unknown,
+                edition: Some(27),
+                package_full_name: None,
+                package_version: None,
+                steam_build: None,
+            },
+            plugin: Module { name: GAME_PLUGIN.to_owned(), base: 0, size: 0, path: Default::default() },
+            fingerprint: PluginFingerprint::Pe { size_of_image: 0, link_timestamp: 0 },
+            profile: None,
+            layout,
+            arrays: EntityArrays::none(),
+            finance_class: OnceLock::new(),
+            stadium_class: OnceLock::new(),
+            retirement_class: OnceLock::new(),
+            retirement_place: Mutex::new(None),
+            game_class: OnceLock::new(),
+            game_place: Mutex::new(None),
+            save_mark: Mutex::new(SaveMark::default()),
+            save_vouched: AtomicBool::new(false),
+            selection_class: OnceLock::new(),
+            loan_class: OnceLock::new(),
+            own_memory: Mutex::new(None),
+            pools_found: Mutex::new(Vec::new()),
+            health: Mutex::new(None),
+            unknown_build_allowed: AtomicBool::new(false),
+            search_all: false,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
