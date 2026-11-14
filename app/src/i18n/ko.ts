@@ -1036,8 +1036,9 @@ export const ko: Strings = {
     reputationTitle: "명성",
 
     tabsLabel: "구단 섹션",
-    tabs: { overview: "개요", squad: "선수단", stadium: "경기장" },
+    tabs: { overview: "개요", squad: "선수단", staff: "스태프", stadium: "경기장" },
     squadLocked: "선수단을 열려면 편집을 마치세요",
+    staffLocked: "스태프를 열려면 편집을 마치세요",
 
     facilities: "시설",
 
@@ -1093,6 +1094,51 @@ export const ko: Strings = {
     info: "구단 정보",
     seasonTickets: "시즌권",
     socialMedia: "소셜 미디어 팔로워",
+  },
+
+  clubStaff: {
+    loading: "스태프를 읽는 중…",
+    empty: "게임이 이 구단의 스태프를 두지 않습니다. 이 세이브에서 플레이하지 않는 리그의 구단에는 스태프가 없습니다.",
+    count: (total, staying) =>
+      staying === 0 ? `스태프 ${format(total)}명` : `스태프 ${format(total)}명 · 나머지를 방출해도 ${format(staying)}명은 남습니다`,
+
+    actionsLabel: "스태프 전체에 대한 작업",
+    releaseAll: (count) => (count === 0 ? "스태프 전원 방출" : `스태프 전원 방출 (${format(count)}명)`),
+    releaseAllTitle: "나와 이사진을 뺀 구단의 모든 스태프를 한 번에 방출합니다. 먼저 확인 창이 열립니다",
+    releaseNone: "이 구단에는 방출할 수 있는 스태프가 없습니다",
+    hint: "나와 이사진을 뺀 모두가 곧바로 구단을 떠납니다. 변경 내역 화면에서도 되돌릴 수 있습니다.",
+    released: (count) => `스태프 ${format(count)}명을 방출했습니다`,
+    refused: (name, reason) => `${name}: ${reason}`,
+    undo: "되돌리기",
+    undoTitle: "방출한 스태프를 같은 계약으로 구단에 되돌립니다",
+
+    tableLabel: "구단 스태프",
+    staysColumn: "잔류",
+    stays: {
+      you: "나",
+      board: "이사진",
+      player: "선수 겸직",
+      held: "구단이 따로 보유",
+      other: "방출할 수 없음",
+    },
+
+    title: "스태프 전원 방출",
+    from: "구단",
+    leaving: (count) => `${format(count)}명이 구단을 떠납니다`,
+    staying: (count) => `${format(count)}명이 남습니다`,
+    more: (count) => `외 ${format(count)}명`,
+    doesHeading: "바뀌는 것",
+    does: [
+      "각자 곧바로 구단 스태프에서 빠지고 계약이 끝나, 게임의 소속 구단 없는 스태프처럼 무직이 됩니다",
+      "누구에게도 돈이 지급되지 않습니다",
+      "감독이나 풋볼 디렉터 자리는 비워 두어 구단이 채우게 합니다",
+      "나, 이사진, 에디터가 방출할 수 없는 사람은 남습니다",
+      "변경 내역에 기록되며, 되돌리기 한 번으로 모두 같은 계약으로 돌아옵니다",
+    ],
+    dialogHint: "'전원 방출'을 누르기 전까지 게임은 아무것도 바뀌지 않습니다.",
+    release: "전원 방출",
+    releasing: "방출하는 중…",
+    cancel: "취소",
   },
 
   clubList: {
@@ -1867,11 +1913,13 @@ export const ko: Strings = {
   release: {
     button: "방출",
     buttonTitle: "게임에서 이 선수를 소속 구단에서 방출합니다. 자유 계약 선수가 됩니다",
+    staffButtonTitle: "게임에서 이 스태프를 소속 구단에서 방출합니다. 소속 구단이 없어집니다",
 
     title: "방출",
     from: "떠나는 구단",
     checking: "방출을 확인하는 중…",
     ready: (club) => `${club} → 자유 계약`,
+    staffReady: (club) => `${club} → 무직`,
     doesHeading: "방출로 바뀌는 것",
     does: [
       "구단의 모든 팀에서 빠지고 계약이 끝나, 어느 구단이든 영입할 수 있는 자유 계약 선수가 됩니다",
@@ -1879,6 +1927,12 @@ export const ko: Strings = {
       "구단에서 맡던 주장직은 비워 둡니다",
       "게임의 이적 기록에는 표시되지 않습니다",
       "변경 내역에 기록되며, 되돌리기 한 번으로 선수가 같은 계약으로 돌아옵니다",
+    ],
+    staffDoes: [
+      "곧바로 구단 스태프에서 빠지고 계약이 끝나, 게임의 소속 구단 없는 스태프처럼 무직이 됩니다",
+      "누구에게도 돈이 지급되지 않습니다",
+      "감독이나 풋볼 디렉터 자리는 비워 두어 구단이 채우게 합니다",
+      "변경 내역에 기록되며, 되돌리기 한 번으로 같은 계약으로 돌아옵니다",
     ],
 
     hint: "'방출'을 누르기 전까지 게임은 아무것도 바뀌지 않습니다.",

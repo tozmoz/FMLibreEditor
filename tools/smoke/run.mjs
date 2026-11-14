@@ -23,6 +23,7 @@ import * as names from "./tests/names.mjs";
 import * as medical from "./tests/medical.mjs";
 import * as move from "./tests/move.mjs";
 import * as palette from "./tests/palette.mjs";
+import * as release from "./tests/release.mjs";
 import * as scouting from "./tests/scouting.mjs";
 import * as sign from "./tests/sign.mjs";
 import * as stadium from "./tests/stadium.mjs";
@@ -34,7 +35,7 @@ import * as unknown from "./tests/unknown.mjs";
 /** In the order they run: the ones that only read first. */
 const TESTS = [
   connect, home, dialog, palette, scouting, edit, history, mass, changes, contract, move, sign, medical, loan, stadium, names, ties,
-  staff, tactics, freeze, unknown,
+  staff, release, tactics, freeze, unknown,
 ];
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");

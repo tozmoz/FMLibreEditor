@@ -1115,8 +1115,9 @@ export const fr: Strings = {
     reputationTitle: "Réputation",
 
     tabsLabel: "Sections du club",
-    tabs: { overview: "Vue d'ensemble", squad: "Effectif", stadium: "Stade" },
+    tabs: { overview: "Vue d'ensemble", squad: "Effectif", staff: "Staff", stadium: "Stade" },
     squadLocked: "Terminez la modification pour ouvrir l'effectif",
+    staffLocked: "Terminez la modification pour ouvrir le staff",
 
     facilities: "Infrastructures",
 
@@ -1178,6 +1179,53 @@ export const fr: Strings = {
     info: "Infos club",
     seasonTickets: "Abonnements",
     socialMedia: "Followers sur les réseaux sociaux",
+  },
+
+  clubStaff: {
+    loading: "Lecture du staff…",
+    empty: "Le jeu ne garde aucun staff pour ce club\u00a0: les clubs des championnats qui ne sont pas joués dans cette partie n'en ont pas.",
+    count: (total, staying) => {
+      const all = counted(total, "membre du staff", "membres du staff");
+      return staying === 0 ? all : `${all} · ${format(staying)} ${plural(staying) ? "restent" : "reste"} si les autres sont libérés`;
+    },
+
+    actionsLabel: "Actions sur tout le staff",
+    releaseAll: (count) => (count === 0 ? "Libérer tout le staff" : `Libérer tout le staff (${format(count)})`),
+    releaseAllTitle: "Libérer d'un coup tout le staff du club, sauf vous et les dirigeants. Une fenêtre demande d'abord",
+    releaseNone: "Personne dans le staff de ce club ne peut être libéré",
+    hint: "Tous quittent aussitôt le club, sauf vous et les dirigeants. L'annulation est aussi dans la vue Modifications.",
+    released: (count) => counted(count, "membre du staff libéré", "membres du staff libérés"),
+    refused: (name, reason) => `${name}\u00a0: ${reason}`,
+    undo: "Annuler",
+    undoTitle: "Faire revenir au club le staff libéré, avec ses contrats",
+
+    tableLabel: "Le staff du club",
+    staysColumn: "Reste",
+    stays: {
+      you: "Vous",
+      board: "Les dirigeants",
+      player: "Aussi joueur",
+      held: "Retenu par le club",
+      other: "Ne peut être libéré",
+    },
+
+    title: "Libérer tout le staff",
+    from: "Club",
+    leaving: (count) => `${format(count)} ${plural(count) ? "quittent" : "quitte"} le club`,
+    staying: (count) => `${format(count)} ${plural(count) ? "restent" : "reste"}`,
+    more: (count) => `et ${format(count)} de plus`,
+    doesHeading: "Ce que cela fait",
+    does: [
+      "Chacun quitte aussitôt le staff du club, et son contrat prend fin\u00a0: sans emploi, comme le staff sans club du jeu",
+      "Personne n'est payé",
+      "Un poste d'entraîneur ou de directeur sportif reste vacant, que le club pourvoira",
+      "Restent au club\u00a0: vous, les dirigeants et ceux que l'éditeur ne peut pas libérer",
+      "Apparaît dans Modifications, où une seule annulation les fait tous revenir avec les mêmes contrats",
+    ],
+    dialogHint: "Rien ne change dans le jeu tant que vous n'appuyez pas sur Tout libérer.",
+    release: "Tout libérer",
+    releasing: "Libération…",
+    cancel: "Annuler",
   },
 
   clubList: {
@@ -2005,12 +2053,14 @@ export const fr: Strings = {
   release: {
     button: "Libérer",
     buttonTitle: "Libérer ce joueur de son club dans le jeu\u00a0: il devient libre de tout contrat",
+    staffButtonTitle: "Libérer ce membre du staff de son club dans le jeu\u00a0: il se retrouve sans club",
 
     // La fenêtre
     title: "Libération",
     from: "Quitte",
     checking: "Vérification de la libération…",
     ready: (club) => `${club} → libre de tout contrat`,
+    staffReady: (club) => `${club} → sans emploi`,
     doesHeading: "Ce que fait la libération",
     does: [
       "Quitte toutes les équipes du club, et le contrat prend fin\u00a0: un joueur libre que n'importe quel club peut " +
@@ -2019,6 +2069,12 @@ export const fr: Strings = {
       "Tout capitanat dans le club reste vacant",
       "L'historique des transferts du jeu ne la mentionne pas",
       "Apparaît dans Modifications, où une seule annulation fait revenir le joueur avec le même contrat",
+    ],
+    staffDoes: [
+      "Quitte aussitôt le staff du club, et le contrat prend fin\u00a0: sans emploi, comme le staff sans club du jeu",
+      "Personne n'est payé",
+      "Un poste d'entraîneur ou de directeur sportif reste vacant, que le club pourvoira",
+      "Apparaît dans Modifications, où une seule annulation le fait revenir avec le même contrat",
     ],
 
     // Le pied de la fenêtre

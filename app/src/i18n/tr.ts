@@ -1009,8 +1009,9 @@ export const tr: Strings = {
 
     // The tabs under the header
     tabsLabel: "Kulüp bölümleri",
-    tabs: { overview: "Genel", squad: "Kadro", stadium: "Stadyum" },
+    tabs: { overview: "Genel", squad: "Kadro", staff: "Personel", stadium: "Stadyum" },
     squadLocked: "Kadroyu açmak için düzenlemeyi bitirin",
+    staffLocked: "Personeli açmak için düzenlemeyi bitirin",
 
     facilities: "Tesisler",
 
@@ -1065,6 +1066,53 @@ export const tr: Strings = {
     info: "Kulüp bilgisi",
     seasonTickets: "Sezonluk biletler",
     socialMedia: "Sosyal medya takipçileri",
+  },
+
+  clubStaff: {
+    loading: "Personel okunuyor…",
+    empty: "Oyun bu kulüp için personel tutmuyor: bu kayıtta oynanmayan liglerin kulüplerinde personel yoktur.",
+    count: (total, staying) =>
+      staying === 0
+        ? `${format(total)} personel`
+        : `${format(total)} personel · diğerleri serbest bırakılırsa ${format(staying)} kişi kalır`,
+
+    actionsLabel: "Bütün personele yönelik işlemler",
+    releaseAll: (count) => (count === 0 ? "Tüm personeli serbest bırak" : `Tüm personeli serbest bırak (${format(count)})`),
+    releaseAllTitle: "Siz ve yönetim dışında kulübün bütün personelini bir kerede serbest bırak; önce bir pencere sorar",
+    releaseNone: "Bu kulübün personelinden serbest bırakılabilecek kimse yok",
+    hint: "Siz ve yönetim dışında herkes kulüpten hemen ayrılır. Geri alma Değişiklikler bölümünde de var.",
+    released: (count) => `${format(count)} personel serbest bırakıldı`,
+    refused: (name, reason) => `${name}: ${reason}`,
+    undo: "Geri al",
+    undoTitle: "Serbest bırakılan personeli sözleşmeleriyle kulübe geri getir",
+
+    tableLabel: "Kulübün personeli",
+    staysColumn: "Kalıyor",
+    stays: {
+      you: "Siz",
+      board: "Yönetim",
+      player: "Aynı zamanda oyuncu",
+      held: "Kulüp başka bir yerde tutuyor",
+      other: "Serbest bırakılamaz",
+    },
+
+    title: "Tüm personeli serbest bırak",
+    from: "Kulüp",
+    leaving: (count) => `${format(count)} kişi kulüpten ayrılır`,
+    staying: (count) => `${format(count)} kişi kalır`,
+    more: (count) => `ve ${format(count)} kişi daha`,
+    doesHeading: "Ne yapar",
+    does: [
+      "Her biri kulübün personelinden hemen ayrılır ve sözleşmesi sona erer: oyunun kendi kulüpsüz personeli gibi işsiz kalır",
+      "Kimseye ödeme yapılmaz",
+      "Teknik direktörlük ya da futbol direktörlüğü yeri, kulüp doldursun diye boş kalır",
+      "Siz, yönetim ve editörün serbest bırakamadıkları kalır",
+      "Değişiklikler bölümünde listelenir; tek geri alma hepsini aynı sözleşmelerle geri getirir",
+    ],
+    dialogHint: "Hepsini serbest bırak düğmesine basana kadar oyunda hiçbir şey değişmez.",
+    release: "Hepsini serbest bırak",
+    releasing: "Serbest bırakılıyor…",
+    cancel: "İptal",
   },
 
   clubList: {
@@ -1867,12 +1915,14 @@ export const tr: Strings = {
   release: {
     button: "Serbest bırak",
     buttonTitle: "Bu oyuncuyu oyunda kulübünden serbest bırak: serbest oyuncu olur",
+    staffButtonTitle: "Bu personeli oyunda kulübünden serbest bırak: kulüpsüz kalır",
 
     // The dialog
     title: "Serbest bırak",
     from: "Ayrıldığı kulüp",
     checking: "Serbest bırakma kontrol ediliyor…",
     ready: (club) => `${club} → serbest oyuncu`,
+    staffReady: (club) => `${club} → işsiz`,
     doesHeading: "Serbest bırakma ne yapar",
     does: [
       "Kulübün bütün takımlarından çıkar ve sözleşmesi sona erer: her kulübün alabileceği serbest oyuncu olur",
@@ -1880,6 +1930,12 @@ export const tr: Strings = {
       "Kulüpteki kaptanlığı boş kalır",
       "Oyunun transfer geçmişinde görünmez",
       "Değişiklikler bölümünde listelenir; tek geri alma oyuncuyu aynı sözleşmeyle geri getirir",
+    ],
+    staffDoes: [
+      "Kulübün personelinden hemen ayrılır ve sözleşmesi sona erer: oyunun kendi kulüpsüz personeli gibi işsiz kalır",
+      "Kimseye ödeme yapılmaz",
+      "Teknik direktörlük ya da futbol direktörlüğü yeri, kulüp doldursun diye boş kalır",
+      "Değişiklikler bölümünde listelenir; tek geri alma onu aynı sözleşmeyle geri getirir",
     ],
 
     // The foot

@@ -1029,8 +1029,9 @@ export const es: Strings = {
     reputationTitle: "Reputación",
 
     tabsLabel: "Secciones del club",
-    tabs: { overview: "Resumen", squad: "Plantilla", stadium: "Estadio" },
+    tabs: { overview: "Resumen", squad: "Plantilla", staff: "Personal", stadium: "Estadio" },
     squadLocked: "Termina de editar para abrir la plantilla",
+    staffLocked: "Termina de editar para abrir el personal",
 
     facilities: "Instalaciones",
 
@@ -1089,6 +1090,53 @@ export const es: Strings = {
     info: "Datos del club",
     seasonTickets: "Abonos de temporada",
     socialMedia: "Seguidores en redes sociales",
+  },
+
+  clubStaff: {
+    loading: "Leyendo el personal…",
+    empty: "El juego no guarda personal de este club: los clubes de ligas que no se juegan en esta partida no tienen.",
+    count: (total, staying) => {
+      const all = entityCount("staff", total);
+      return staying === 0 ? all : `${all} · ${staying === 1 ? "1 se queda" : `${format(staying)} se quedan`} si se rescinde al resto`;
+    },
+
+    actionsLabel: "Acciones sobre todo el personal",
+    releaseAll: (count) => (count === 0 ? "Rescindir a todo el personal" : `Rescindir a todo el personal (${format(count)})`),
+    releaseAllTitle: "Rescindir de una vez a todo el personal del club, salvo a ti y a la directiva; antes lo pregunta una ventana",
+    releaseNone: "No se puede rescindir a nadie del personal de este club",
+    hint: "Todos salvo tú y la directiva dejan el club al momento. Deshacer también está en la vista Cambios.",
+    released: (count) => (count === 1 ? "1 empleado rescindido" : `${format(count)} empleados rescindidos`),
+    refused: (name, reason) => `${name}: ${reason}`,
+    undo: "Deshacer",
+    undoTitle: "Devolver al club a los empleados rescindidos, con sus contratos",
+
+    tableLabel: "Personal del club",
+    staysColumn: "Se queda",
+    stays: {
+      you: "Tú",
+      board: "La directiva",
+      player: "También jugador",
+      held: "El club lo tiene en otro puesto",
+      other: "No se puede rescindir",
+    },
+
+    title: "Rescindir a todo el personal",
+    from: "Club",
+    leaving: (count) => (count === 1 ? "1 deja el club" : `${format(count)} dejan el club`),
+    staying: (count) => (count === 1 ? "1 se queda" : `${format(count)} se quedan`),
+    more: (count) => `y ${format(count)} más`,
+    doesHeading: "Qué hace",
+    does: [
+      "Cada uno deja el personal del club al momento y su contrato termina: sin empleo, como los empleados sin club del propio juego",
+      "Nadie cobra nada",
+      "Un puesto de mánager o de director de fútbol queda vacío, para que el club lo cubra",
+      "Se quedan: tú, la directiva y quienes el editor no puede rescindir",
+      "Aparece en Cambios, donde deshacerla los devuelve a todos con los mismos contratos",
+    ],
+    dialogHint: "Nada cambia en el juego hasta que pulsas Rescindir a todos.",
+    release: "Rescindir a todos",
+    releasing: "Rescindiendo…",
+    cancel: "Cancelar",
   },
 
   clubList: {
@@ -1914,12 +1962,14 @@ export const es: Strings = {
   release: {
     button: "Rescindir",
     buttonTitle: "Rescindir el contrato de este jugador con su club en el juego: pasa a ser agente libre",
+    staffButtonTitle: "Rescindir el contrato de este empleado con su club en el juego: se queda sin club",
 
     // El diálogo
     title: "Rescisión",
     from: "Sale de",
     checking: "Comprobando la rescisión…",
     ready: (club) => `${club} → agente libre`,
+    staffReady: (club) => `${club} → sin empleo`,
     doesHeading: "Qué hace la rescisión",
     does: [
       "Sale de todos los equipos del club y su contrato termina: es agente libre y cualquier club puede ficharlo",
@@ -1927,6 +1977,12 @@ export const es: Strings = {
       "Cualquier capitanía en el club queda vacante",
       "El historial de traspasos del juego no lo recoge",
       "Aparece en Cambios, donde deshacerla devuelve al jugador con el mismo contrato",
+    ],
+    staffDoes: [
+      "Deja el personal del club al momento y su contrato termina: sin empleo, como los empleados sin club del propio juego",
+      "Nadie cobra nada",
+      "Un puesto de mánager o de director de fútbol queda vacío, para que el club lo cubra",
+      "Aparece en Cambios, donde deshacerla lo devuelve con el mismo contrato",
     ],
 
     // El pie

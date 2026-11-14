@@ -1107,9 +1107,10 @@ export const zhCN: Strings = {
     // The tabs under the header: what the club has, and its squad (see `squad`).
     /** The name of the tabs for assistive technology. */
     tabsLabel: "俱乐部栏目",
-    tabs: { overview: "概览", squad: "阵容", stadium: "球场" },
+    tabs: { overview: "概览", squad: "阵容", staff: "职员", stadium: "球场" },
     /** Hover text of the Squad tab while the club is edited: its values are on the Overview. */
     squadLocked: "完成编辑后才能打开阵容",
+    staffLocked: "完成编辑后才能打开职员",
 
     facilities: "设施",
 
@@ -1177,6 +1178,51 @@ export const zhCN: Strings = {
     info: "俱乐部信息",
     seasonTickets: "季票",
     socialMedia: "社交媒体关注者",
+  },
+
+  clubStaff: {
+    loading: "正在读取职员…",
+    empty: "游戏没有为这家俱乐部保存职员：本存档中未开放联赛的俱乐部没有职员。",
+    count: (total: number, staying: number) =>
+      staying === 0 ? `${format(total)} 名职员` : `${format(total)} 名职员 · 其余全部解约后仍有 ${format(staying)} 人留下`,
+
+    actionsLabel: "全体职员操作",
+    releaseAll: (count: number) => (count === 0 ? "解约全部职员" : `解约全部职员（${format(count)}）`),
+    releaseAllTitle: "一次性解约俱乐部除你和董事会以外的全部职员；会先弹出确认窗口",
+    releaseNone: "这家俱乐部没有可以解约的职员",
+    hint: "除你和董事会外，所有人都会立即离开俱乐部。也可以在“改动记录”中撤销。",
+    released: (count: number) => `已解约 ${format(count)} 名职员`,
+    refused: (name: string, reason: string) => `${name}：${reason}`,
+    undo: "撤销",
+    undoTitle: "让已解约的职员以原合同回到俱乐部",
+
+    tableLabel: "俱乐部职员",
+    staysColumn: "留下",
+    stays: {
+      you: "你",
+      board: "董事会",
+      player: "兼任球员",
+      held: "俱乐部另有安排",
+      other: "无法解约",
+    },
+
+    title: "解约全部职员",
+    from: "俱乐部",
+    leaving: (count: number) => `${format(count)} 人将离开俱乐部`,
+    staying: (count: number) => `${format(count)} 人留下`,
+    more: (count: number) => `以及另外 ${format(count)} 人`,
+    doesHeading: "执行内容",
+    does: [
+      "每人立即离开俱乐部的职员团队并终止合同，与游戏中本就没有俱乐部的职员一样处于无业状态",
+      "不支付任何费用",
+      "主教练或足球总监的职位将空缺，由俱乐部安排继任者",
+      "你、董事会以及编辑器无法解约的人会留下",
+      "改动会列在“改动记录”中，撤销后所有人将恢复原合同",
+    ],
+    dialogHint: "点击“全部解约”后才会修改游戏。",
+    release: "全部解约",
+    releasing: "正在解约…",
+    cancel: "取消",
   },
 
   /** The club list, with the sidebar entry and the status-line count that go with it. */
@@ -2145,6 +2191,7 @@ export const zhCN: Strings = {
     /** The button in the header of a player's profile, beside Transfer. */
     button: "解约",
     buttonTitle: "将这名球员从俱乐部解约，使其成为自由球员。",
+    staffButtonTitle: "将这名职员从俱乐部解约，使其不再隶属任何俱乐部。",
 
     // The dialog
     title: "解约",
@@ -2153,6 +2200,7 @@ export const zhCN: Strings = {
     checking: "正在检查解约…",
     /** The player can be released; `club` is the name of their club. */
     ready: (club: string) => `${club} → 自由球员`,
+    staffReady: (club: string) => `${club} → 无业`,
     doesHeading: "解约内容",
     /** What the game does to the player, one line each. */
     does: [
@@ -2161,6 +2209,12 @@ export const zhCN: Strings = {
       "球员在该俱乐部担任的队长职务将空缺",
       "游戏的转会记录不会显示此次解约",
       "改动会列在“改动记录”中，撤销后球员将恢复原合同",
+    ],
+    staffDoes: [
+      "立即离开俱乐部的职员团队并终止合同，与游戏中本就没有俱乐部的职员一样处于无业状态",
+      "不支付任何费用",
+      "主教练或足球总监的职位将空缺，由俱乐部安排继任者",
+      "改动会列在“改动记录”中，撤销后该职员将恢复原合同",
     ],
 
     // The foot

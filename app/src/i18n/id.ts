@@ -981,8 +981,9 @@ export const id: Strings = {
     reputationTitle: "Reputasi",
 
     tabsLabel: "Bagian klub",
-    tabs: { overview: "Ringkasan", squad: "Skuad", stadium: "Stadion" },
+    tabs: { overview: "Ringkasan", squad: "Skuad", staff: "Staf", stadium: "Stadion" },
     squadLocked: "Selesaikan pengeditan untuk membuka skuad",
+    staffLocked: "Selesaikan pengeditan untuk membuka staf",
 
     facilities: "Fasilitas",
 
@@ -1036,6 +1037,51 @@ export const id: Strings = {
     info: "Info klub",
     seasonTickets: "Tiket musiman",
     socialMedia: "Pengikut media sosial",
+  },
+
+  clubStaff: {
+    loading: "Membaca staf…",
+    empty: "Game tidak menyimpan staf untuk klub ini: klub dari liga yang tidak dimainkan di save ini tidak punya staf.",
+    count: (total: number, staying: number) =>
+      staying === 0 ? `${format(total)} staf` : `${format(total)} staf · ${format(staying)} tetap tinggal jika yang lain dilepas`,
+
+    actionsLabel: "Tindakan untuk seluruh staf",
+    releaseAll: (count: number) => (count === 0 ? "Lepas semua staf" : `Lepas semua staf (${format(count)})`),
+    releaseAllTitle: "Lepas semua staf klub sekaligus, kecuali kamu dan dewan; sebuah jendela bertanya dulu",
+    releaseNone: "Tidak ada staf klub ini yang bisa dilepas",
+    hint: "Semua kecuali kamu dan dewan langsung meninggalkan klub. Urungkan juga ada di tampilan Perubahan.",
+    released: (count: number) => `${format(count)} staf dilepas`,
+    refused: (name: string, reason: string) => `${name}: ${reason}`,
+    undo: "Urungkan",
+    undoTitle: "Kembalikan staf yang dilepas ke klub, dengan kontrak mereka",
+
+    tableLabel: "Staf klub",
+    staysColumn: "Tetap",
+    stays: {
+      you: "Kamu",
+      board: "Dewan",
+      player: "Juga pemain",
+      held: "Dipegang klub di tempat lain",
+      other: "Tidak bisa dilepas",
+    },
+
+    title: "Lepas semua staf",
+    from: "Klub",
+    leaving: (count: number) => `${format(count)} meninggalkan klub`,
+    staying: (count: number) => `${format(count)} tetap tinggal`,
+    more: (count: number) => `dan ${format(count)} lainnya`,
+    doesHeading: "Yang dilakukan",
+    does: [
+      "Masing-masing langsung meninggalkan staf klub, dan kontraknya berakhir: menganggur, seperti staf tanpa klub milik game sendiri",
+      "Tidak ada yang dibayar apa pun",
+      "Posisi manajer atau direktur sepak bola dikosongkan, untuk diisi klub",
+      "Kamu, dewan, dan mereka yang tidak bisa dilepas editor tetap tinggal",
+      "Tercantum di Perubahan, tempat satu kali urungkan mengembalikan semuanya dengan kontrak yang sama",
+    ],
+    dialogHint: "Tidak ada yang berubah di game sampai kamu menekan Lepas semua.",
+    release: "Lepas semua",
+    releasing: "Melepas…",
+    cancel: "Batal",
   },
 
   clubList: {
@@ -1802,11 +1848,13 @@ export const id: Strings = {
   release: {
     button: "Lepas",
     buttonTitle: "Lepas pemain ini dari klubnya di game: dia menjadi agen bebas",
+    staffButtonTitle: "Lepas anggota staf ini dari klubnya di game: dia tidak punya klub lagi",
 
     title: "Lepas",
     from: "Meninggalkan",
     checking: "Memeriksa pelepasan…",
     ready: (club: string) => `${club} → agen bebas`,
+    staffReady: (club: string) => `${club} → menganggur`,
     doesHeading: "Yang dilakukan pelepasan",
     does: [
       "Meninggalkan setiap tim klub, dan kontraknya berakhir: agen bebas yang bisa direkrut klub mana pun",
@@ -1814,6 +1862,12 @@ export const id: Strings = {
       "Jabatan kapten di klub dikosongkan",
       "Riwayat transfer game tidak mencantumkannya",
       "Tercantum di Perubahan, tempat satu kali urungkan mengembalikan pemain dengan kontrak yang sama",
+    ],
+    staffDoes: [
+      "Langsung meninggalkan staf klub, dan kontraknya berakhir: menganggur, seperti staf tanpa klub milik game sendiri",
+      "Tidak ada yang dibayar apa pun",
+      "Posisi manajer atau direktur sepak bola dikosongkan, untuk diisi klub",
+      "Tercantum di Perubahan, tempat satu kali urungkan mengembalikannya dengan kontrak yang sama",
     ],
 
     hint: "Tidak ada yang berubah di game sampai kamu menekan Lepas.",

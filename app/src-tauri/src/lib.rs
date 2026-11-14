@@ -1465,23 +1465,34 @@ impl Connection {
         self.session.plan_staff_job(member, job).map_err(|err| self.with_names(err.into()))
     }
 
-    /// Logs a member of staff's move or signing, as a change of his `club`, or his new job, as a change of
-    /// `contract.job`, and brings his list row up to date: for one signed, with the end of the contract `made`.
-    fn log_staff(&mut self, done: StaffChange, made: Option<NewStaffContract>) -> LoggedChange {
+    /// Works out releasing the member of staff `uid` from his club.
+    fn plan_staff_release(&self, uid: u32) -> Result<StaffPlan, Failure> {
+        let member = self.staff.get(uid).ok_or_else(|| not_found(Entity::Staff, uid))?;
+        self.session.plan_staff_release(member).map_err(|err| self.with_names(err.into()))
+    }
+
+    /// Logs a member of staff's move, signing or release, as a change of his `club`, or his new job, as a change of
+    /// `contract.job`, and brings his list row up to date: for one signed, with the end of the contract `made`; for one
+    /// released, with no club, job or contract. `batch` groups the releases of a club's staff.
+    fn log_staff(&mut self, done: StaffChange, made: Option<NewStaffContract>, batch: Option<u32>) -> LoggedChange {
         let row = self.staff.get(done.member);
         let (club, club_uid, job, contract_expires) =
             row.map_or((None, None, None, None), |s| (s.club.clone(), s.club_uid, s.job, s.contract_expires));
         let name = row.map_or_else(String::new, |s| s.name.clone());
         let moved = done.from_club != done.to_club;
-        // One signed had no club.
+        // One signed had no club, and one released has none.
         let from = (done.from_club != 0).then(|| self.club_name(done.from_club));
-        let to = self.club_name(done.to_club);
+        let released = done.to_club == 0;
+        let to = (!released).then(|| self.club_name(done.to_club));
         self.staff.update(done.member, |member| {
             if moved {
-                member.club = Some(to.clone());
-                member.club_uid = Some(done.to_club);
+                member.club = to.clone();
+                member.club_uid = (!released).then_some(done.to_club);
             }
-            member.job = Some(done.job.1);
+            member.job = (!released).then_some(done.job.1);
+            if released {
+                member.contract_expires = None;
+            }
             if let Some(made) = made {
                 member.contract_expires = FmDate::from_number(made.expires);
             }
@@ -1492,9 +1503,9 @@ impl Connection {
             ("contract.job", i64::from(done.job.0), i64::from(done.job.1))
         };
         let change = Change { entity: Entity::Staff, uid: done.member, field: field.to_owned(), old, new };
-        let entry = self.entry(change, name, None);
+        let entry = self.entry(change, name, batch);
         self.push_log(LoggedChange {
-            moved: moved.then_some(MovedClubs { from, to: Some(to), with: None, released: None, fee: None }),
+            moved: moved.then_some(MovedClubs { from, to, with: None, released: None, fee: None }),
             undo: Some(Undo::Staff(LoggedStaff { done, club, club_uid, job, contract_expires })),
             ..entry
         })
@@ -2156,6 +2167,16 @@ struct RoomMakerRow {
     player: PlayerSummary,
     injured: bool,
     captain: bool,
+}
+
+/// A member of staff of a club, as its Staff tab lists him: his list row, and why Release all staff would leave him at
+/// the club (none for one it releases).
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ClubStaffRow {
+    #[serde(flatten)]
+    member: fmlibre_core::StaffSummary,
+    stays: Option<Failure>,
 }
 
 /// What a team-wide action does to every player of the team.
@@ -3604,7 +3625,7 @@ fn move_staff(
     let connection = guard.as_mut().ok_or_else(not_connected)?;
     let plan = connection.plan_staff_move(uid, club, job, terms.unwrap_or_default())?;
     let done = connection.session.apply_staff_plan(&plan)?;
-    Ok(connection.log_staff(done, plan.contract))
+    Ok(connection.log_staff(done, plan.contract, None))
 }
 
 /// Gives the member of staff `uid` the job `job` (a contract code) at his club, and logs it.
@@ -3614,7 +3635,102 @@ fn change_staff_job(state: State<'_, AppState>, uid: u32, job: u8) -> Result<Log
     let connection = guard.as_mut().ok_or_else(not_connected)?;
     let plan = connection.plan_staff_job(uid, job)?;
     let done = connection.session.apply_staff_plan(&plan)?;
-    Ok(connection.log_staff(done, None))
+    Ok(connection.log_staff(done, None, None))
+}
+
+/// Checks that the member of staff `uid` can be released from his club, and names it; the error says why he cannot.
+/// Nothing is written.
+#[tauri::command]
+fn plan_staff_release(state: State<'_, AppState>, uid: u32) -> Result<ClubName, Failure> {
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    let plan = connection.plan_staff_release(uid)?;
+    Ok(ClubName { uid: plan.from_club, name: connection.club_name(plan.from_club) })
+}
+
+/// Releases the member of staff `uid` from his club, worked out again from the game as it is now, and logs it: he has
+/// no club and no contract then, as the game's own staff without a club have none (see `Session::plan_staff_release`).
+/// One undo puts him back on his contract.
+#[tauri::command]
+fn release_staff(state: State<'_, AppState>, uid: u32) -> Result<LoggedChange, Failure> {
+    let mut guard = state.0.lock()?;
+    let connection = guard.as_mut().ok_or_else(not_connected)?;
+    let plan = connection.plan_staff_release(uid)?;
+    let done = connection.session.apply_staff_plan(&plan)?;
+    Ok(connection.log_staff(done, None, None))
+}
+
+/// The staff of the club `club` as the lists have them, the human manager first and then the best, each with why
+/// Release all staff would leave him at the club: the human manager, the board, a player-coach, ... (none for one it
+/// releases). Off the window's thread: each is checked as his release would be.
+#[tauri::command]
+async fn club_staff(app: tauri::AppHandle, club: u32) -> Result<Vec<ClubStaffRow>, Failure> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<Vec<ClubStaffRow>, Failure> {
+        let state = app.state::<AppState>();
+        let guard = state.0.lock()?;
+        let connection = guard.as_ref().ok_or_else(not_connected)?;
+        connection.clubs.get(club).ok_or_else(|| not_found(Entity::Club, club))?;
+        Ok(connection
+            .staff
+            .iter()
+            .filter(|member| member.club_uid == Some(club))
+            .map(|member| ClubStaffRow {
+                member: member.clone(),
+                stays: connection.session.plan_staff_release(member).err().map(|err| connection.with_names(err.into())),
+            })
+            .collect())
+    })
+    .await?
+}
+
+/// Whether a release refused for `err` leaves the member of staff at his club for good, as Release all staff leaves
+/// the human manager, the board, a player-coach and one his club points at in another way: not a failure to report.
+fn stays_at_club(err: &MoveError) -> bool {
+    matches!(err, MoveError::You | MoveError::UnusualJob { .. } | MoveError::PlayerCoach | MoveError::StaffRole)
+}
+
+/// Releases every member of staff of the club `club` that can be released, one after another, each worked out from the
+/// game as the release before left it: the human manager, the board and those `stays_at_club` keeps stay. Logged as
+/// one batch, which `undo_batch` undoes, the last one first; a release that fails is reported and the others go on.
+/// Off the window's thread, as a club may have seventy.
+#[tauri::command]
+async fn release_club_staff(app: tauri::AppHandle, club: u32) -> Result<MassReport, Failure> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<MassReport, Failure> {
+        let state = app.state::<AppState>();
+        let mut guard = state.0.lock()?;
+        let connection = guard.as_mut().ok_or_else(not_connected)?;
+        connection.clubs.get(club).ok_or_else(|| not_found(Entity::Club, club))?;
+        // A release changes the club's lists: refused once, not once for every member of staff.
+        if let Some(lock) = connection.session.structure_lock() {
+            return Err(MoveError::Locked(lock).into());
+        }
+        let members: Vec<u32> =
+            connection.staff.iter().filter(|member| member.club_uid == Some(club)).map(|member| member.uid).collect();
+        let batch = connection.fresh_id();
+        let mut report = MassReport { batch, applied: 0, failed: Vec::new() };
+        for uid in members {
+            let Some(member) = connection.staff.get(uid) else {
+                continue;
+            };
+            let name = member.name.clone();
+            let released = match connection.session.plan_staff_release(member) {
+                Err(err) if stays_at_club(&err) => continue,
+                planned => planned.and_then(|plan| connection.session.apply_staff_plan(&plan)),
+            };
+            match released {
+                Ok(done) => {
+                    connection.log_staff(done, None, Some(batch));
+                    report.applied += 1;
+                }
+                Err(err) => {
+                    let error = connection.with_names(err.into());
+                    report.failed.push(MassFailure { uid, name, field: "club".to_owned(), error });
+                }
+            }
+        }
+        Ok(report)
+    })
+    .await?
 }
 
 /// The jobs `change_staff_job` gives, and a move or a signing of staff can, by contract code: in the game connected
@@ -4508,6 +4624,10 @@ pub fn run() {
             plan_staff_move,
             move_staff,
             change_staff_job,
+            plan_staff_release,
+            release_staff,
+            club_staff,
+            release_club_staff,
             staff_jobs,
             heal_player,
             lift_bans,
@@ -4548,6 +4668,18 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn release_all_leaves_the_board_and_reports_what_went_wrong() {
+        // Those who stay are not failures: the human manager, the board, a player-coach, one held in another way.
+        for stays in [MoveError::You, MoveError::UnusualJob { job: 4 }, MoveError::PlayerCoach, MoveError::StaffRole] {
+            assert!(stays_at_club(&stays), "{stays}");
+        }
+        // A release the game's memory did not let through is.
+        for failed in [MoveError::Changed { address: 0x10 }, MoveError::NotInDepartment, MoveError::UnusualContract] {
+            assert!(!stays_at_club(&failed), "{failed}");
+        }
+    }
 
     #[test]
     fn report_files_are_named_after_the_player() {

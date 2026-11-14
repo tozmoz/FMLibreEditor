@@ -973,6 +973,14 @@ export interface RoomMaker extends PlayerSummary {
   captain: boolean;
 }
 
+/**
+ * A member of staff of a club, as its Staff tab lists them (`club_staff`): why Release all staff leaves them at the
+ * club (the human manager, the board, a player-coach, ...), none for one it releases.
+ */
+export interface ClubStaffRow extends StaffSummary {
+  stays: Failure | null;
+}
+
 /** From `plan_club_move`: the move can be made, between these clubs. */
 /** A club by its UID and name, as a plan names it. */
 export interface ClubName {

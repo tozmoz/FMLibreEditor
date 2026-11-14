@@ -1092,8 +1092,9 @@ export const de: Strings = {
     reputationTitle: "Ansehen",
 
     tabsLabel: "Vereinsbereiche",
-    tabs: { overview: "Übersicht", squad: "Kader", stadium: "Stadion" },
+    tabs: { overview: "Übersicht", squad: "Kader", staff: "Mitarbeiter", stadium: "Stadion" },
     squadLocked: "Beenden Sie die Bearbeitung, um den Kader zu öffnen",
+    staffLocked: "Beenden Sie die Bearbeitung, um die Mitarbeiter zu öffnen",
 
     facilities: "Einrichtungen",
 
@@ -1157,6 +1158,55 @@ export const de: Strings = {
     info: "Vereinsinfo",
     seasonTickets: "Dauerkarten",
     socialMedia: "Follower in sozialen Medien",
+  },
+
+  clubStaff: {
+    loading: "Mitarbeiter werden gelesen…",
+    empty: "Das Spiel führt für diesen Verein keine Mitarbeiter: Vereine aus Ligen, die in diesem Spielstand nicht gespielt werden, haben keine.",
+    count: (total, staying) => {
+      const all = `${format(total)} Mitarbeiter`;
+      return staying === 0 ? all : `${all} · ${format(staying)} ${staying === 1 ? "bleibt" : "bleiben"}, wenn die übrigen gehen`;
+    },
+
+    actionsLabel: "Aktionen für alle Mitarbeiter",
+    releaseAll: (count) => (count === 0 ? "Alle Verträge auflösen" : `Alle Verträge auflösen (${format(count)})`),
+    releaseAllTitle:
+      "Löst auf einmal die Verträge aller Mitarbeiter des Vereins auf, außer Ihrem und denen des Vorstands; vorher fragt ein Fenster nach",
+    releaseNone: "Bei keinem Mitarbeiter dieses Vereins kann der Vertrag aufgelöst werden",
+    hint: "Alle außer Ihnen und dem Vorstand verlassen den Verein sofort. Rückgängig gibt es auch unter Änderungen.",
+    released: (count) =>
+      count === 1 ? "Vertrag von 1 Mitarbeiter aufgelöst" : `Verträge von ${format(count)} Mitarbeitern aufgelöst`,
+    refused: (name, reason) => `${name}: ${reason}`,
+    undo: "Rückgängig",
+    undoTitle: "Holt die Mitarbeiter, deren Vertrag aufgelöst wurde, mit ihren Verträgen zum Verein zurück",
+
+    tableLabel: "Mitarbeiter des Vereins",
+    staysColumn: "Bleibt",
+    stays: {
+      you: "Sie",
+      board: "Vorstand",
+      player: "Auch Spieler",
+      held: "Vom Verein anders gehalten",
+      other: "Nicht auflösbar",
+    },
+
+    title: "Alle Verträge auflösen",
+    from: "Verein",
+    leaving: (count) => (count === 1 ? "1 verlässt den Verein" : `${format(count)} verlassen den Verein`),
+    staying: (count) => (count === 1 ? "1 bleibt" : `${format(count)} bleiben`),
+    more: (count) => `und ${format(count)} weitere`,
+    doesHeading: "Was es bewirkt",
+    does: [
+      "Jeder verlässt sofort den Stab des Vereins, und sein Vertrag endet: arbeitslos, wie die vereinslosen Mitarbeiter des Spiels",
+      "Niemand erhält Geld",
+      "Ein Posten als Trainer oder Sportdirektor bleibt leer, damit der Verein ihn besetzt",
+      "Es bleiben: Sie, der Vorstand und alle, deren Vertrag der Editor nicht auflösen kann",
+      "Steht unter Änderungen, wo ein einziges Rückgängig alle mit denselben Verträgen zurückholt",
+    ],
+    dialogHint: "Im Spiel ändert sich nichts, bis Sie auf Alle auflösen klicken.",
+    release: "Alle auflösen",
+    releasing: "Verträge werden aufgelöst…",
+    cancel: "Abbrechen",
   },
 
   clubList: {
@@ -1990,12 +2040,14 @@ export const de: Strings = {
   release: {
     button: "Vertrag auflösen",
     buttonTitle: "Löst im Spiel den Vertrag dieses Spielers mit seinem Verein auf: Er wird vertragslos",
+    staffButtonTitle: "Löst im Spiel den Vertrag dieses Mitarbeiters mit seinem Verein auf: Er bleibt ohne Verein",
 
     // Das Fenster
     title: "Vertragsauflösung",
     from: "Verlässt",
     checking: "Vertragsauflösung wird geprüft…",
     ready: (club) => `${club} → vertragslos`,
+    staffReady: (club) => `${club} → arbeitslos`,
     doesHeading: "Was die Vertragsauflösung bewirkt",
     does: [
       "Verlässt jede Mannschaft des Vereins, und der Vertrag endet: vertragslos, jeder Verein kann ihn verpflichten",
@@ -2003,6 +2055,12 @@ export const de: Strings = {
       "Ein Kapitänsamt beim Verein bleibt unbesetzt",
       "Die Transferhistorie des Spiels verzeichnet sie nicht",
       "Steht unter Änderungen, wo ein einziges Rückgängig den Spieler mit demselben Vertrag zurückholt",
+    ],
+    staffDoes: [
+      "Verlässt sofort den Stab des Vereins, und der Vertrag endet: arbeitslos, wie die vereinslosen Mitarbeiter des Spiels",
+      "Niemand erhält Geld",
+      "Ein Posten als Trainer oder Sportdirektor bleibt leer, damit der Verein ihn besetzt",
+      "Steht unter Änderungen, wo ein einziges Rückgängig ihn mit demselben Vertrag zurückholt",
     ],
 
     // Die Fußzeile
