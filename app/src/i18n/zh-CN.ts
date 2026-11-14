@@ -1247,16 +1247,26 @@ export const zhCN: Strings = {
     women: "女子",
     columns: {
       name: "名称",
+      nation: "国家/地区",
+      league: "联赛",
       reputation: "声望",
       founded: "成立年份",
       uid: "UID",
     },
     filters: {
-      /** The name of the select, which has no label of its own. */
+      /** The label of the select of which clubs to show. */
       kind: "显示俱乐部",
       all: "所有俱乐部",
       men: "男子俱乐部",
       women: "女子俱乐部",
+      nation: "国家/地区",
+      league: "联赛",
+      anyLeague: "所有联赛",
+      leagueTitle: "一线队本赛季参加的联赛",
+      reputation: "声望",
+      reputationTitle: "游戏中保存的数值，0 到 10,000",
+      minReputation: "最低声望",
+      maxReputation: "最高声望",
     },
   },
 

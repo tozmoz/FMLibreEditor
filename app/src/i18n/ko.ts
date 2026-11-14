@@ -1158,6 +1158,8 @@ export const ko: Strings = {
     women: "여자",
     columns: {
       name: "이름",
+      nation: "국가",
+      league: "리그",
       reputation: "명성",
       founded: "창단",
       uid: "UID",
@@ -1167,6 +1169,14 @@ export const ko: Strings = {
       all: "모든 구단",
       men: "남자 구단",
       women: "여자 구단",
+      nation: "국가",
+      league: "리그",
+      anyLeague: "모든 리그",
+      leagueTitle: "1군이 이번 시즌에 뛰는 리그",
+      reputation: "명성",
+      reputationTitle: "게임에 저장된 값으로 0~10,000",
+      minReputation: "최저 명성",
+      maxReputation: "최고 명성",
     },
   },
 

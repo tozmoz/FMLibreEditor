@@ -23,6 +23,7 @@ import type {
   FreezeKind,
   ClubDetails,
   ClubFilter,
+  League,
   ClubPage,
   ClubStaffRow,
   ClubSummary,
@@ -2904,8 +2905,8 @@ function selectTargets(entity: Entity, query: string, filters: MassFilters): { u
     const filter = filters.staffFilter ?? {};
     return staff.filter((s) => matchesQuery(query, s.uid, `${s.name} ${s.fullName ?? ""}`) && matchesStaffFilter(s, filter));
   }
-  const women = filters.clubFilter?.women;
-  return clubs.filter((c) => matchesQuery(query, c.uid, `${c.name} ${c.shortName ?? ""}`) && (women === undefined || c.women === women));
+  const filter = filters.clubFilter ?? {};
+  return clubs.filter((c) => matchesQuery(query, c.uid, `${c.name} ${c.shortName ?? ""}`) && clubMatches(c, filter));
 }
 
 /** The mass edit last previewed, until it is applied or replaced. */
@@ -3062,10 +3063,59 @@ function undoMassBatch(batch: number): BatchUndo {
   return report;
 }
 
-const clubs: ClubSummary[] = CLUBS.flatMap((name, i) => [
-  { uid: 500 + i * 7, name, shortName: name.split(" ")[0], women: false, reputation: 8200 - i * 900, founded: 1880 + i * 11 },
-  { uid: 2_000_100_000 + i, name, shortName: name.split(" ")[0], women: true, reputation: 6100 - i * 700, founded: 1985 + i * 4 },
-]);
+/** The nation each fixture club is from, in the order of `CLUBS`: two of them play in England. */
+const CLUB_NATIONS = ["England", "Spain", "Portugal", "Germany", "Türkiye", "England"];
+
+/** The league a fixture club's first team plays in: the men's clubs of England in two divisions, every other in one. */
+function fixtureLeague(i: number, women: boolean): Pick<ClubSummary, "league" | "leagueUid" | "leagueNation"> {
+  const nation = CLUB_NATIONS[i];
+  if (women) {
+    return { league: `${nation} Women's League`, leagueUid: 9000 + ALL_NATIONS.indexOf(nation), leagueNation: nation };
+  }
+  if (nation === "England") {
+    return i === 0
+      ? { league: "Premier Division", leagueUid: 11, leagueNation: nation }
+      : { league: "First Division", leagueUid: 12, leagueNation: nation };
+  }
+  return { league: `${nation} Top Division`, leagueUid: 100 + ALL_NATIONS.indexOf(nation), leagueNation: nation };
+}
+
+const clubs: ClubSummary[] = CLUBS.flatMap((name, i) => {
+  const nation = { nation: CLUB_NATIONS[i], nationUid: 1000 + ALL_NATIONS.indexOf(CLUB_NATIONS[i]) };
+  return [
+    { uid: 500 + i * 7, name, shortName: name.split(" ")[0], women: false, reputation: 8200 - i * 900, founded: 1880 + i * 11, ...nation, ...fixtureLeague(i, false) },
+    { uid: 2_000_100_000 + i, name, shortName: name.split(" ")[0], women: true, reputation: 6100 - i * 700, founded: 1985 + i * 4, ...nation, ...fixtureLeague(i, true) },
+  ];
+});
+
+/** Whether `club` keeps to `filter`, as the real `ClubFilter::matches` has it; `leagues` leaves the league out. */
+function clubMatches(club: ClubSummary, filter: ClubFilter, leagues = false): boolean {
+  const nation = filter.nation?.trim();
+  return (
+    (filter.women === undefined || club.women === filter.women) &&
+    (!nation || (club.nation !== null && fold(club.nation).includes(fold(nation)))) &&
+    (leagues || filter.leagueUid === undefined || club.leagueUid === filter.leagueUid) &&
+    (filter.minReputation === undefined || (club.reputation !== null && club.reputation >= filter.minReputation)) &&
+    (filter.maxReputation === undefined || (club.reputation !== null && club.reputation <= filter.maxReputation))
+  );
+}
+
+/** `club_leagues`: the leagues the clubs `filter` selects play in, by nation, a nation's best known first. */
+function mockLeagues(filter: ClubFilter): League[] {
+  const byUid = new Map<number, League>();
+  for (const club of clubs.filter((c) => clubMatches(c, filter, true))) {
+    if (club.leagueUid === null || club.league === null) {
+      continue;
+    }
+    const league = byUid.get(club.leagueUid) ?? { uid: club.leagueUid, name: club.league, nation: club.leagueNation, clubs: 0, reputation: 0 };
+    league.clubs++;
+    league.reputation = Math.max(league.reputation, club.reputation ?? 0);
+    byUid.set(club.leagueUid, league);
+  }
+  return [...byUid.values()].sort(
+    (a, b) => (a.nation ?? "\uffff").localeCompare(b.nation ?? "\uffff") || b.reputation - a.reputation || a.name.localeCompare(b.name),
+  );
+}
 
 /** Made-up but self-consistent profile for a fixture club; women's clubs have no finances. */
 function clubDetails(club: ClubSummary): ClubDetails {
@@ -3491,11 +3541,13 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       const words = fold(query).split(/\s+/).filter(Boolean);
       const hits = clubs
         .filter((c) => String(c.uid) === query.trim() || words.every((w) => fold(`${c.name} ${c.shortName ?? ""}`).includes(w)))
-        .filter((c) => women === undefined || c.women === women)
+        .filter((c) => clubMatches(c, { ...filter, women }))
         .sort((a, b) => (b.reputation ?? -1) - (a.reputation ?? -1) || a.name.localeCompare(b.name));
       const page: ClubPage = { total: hits.length, rows: hits.slice(0, limit) };
       return page as T;
     }
+    case "club_leagues":
+      return mockLeagues((args?.filter ?? {}) as ClubFilter) as T;
     case "club_details": {
       const uid = Number(args?.uid);
       const club = clubs.find((c) => c.uid === uid);

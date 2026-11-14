@@ -1166,6 +1166,8 @@ export const ru: Strings = {
     women: "Жен.",
     columns: {
       name: "Название",
+      nation: "Страна",
+      league: "Лига",
       reputation: "Репутация",
       founded: "Основан",
       uid: "UID",
@@ -1175,6 +1177,14 @@ export const ru: Strings = {
       all: "Все клубы",
       men: "Мужские клубы",
       women: "Женские клубы",
+      nation: "Страна",
+      league: "Лига",
+      anyLeague: "Любая лига",
+      leagueTitle: "Лига, в которой первая команда играет в этом сезоне",
+      reputation: "Репутация",
+      reputationTitle: "От 0 до 10 000, как её хранит игра",
+      minReputation: "Минимальная репутация",
+      maxReputation: "Максимальная репутация",
     },
   },
 

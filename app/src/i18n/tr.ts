@@ -1134,6 +1134,8 @@ export const tr: Strings = {
     women: "Kadın",
     columns: {
       name: "İsim",
+      nation: "Ülke",
+      league: "Lig",
       reputation: "İtibar",
       founded: "Kuruluş",
       uid: "UID",
@@ -1143,6 +1145,14 @@ export const tr: Strings = {
       all: "Tüm kulüpler",
       men: "Erkek kulüpleri",
       women: "Kadın kulüpleri",
+      nation: "Ülke",
+      league: "Lig",
+      anyLeague: "Tüm ligler",
+      leagueTitle: "A takımın bu sezon oynadığı lig",
+      reputation: "İtibar",
+      reputationTitle: "Oyunun tuttuğu gibi 0 ile 10.000 arası",
+      minReputation: "En düşük itibar",
+      maxReputation: "En yüksek itibar",
     },
   },
 

@@ -1103,6 +1103,8 @@ export const id: Strings = {
     women: "Wanita",
     columns: {
       name: "Nama",
+      nation: "Negara",
+      league: "Liga",
       reputation: "Reputasi",
       founded: "Didirikan",
       uid: "UID",
@@ -1112,6 +1114,14 @@ export const id: Strings = {
       all: "Semua klub",
       men: "Klub pria",
       women: "Klub wanita",
+      nation: "Negara",
+      league: "Liga",
+      anyLeague: "Semua liga",
+      leagueTitle: "Liga tempat tim utama bermain musim ini",
+      reputation: "Reputasi",
+      reputationTitle: "Dari 0 sampai 10.000, seperti yang disimpan game",
+      minReputation: "Reputasi terendah",
+      maxReputation: "Reputasi tertinggi",
     },
   },
 

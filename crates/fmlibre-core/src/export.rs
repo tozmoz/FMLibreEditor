@@ -338,6 +338,8 @@ fn club_columns(game_date: Option<FmDate>, decimal_mark: char) -> Columns<ClubDe
     columns.add("name", |d| d.summary.name.clone());
     columns.add("short_name", |d| d.summary.short_name.clone().unwrap_or_default());
     columns.add("women", |d| d.summary.women.to_string());
+    columns.add("nation", |d| d.summary.nation.clone().unwrap_or_default());
+    columns.add("league", |d| d.summary.league.clone().unwrap_or_default());
     columns.add("reputation", |d| text(d.summary.reputation));
     columns.add("founded", |d| text(d.summary.founded));
     columns.add("season_tickets", |d| text(d.season_tickets));
@@ -700,6 +702,12 @@ struct JsonClub<'a> {
     name: &'a str,
     short_name: Option<&'a str>,
     women: bool,
+    /// The nation the club is from, and its UID.
+    nation: Option<&'a str>,
+    nation_uid: Option<u32>,
+    /// The league its senior team plays in this season, and its UID.
+    league: Option<&'a str>,
+    league_uid: Option<u32>,
     /// 0–10000, of the senior team.
     reputation: Option<u16>,
     founded: Option<u16>,
@@ -756,6 +764,10 @@ impl<'a> From<&'a ClubDetails> for JsonClub<'a> {
             name: &c.name,
             short_name: c.short_name.as_deref(),
             women: c.women,
+            nation: c.nation.as_deref(),
+            nation_uid: c.nation_uid,
+            league: c.league.as_deref(),
+            league_uid: c.league_uid,
             reputation: c.reputation,
             founded: c.founded,
             season_tickets: d.season_tickets,
@@ -1055,6 +1067,11 @@ mod tests {
                 women: false,
                 reputation: Some(7_200),
                 founded: Some(1900),
+                nation: Some("Netherlands".to_owned()),
+                nation_uid: Some(157),
+                league: Some("Eredivisie".to_owned()),
+                league_uid: Some(14),
+                league_nation: Some("Netherlands".to_owned()),
                 address: 0,
             },
             season_tickets: Some(42_000),
@@ -1085,6 +1102,7 @@ mod tests {
         club.summary.name = "Amateurs, Zaterdag".to_owned();
         club.summary.short_name = None;
         club.summary.reputation = None;
+        (club.summary.league, club.summary.league_uid, club.summary.league_nation) = (None, None, None);
         club.facilities.remove("corporate");
         club.finances = None;
         club.stadium = None;
@@ -1338,6 +1356,8 @@ mod tests {
         assert_eq!(cell(&row, "game_date"), "2027-01-02");
         assert_eq!(cell(&row, "short_name"), "Ajax");
         assert_eq!(cell(&row, "women"), "false");
+        assert_eq!(cell(&row, "nation"), "Netherlands");
+        assert_eq!(cell(&row, "league"), "Eredivisie");
         assert_eq!(cell(&row, "supporters_hardcore_pct"), "10");
         assert_eq!(cell(&row, "supporter_loyalty"), "14");
         assert_eq!(cell(&row, "training_facilities"), "17");
@@ -1354,6 +1374,7 @@ mod tests {
         assert_eq!(cell(&row, "corporate_facilities"), "");
         assert_eq!(cell(&row, "stadium_capacity"), "");
         assert_eq!(cell(&row, "reputation"), "");
+        assert_eq!(cell(&row, "league"), "");
     }
 
     #[test]

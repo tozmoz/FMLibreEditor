@@ -1132,6 +1132,8 @@ export const ja: Strings = {
     women: "女子",
     columns: {
       name: "名前",
+      nation: "国",
+      league: "リーグ",
       reputation: "評価",
       founded: "創立",
       uid: "UID",
@@ -1141,6 +1143,14 @@ export const ja: Strings = {
       all: "すべてのクラブ",
       men: "男子クラブ",
       women: "女子クラブ",
+      nation: "国",
+      league: "リーグ",
+      anyLeague: "すべてのリーグ",
+      leagueTitle: "トップチームが今シーズン戦うリーグ",
+      reputation: "評価",
+      reputationTitle: "ゲーム内の値で 0～10,000",
+      minReputation: "評価の下限",
+      maxReputation: "評価の上限",
     },
   },
 

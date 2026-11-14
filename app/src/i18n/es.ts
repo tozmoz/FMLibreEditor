@@ -1158,6 +1158,8 @@ export const es: Strings = {
     women: "Femenino",
     columns: {
       name: "Nombre",
+      nation: "País",
+      league: "Liga",
       reputation: "Reputación",
       founded: "Fundación",
       uid: "UID",
@@ -1167,6 +1169,14 @@ export const es: Strings = {
       all: "Todos los clubes",
       men: "Clubes masculinos",
       women: "Clubes femeninos",
+      nation: "País",
+      league: "Liga",
+      anyLeague: "Cualquier liga",
+      leagueTitle: "La liga en la que juega el primer equipo esta temporada",
+      reputation: "Reputación",
+      reputationTitle: "De 0 a 10.000, como la guarda el juego",
+      minReputation: "Reputación mínima",
+      maxReputation: "Reputación máxima",
     },
   },
 

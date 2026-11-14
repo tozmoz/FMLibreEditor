@@ -1185,16 +1185,30 @@ export const en = {
     women: "Women",
     columns: {
       name: "Name",
+      nation: "Nation",
+      league: "League",
       reputation: "Reputation",
       founded: "Founded",
       uid: "UID",
     },
     filters: {
-      /** The name of the select, which has no label of its own. */
+      /** The label of the select of which clubs to show. */
       kind: "Clubs to show",
       all: "All clubs",
       men: "Men's clubs",
       women: "Women's clubs",
+      nation: "Nation",
+      league: "League",
+      /** The first entry of the league select. */
+      anyLeague: "Any league",
+      /** The hover text of the league select. */
+      leagueTitle: "The league the first team plays in this season",
+      reputation: "Reputation",
+      /** The hover text of the reputation range. */
+      reputationTitle: "From 0 to 10,000, as the game keeps it",
+      /** The names of the two ends of the range, which have no labels of their own. */
+      minReputation: "Lowest reputation",
+      maxReputation: "Highest reputation",
     },
   },
 
