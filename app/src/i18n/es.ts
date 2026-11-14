@@ -2863,5 +2863,58 @@ export const es: Strings = {
     },
   },
 
+  /** What's new: what a version brings (see en.ts). */
+  whatsNew: {
+    title: (version: string) => `Novedades de la versión ${version}`,
+    updated: "FMLibreEditor se ha actualizado.",
+    version: (version: string) => `Versión ${version}`,
+    thanks: (names: string) => `Gracias a ${names}.`,
+    allChanges: "Todos los cambios",
+    allChangesTitle: "Abrir en GitHub las notas completas de esta versión",
+    close: "Entendido",
+    link: "Novedades",
+    command: "Novedades de esta versión",
+    versions: {
+      "0.5.2": [
+        {
+          title: "Mi club.",
+          text: "La aplicación se abre con el club que diriges: a quién hay que mirar, su dinero y las acciones de la plantilla, todo en un sitio. Si no tienes club propio, puedes seguir uno.",
+        },
+        {
+          title: "Paleta de comandos.",
+          text: "Ctrl+K (⌘K en Mac) encuentra un jugador, un miembro del personal, un club o un comando, y con los atajos te mueves entre las pestañas.",
+        },
+        {
+          title: "Ojeo.",
+          text: "Oportunidades en el mercado, jugadores parecidos a uno que dejarías marchar, una comparación con tu n.º 1 en su posición, informes de ojeadores para guardar como imagen o PDF, la plantilla sobre el campo y las promociones de la cantera.",
+        },
+        {
+          title: "Renombrar a un jugador.",
+          text: "Nombre, apellido, nombre común y nombre completo. El juego conserva el nuevo nombre en sus partidas.",
+        },
+        {
+          title: "Contratos y personal.",
+          text: "Amplía un contrato cinco años con un clic, o suma años a muchos con una edición masiva. Rescinde a un miembro del personal, o a todo el personal de un club, y recupéralos con un solo Deshacer.",
+        },
+        {
+          title: "Táctica al máximo.",
+          text: "En la pestaña Plantilla de un club, sube la familiaridad táctica del equipo al máximo. Los motivos de descontento ahora se expresan como los expresa el juego.",
+        },
+        {
+          title: "Tus cambios se conservan.",
+          text: "Los cambios de cada carrera siguen en la pestaña Cambios tras reiniciar, y puedes buscarlos, filtrarlos y exportarlos.",
+        },
+        {
+          title: "Filtros de clubes.",
+          text: "País, liga y reputación. Edición masiva y Exportar toman los clubes que muestra la lista.",
+        },
+        {
+          title: "Ruso y japonés.",
+          text: "Dos idiomas más. La actualización de Steam del 12 de noviembre también es ya una versión conocida.",
+        },
+      ],
+    } as Record<string, { title: string; text: string }[]>,
+  },
+
   errors,
 };

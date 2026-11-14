@@ -78,6 +78,9 @@ export function isNewer(version: string, than: string): boolean {
 /** The app's version, from its configuration (tauri.conf.json). */
 export const appVersion = (): Promise<string> => (inTauri ? getVersion() : Promise.resolve(PREVIEW_VERSION));
 
+/** A version's page among the releases, its notes in full ("0.5.2" is …/releases/tag/v0.5.2). */
+export const releasePageOf = (version: string): string => `${RELEASES_PAGE}/tag/v${version}`;
+
 /** The page to open for a release: the one GitHub names, if it is one of the releases' pages. */
 const releasePage = (url: unknown): string =>
   typeof url === "string" && url.startsWith(`${RELEASES_PAGE}/`) ? url : `${RELEASES_PAGE}/latest`;

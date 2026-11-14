@@ -6,7 +6,7 @@
 // `fieldLabel` for the names of the fields), the Changes view `changesText`, mass editing `massEditText`, comparing
 // players `comparisonText`, moving a player to another club (or swapping him with one) `moveText`, releasing him
 // `releaseText`, changing his names `renameText`, his nationalities and homegrown status `tieText`, a club's squad `squadText`, the sidebar and the connect panel `appText`, the status of the
-// graphics packs `graphicsText`, and new versions of the app `updateText`.
+// graphics packs `graphicsText`, new versions of the app `updateText`, and what one brings `whatsNewText`.
 // A new language only has to provide a dictionary of the same shape (and be added to i18n/index.ts, with a flag in
 // SettingsMenu.tsx).
 
@@ -279,3 +279,6 @@ export const homeText = strings.home;
 
 /** The command palette and the keyboard shortcuts (see `CommandPalette` and `shortcuts.ts`). */
 export const paletteText = strings.palette;
+
+/** What a version brings, told once after an update (see `WhatsNewDialog`). */
+export const whatsNewText = strings.whatsNew;

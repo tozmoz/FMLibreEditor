@@ -2877,5 +2877,58 @@ export const it: Strings = {
     },
   },
 
+  /** What's new: what a version brings (see en.ts). */
+  whatsNew: {
+    title: (version: string) => `Novità della versione ${version}`,
+    updated: "FMLibreEditor è stato aggiornato.",
+    version: (version: string) => `Versione ${version}`,
+    thanks: (names: string) => `Grazie a ${names}.`,
+    allChanges: "Tutte le modifiche",
+    allChangesTitle: "Apri su GitHub le note complete di questa versione",
+    close: "Ho capito",
+    link: "Novità",
+    command: "Novità di questa versione",
+    versions: {
+      "0.5.2": [
+        {
+          title: "La mia società.",
+          text: "L'app si apre sulla società che alleni: chi merita un'occhiata, il suo denaro e le azioni sulla rosa, tutto in un posto. Se non hai una società tua, puoi seguirne una.",
+        },
+        {
+          title: "Tavolozza dei comandi.",
+          text: "Ctrl+K (⌘K su Mac) trova un giocatore, un membro dello staff, una società o un comando, e con le scorciatoie ti sposti tra le schede.",
+        },
+        {
+          title: "Osservatori.",
+          text: "Occasioni sul mercato, giocatori simili a uno che lasceresti partire, un confronto con il tuo numero 1 nel suo ruolo, rapporti dell'osservatore da salvare come immagine o PDF, la rosa in campo e i nuovi giovani.",
+        },
+        {
+          title: "Rinomina un giocatore.",
+          text: "Nome, cognome, nome comune e nome completo. Il gioco tiene il nuovo nome nei suoi salvataggi.",
+        },
+        {
+          title: "Contratti e staff.",
+          text: "Prolunga un contratto di cinque anni con un clic, oppure aggiungi anni a molti con una modifica multipla. Svincola un membro dello staff, o tutto lo staff di una società, e riportali indietro con un solo Ripristina.",
+        },
+        {
+          title: "Tattica al massimo.",
+          text: "Nella scheda Rosa di una società, porta la familiarità tattica della squadra al massimo. I motivi di scontento ora sono scritti come li scrive il gioco.",
+        },
+        {
+          title: "Le tue modifiche restano.",
+          text: "Le modifiche di ogni carriera restano nella scheda Modifiche dopo un riavvio, e puoi cercarle, filtrarle ed esportarle.",
+        },
+        {
+          title: "Filtri delle società.",
+          text: "Nazione, campionato e reputazione. Modifica multipla ed Esporta prendono le società che l'elenco mostra.",
+        },
+        {
+          title: "Russo e giapponese.",
+          text: "Altre due lingue. Anche l'aggiornamento di Steam del 12 novembre è ora una build conosciuta.",
+        },
+      ],
+    } as Record<string, { title: string; text: string }[]>,
+  },
+
   errors,
 };

@@ -3183,6 +3183,72 @@ export const en = {
     keys: { ctrl: "Ctrl", shift: "Shift", enter: "Enter", escape: "Esc" },
   },
 
+  /**
+   * What's new (`WhatsNewDialog`): what a version brings. It opens by itself the first time the app starts after an
+   * update, and from the foot of the window or the palette when asked.
+   */
+  whatsNew: {
+    title: (version: string) => `What's new in ${version}`,
+    /** Under the title when the dialog opened by itself. */
+    updated: "FMLibreEditor has been updated.",
+    /** Over each version's list, when the dialog tells about more than one. */
+    version: (version: string) => `Version ${version}`,
+    /** `names` is a list the language's own way ("a, b and c"). */
+    thanks: (names: string) => `Thanks to ${names}.`,
+    /** Opens the release's notes on GitHub. */
+    allChanges: "All changes",
+    allChangesTitle: "Open this version's notes in full on GitHub",
+    /** Closes the dialog, which does not open by itself again for this version. */
+    close: "Got it",
+    /** The link at the foot of the window that opens it again, and the palette's command. */
+    link: "What's new",
+    command: "What's new in this version",
+    /**
+     * What each version brings, newest first: a few words in bold, then a sentence. Where a language lacks a version,
+     * the dialog shows it in English. A release adds its version here (see docs/DEVELOPING.md).
+     */
+    versions: {
+      "0.5.2": [
+        {
+          title: "My club.",
+          text: "The app opens on the club you manage: who needs a look, its money and the squad's actions, in one place. Without a club of your own, you can follow one.",
+        },
+        {
+          title: "Command palette.",
+          text: "Ctrl+K (⌘K on a Mac) finds a player, a member of staff, a club or a command, and shortcuts move between the tabs.",
+        },
+        {
+          title: "Scouting.",
+          text: "Opportunities in the market, players like one you would let go, a comparison with your no. 1 at his position, scout reports to save as a picture or a PDF, the squad on a pitch and the youth intakes.",
+        },
+        {
+          title: "Rename a player.",
+          text: "First, last, common and full name. The game keeps the new name in its saves.",
+        },
+        {
+          title: "Contracts and staff.",
+          text: "Extend a contract by five years in one click, or add years to many in a mass edit. Release a member of staff, or a club's whole staff, and bring them back with one Undo.",
+        },
+        {
+          title: "Max tactics.",
+          text: "In a club's Squad tab, it brings the team's tactical familiarity to the top. Reasons to be unhappy are now worded as the game words them.",
+        },
+        {
+          title: "Your changes, kept.",
+          text: "Each career's changes stay in the Changes tab after a restart, and you can search, filter and export them.",
+        },
+        {
+          title: "Club filters.",
+          text: "Nation, league and reputation; Mass edit and Export take the clubs the list shows.",
+        },
+        {
+          title: "Russian and Japanese.",
+          text: "Two more languages. Steam's update of 12 November is a known build too.",
+        },
+      ],
+    } as Record<string, { title: string; text: string }[]>,
+  },
+
   errors,
 };
 
