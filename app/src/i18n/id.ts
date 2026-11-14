@@ -1174,7 +1174,6 @@ export const id: Strings = {
     unknownBuildText:
       "Game kemungkinan baru diperbarui. FMLibreEditor menemukan data game dan memeriksanya, tetapi tidak menulis ke " +
       "versi yang belum diuji sampai kamu mengizinkannya. FMLibreEditor versi baru biasanya menyusul dalam beberapa hari.",
-    allowedText: "Pengeditan menyala untuk sesi ini, sejauh pemeriksaan mengizinkan. Simpan cadangan save-mu.",
     failedTitle: "Sebagian data game tidak lolos pemeriksaan",
     reloadHint: "Jika save masih dimuat, Muat ulang data akan memeriksanya lagi.",
     noDate: "Tanggal dalam game tidak lolos pemeriksaan, jadi usia tidak ditampilkan.",

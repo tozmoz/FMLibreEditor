@@ -1307,9 +1307,6 @@ export const de: Strings = {
       "Das Spiel wurde wahrscheinlich aktualisiert. FMLibreEditor hat die Daten des Spiels gefunden und geprüft, " +
       "schreibt aber nicht in eine Version, mit der es nicht getestet wurde, bis Sie es erlauben. Eine neue Version von " +
       "FMLibreEditor folgt meist innerhalb weniger Tage.",
-    allowedText:
-      "Das Bearbeiten ist für diese Sitzung eingeschaltet, soweit die Prüfungen es zulassen. Behalten Sie eine Sicherung " +
-      "Ihres Spielstands.",
     failedTitle: "Einige Daten des Spiels haben die Prüfung nicht bestanden",
     reloadHint: "Falls noch ein Spielstand geladen wurde, prüft „Daten neu laden“ erneut.",
     noDate: "Das Spieldatum hat die Prüfung nicht bestanden, daher wird kein Alter angezeigt.",

@@ -1333,9 +1333,6 @@ export const fr: Strings = {
       "Le jeu a probablement été mis à jour. FMLibreEditor a trouvé les données du jeu et les a vérifiées, mais il " +
       "n'écrit pas dans une version avec laquelle il n'a pas été testé tant que vous ne l'autorisez pas. Un nouveau " +
       "FMLibreEditor suit généralement en quelques jours.",
-    allowedText:
-      "La modification est activée pour cette session, dans la limite des vérifications. Gardez une copie de " +
-      "sauvegarde de votre partie.",
     failedTitle: "Certaines données du jeu n'ont pas passé les vérifications",
     reloadHint: "Si une partie était encore en cours de chargement, «\u00a0Recharger les données\u00a0» vérifie à nouveau.",
     noDate: "La date du jeu n'a pas passé les vérifications\u00a0: aucun âge n'est donc affiché.",
