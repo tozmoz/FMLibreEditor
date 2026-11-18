@@ -11,7 +11,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use fmlibre_core::{
     ArraySource, Buyer, COHESION_RANGE, CaptainRole, CaptainSet, Change, ChangeRow, Clause, ClauseSet, ClubDetails,
-    ClubFilter, ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet, CompetitionPrizes, EditError, Entity,
+    ClubFilter, ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet, CompetitionIndex, CompetitionPrizes, EditError,
+    Entity,
     EntityArrays, ExportFormat, ExportHeader, Exported, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo,
     GraphicsCounts, GraphicsIndex, HOMEGROWN_RULES, Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted,
     Listed, Loan, Lock, MoveError, MovePlan, MoveTerms, NameChange, NameKind, Nation, NationalIndex, NationalSide,
@@ -53,6 +54,8 @@ struct Connection {
     players: PlayerIndex,
     staff: StaffIndex,
     clubs: ClubIndex,
+    /// The game's competitions: its leagues and cups.
+    competitions: CompetitionIndex,
     /// The nations' men's and women's national teams, or why there are none to show on this build of the game.
     nationals: Result<NationalIndex, NationalUnavailable>,
     /// The clubs human managers run: a player who leaves one leaves its team selections too.
@@ -644,6 +647,7 @@ impl Connection {
         let save = save_of(&session, &humans);
         let staff = StaffIndex::new(staff);
         let clubs = ClubIndex::new(session.clubs()?);
+        let competitions = CompetitionIndex::new(session.competitions().unwrap_or_default());
         let nationals = session.national_teams().map(NationalIndex::new);
         let (history, log) = match kept {
             Some(kept) if kept.save == save => (kept.history, kept.log),
@@ -664,6 +668,7 @@ impl Connection {
             players,
             staff,
             clubs,
+            competitions,
             nationals,
             human_clubs,
             log,
@@ -1149,6 +1154,7 @@ impl Connection {
             players: self.players.len(),
             staff: self.staff.len(),
             clubs: self.clubs.len(),
+            competitions: self.competitions.len(),
             game_date: self.session.game_date(),
             load_ms,
             editable: self.session.process.can_write() && self.session.writes_allowed(),
@@ -1182,6 +1188,9 @@ impl Connection {
                 let filter = filters.club_filter.unwrap_or_default();
                 let hits = self.clubs.search(query).into_iter().filter(|c| filter.matches(c));
                 hits.map(|c| (c.target(), c.name.clone())).collect()
+            }
+            Entity::Competition => {
+                self.competitions.search(query).into_iter().map(|c| (c.target(), c.name.clone())).collect()
             }
             // National teams have no mass edit: the reputation of one team at a time.
             Entity::NationalTeam => Vec::new(),
@@ -1912,6 +1921,7 @@ impl Connection {
             Entity::Player => self.players.get(uid).map(|p| (p.target(), p.name.clone())),
             Entity::Staff => self.staff.get(uid).map(|s| (s.target(), s.name.clone())),
             Entity::Club => self.clubs.get(uid).map(|c| (c.target(), c.name.clone())),
+            Entity::Competition => self.competitions.get(uid).map(|c| (c.target(), c.name.clone())),
             Entity::NationalTeam => {
                 self.nationals.as_ref().ok().and_then(|n| n.get(uid)).map(|n| (n.target(), n.name.clone()))
             }
@@ -2044,6 +2054,7 @@ impl Connection {
                 }
             }),
             Entity::Club => self.clubs.update(change.uid, |c| c.note_change(&change.field, value)),
+            Entity::Competition => self.competitions.update(change.uid, |c| c.note_change(&change.field, value)),
             Entity::NationalTeam => match self.nationals.as_mut() {
                 Ok(nationals) => nationals.update(change.uid, |n| n.note_change(&change.field, value)),
                 Err(_) => false,
@@ -2594,6 +2605,7 @@ struct ConnectionInfo {
     players: usize,
     staff: usize,
     clubs: usize,
+    competitions: usize,
     game_date: Option<FmDate>,
     load_ms: u128,
     /// Whether edits can be written: the system let the app open the game for writing, and the build is one the
@@ -2618,6 +2630,7 @@ struct ReloadInfo {
     players: usize,
     staff: usize,
     clubs: usize,
+    competitions: usize,
     game_date: Option<FmDate>,
     /// The checks, run again with the game as it is now.
     health: Health,
@@ -2821,6 +2834,7 @@ async fn reload(
         players: connection.players.len(),
         staff: connection.staff.len(),
         clubs: connection.clubs.len(),
+        competitions: connection.competitions.len(),
         game_date: connection.session.game_date(),
         health: Health::clone(&connection.session.health()),
         refrozen,
@@ -2922,6 +2936,39 @@ fn search_clubs(
         filter.women = Some(woman);
     }
     Ok(page(&connection.clubs, &query, limit, |c| filter.matches(c), |_| {}))
+}
+
+/// Which competitions a list shows: all of them, the ones a nation's teams play in, or the international ones.
+#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CompetitionFilter {
+    /// `Some(true)` for the competitions played between nations, which belong to none; `Some(false)` for the ones a
+    /// nation's teams play in; `None` for both.
+    international: Option<bool>,
+}
+
+impl CompetitionFilter {
+    fn keeps(&self, competition: &fmlibre_core::CompetitionSummary) -> bool {
+        match self.international {
+            Some(international) => competition.nation.is_none() == international,
+            None => true,
+        }
+    }
+}
+
+/// The competitions whose names hold `query`, at most `limit` of them, best known first: what the competitions tab's
+/// table shows.
+#[tauri::command]
+fn search_competitions(
+    state: State<'_, AppState>,
+    query: String,
+    limit: usize,
+    filter: Option<CompetitionFilter>,
+) -> Result<Page<fmlibre_core::CompetitionSummary>, Failure> {
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    let filter = filter.unwrap_or_default();
+    Ok(page(&connection.competitions, &query, limit, |c| filter.keeps(c), |_| {}))
 }
 
 /// The leagues the clubs `filter` selects play in this season, for the club list's league filter: grouped by their
@@ -3202,6 +3249,19 @@ fn club_details(state: State<'_, AppState>, uid: u32) -> Result<ClubDetails, Fai
     let connection = guard.as_ref().ok_or_else(not_connected)?;
     let club = connection.clubs.get(uid).ok_or_else(|| not_found(Entity::Club, uid))?;
     connection.session.club_details(club)?.ok_or_else(data_changed)
+}
+
+/// The profile of the competition with `uid`, read now: what the game holds of it after the editor wrote to it too.
+/// Only reads memory.
+#[tauri::command]
+fn competition_details(
+    state: State<'_, AppState>,
+    uid: u32,
+) -> Result<fmlibre_core::CompetitionSummary, Failure> {
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    let competition = connection.competitions.get(uid).ok_or_else(|| not_found(Entity::Competition, uid))?;
+    connection.session.competition_details(competition).ok_or_else(data_changed)
 }
 
 /// Whether this build of the game has national teams the editor can show: the National teams tab says why when it has
@@ -4885,6 +4945,7 @@ pub fn run() {
             search_players,
             search_staff,
             search_clubs,
+            search_competitions,
             club_leagues,
             league_prizes,
             set_league_prizes,
@@ -4900,6 +4961,7 @@ pub fn run() {
             player_details,
             staff_details,
             club_details,
+            competition_details,
             list_nations,
             freeze_money,
             frozen_clubs,

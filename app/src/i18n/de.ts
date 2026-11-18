@@ -44,6 +44,7 @@ const nouns: Record<Entity, { one: string; many: string; dative: string }> = {
   player: { one: "Spieler", many: "Spieler", dative: "Spielern" },
   staff: { one: "Mitarbeiter", many: "Mitarbeiter", dative: "Mitarbeitern" },
   club: { one: "Verein", many: "Vereine", dative: "Vereinen" },
+  competition: { one: "Wettbewerb", many: "Wettbewerbe", dative: "Wettbewerben" },
 };
 
 /** "237 Spieler", "1 Mitarbeiter", "12 Vereine". */
@@ -56,6 +57,9 @@ const entityDative = (entity: Entity, count: number) =>
 
 /** "1 Verein", "12 Vereine". */
 const clubCount = (count: number) => entityCount("club", count);
+
+/** "1 Wettbewerb", "12 Wettbewerbe". */
+const competitionCount = (count: number) => entityCount("competition", count);
 
 /** Squad statuses, by the codes contracts hold them as (see `en.ts`); named as the game's German text names them. */
 const SQUAD_STATUSES: Partial<Record<number, string>> = {
@@ -1250,6 +1254,75 @@ export const de: Strings = {
       maxReputation: "Höchstes Ansehen",
     },
   },
+
+  competitionList: {
+    nav: "Wettbewerbe",
+    count: (total) => competitionCount(total),
+    search: "Wettbewerbe nach Name oder UID suchen",
+    summary: (total, shown) =>
+      total > shown ? `${competitionCount(total)} · die besten ${shown} nach Ansehen` : competitionCount(total),
+    empty: (query, filtered) => {
+      if (query === "") {
+        return filtered ? "Kein Wettbewerb passt zu diesem Filter." : "Keine Wettbewerbe gefunden.";
+      }
+      return filtered
+        ? `Mit diesem Filter passt kein Wettbewerb zu „${query}“.`
+        : `Kein Wettbewerb passt zu „${query}“.`;
+    },
+    /** The tag on a competition no nation's teams play in. */
+    international: "International",
+    league: "Liga",
+    cup: "Pokal",
+    columns: {
+      name: "Name",
+      nation: "Land",
+      reputation: "Ansehen",
+      matches: "Spiele",
+      uid: "UID",
+    },
+    filters: {
+      /** The name of the select, which has no label of its own. */
+      kind: "Angezeigte Wettbewerbe",
+      all: "Alle Wettbewerbe",
+      domestic: "National",
+      international: "International",
+    },
+  },
+
+  competitionProfile: {
+    where: "Wo er gespielt wird",
+    nation: "Land",
+    continent: "Kontinent",
+    colours: "Farben",
+    background: "Hintergrund",
+    foreground: "Schrift",
+    kit: "Trikot",
+    championText: "Name des Siegers",
+    coloursNote: "Die Farben, die das Spiel für den Wettbewerb führt: der Hintergrund seiner Tabellen, die Schrift darauf, das Trikot seiner Teams und die Farbe des Siegernamens.",
+    winter: "Wintertrikot",
+    winterKit: "Farbe des Wintertrikots",
+    winterStart: "Wechsel am",
+    winterEnd: "Zurück am",
+    winterNote: "Die meisten Wettbewerbe wechseln nie das Trikot; ohne Daten wird die ganze Saison dasselbe getragen.",
+    season: "Saison",
+    seasonStart: "Saisonbeginn",
+    seasonEnd: "Saisonende",
+    stages: "Stufen",
+    stagesTitle:
+      "Eine Liga wird in keiner Stufe gespielt, oder in einer, wenn die Play-offs eine eigene sind; ein Pokal in zwei oder mehr.",
+    matches: "Spiele je Team",
+    reputation: "Ansehen",
+    reputationShort: "Ans",
+    reputationTitle:
+      "1–200: wie groß das Spiel den Wettbewerb einschätzt. Die Champions League 200, die Premier League 189.",
+    rules: "Regeln",
+    substitutionRules: "Auswechslungsregel",
+    substitutionRulesTitle: "Die Regel, nach der die Spiele des Wettbewerbs ausgetragen werden. „Regeln nicht überschreiben“ lässt die gespeicherte Regel des Wettbewerbs unverändert.",
+    substitutionRulesNote: "Das Spiel wendet die Regel auf Spiele an, die nach der Änderung erstellt werden; bereits angesetzte Spiele behalten ihre Regel.",
+    /** What the game shows where a competition has no such value. */
+    none: "—",
+    seasonNote: "Die Daten, die das Spiel für die Saison des Wettbewerbs im Spielstand führt.",
+  },
   /** The Clubs tab's national teams: each nation's men's and women's team, its senior team's squad and reputation. */
   national: {
     /** The button of the Clubs tab's switch that lists them, and the palette's command to go there. */
@@ -1495,6 +1568,7 @@ export const de: Strings = {
     clubs: "Vereine",
     cohesion: "Teambuilding mit den Vereinen",
     tactics: "taktische Vertrautheit",
+    competitions: "Wettbewerbe",
   },
 
   update: {
@@ -1607,7 +1681,7 @@ export const de: Strings = {
       change: "Änderung",
       status: "Status",
     },
-    kinds: { player: "Spieler", staff: "Mitarbeiter", club: "Verein", nationalTeam: "Nationalteam" },
+    kinds: { player: "Spieler", staff: "Mitarbeiter", club: "Verein", competition: "Wettbewerb", nationalTeam: "Nationalteam" },
     stored: (change) => `Rohwerte ${change}`,
     undone: (time) => `Rückgängig gemacht um ${time}`,
     undo: "Rückgängig",
@@ -1742,6 +1816,7 @@ export const de: Strings = {
       player: "Massenbearbeitung: Spieler",
       staff: "Massenbearbeitung: Mitarbeiter",
       club: "Massenbearbeitung: Vereine",
+      competition: "Massenbearbeitung: Wettbewerbe",
     },
 
     // Worauf sie sich bezieht

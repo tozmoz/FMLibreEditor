@@ -4,6 +4,7 @@ import { call, inTauri } from "./api";
 import { BridgeSetup } from "./BridgeSetup";
 import { ChangesView, useChangeFilter, useChangeLog } from "./ChangesView";
 import { ClubBrowser } from "./ClubBrowser";
+import { CompetitionBrowser } from "./CompetitionBrowser";
 import { NationalBrowser } from "./NationalBrowser";
 import { CommandPalette, Keys, SearchIcon, type Command, type Found, type FoundKind } from "./CommandPalette";
 import { CompatibilityNotice } from "./CompatibilityNotice";
@@ -17,6 +18,7 @@ import {
   appText,
   changesText,
   clubListText,
+  competitionListText,
   nationalText,
   homeText,
   paletteText,
@@ -54,7 +56,7 @@ import { useWhatsNew } from "./whatsNew";
 import { WhatsNewDialog } from "./WhatsNewDialog";
 import "./App.css";
 
-type View = "home" | "players" | "staff" | "clubs" | "scouting" | "changes";
+type View = "home" | "players" | "staff" | "clubs" | "competitions" | "scouting" | "changes";
 
 // The national teams are listed in the Clubs tab, behind its switch (see `TeamsSwitch`), not in a tab of their own.
 const VIEWS: { id: View; label: string }[] = [
@@ -62,6 +64,7 @@ const VIEWS: { id: View; label: string }[] = [
   { id: "players", label: playerListText.nav },
   { id: "staff", label: staffListText.nav },
   { id: "clubs", label: clubListText.nav },
+  { id: "competitions", label: competitionListText.nav },
   { id: "scouting", label: scoutingText.nav },
   { id: "changes", label: changesText.nav },
 ];
@@ -572,6 +575,7 @@ function App() {
                   active={view === "clubs" && teams === "nationals"}
                   scope={teamsSwitch}
                 />
+                <CompetitionBrowser version={dataVersion} active={view === "competitions"} />
                 <ScoutingBrowser version={dataVersion} active={view === "scouting"} gameDate={connection.gameDate} />
                 {view === "changes" && (
                   <ChangesView
@@ -619,6 +623,7 @@ function App() {
                     playerListText.count(connection.players),
                     staffListText.count(connection.staff),
                     clubListText.count(connection.clubs),
+                    competitionListText.count(connection.competitions),
                   ].join(" · ")
                 : appText.notConnected}
             </span>

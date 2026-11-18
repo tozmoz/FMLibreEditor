@@ -40,6 +40,7 @@ const nouns: Record<Entity, { plain: string; of: string; in: string }> = {
   player: { plain: "oyuncu", of: "oyuncunun", in: "oyuncuda" },
   staff: { plain: "personel", of: "personelin", in: "personelde" },
   club: { plain: "kulüp", of: "kulübün", in: "kulüpte" },
+  competition: { plain: "turnuva", of: "turnuvanın", in: "turnuvada" },
 };
 
 /** "237 oyuncu", "1 personel", "12 kulüp". */
@@ -1159,6 +1160,76 @@ export const tr: Strings = {
       maxReputation: "En yüksek itibar",
     },
   },
+
+  competitionList: {
+    nav: "Turnuvalar",
+    count: (total) => `${format(total)} turnuva`,
+    search: "İsim veya UID ile turnuva ara",
+    summary: (total, shown) =>
+      total > shown
+        ? `${format(total)} turnuva · itibara göre ilk ${shown} gösteriliyor`
+        : `${format(total)} turnuva`,
+    empty: (query, filtered) => {
+      if (query === "") {
+        return filtered ? "Bu filtreye uyan turnuva yok." : "Turnuva bulunamadı.";
+      }
+      return filtered
+        ? `“${query}” aramasına ve bu filtreye uyan turnuva yok.`
+        : `“${query}” aramasına uyan turnuva yok.`;
+    },
+    /** The tag on a competition no nation's teams play in. */
+    international: "Uluslararası",
+    league: "Lig",
+    cup: "Kupa",
+    columns: {
+      name: "Ad",
+      nation: "Ülke",
+      reputation: "İtibar",
+      matches: "Maç",
+      uid: "UID",
+    },
+    filters: {
+      /** The name of the select, which has no label of its own. */
+      kind: "Gösterilecek turnuvalar",
+      all: "Tüm turnuvalar",
+      domestic: "Ulusal",
+      international: "Uluslararası",
+    },
+  },
+
+  competitionProfile: {
+    where: "Nerede oynanıyor",
+    nation: "Ülke",
+    continent: "Kıta",
+    colours: "Renkler",
+    background: "Arka plan",
+    foreground: "Yazı",
+    kit: "Forma",
+    championText: "Şampiyon adı",
+    coloursNote: "Oyunun turnuva için tuttuğu renkler: puan tablolarının arka planı, üzerindeki yazı, takımların forması ve şampiyonun adının rengi.",
+    winter: "Kış forması",
+    winterKit: "Kış forması rengi",
+    winterStart: "Geçiş tarihi",
+    winterEnd: "Dönüş tarihi",
+    winterNote: "Çoğu turnuva forma değiştirmez; tarih yoksa sezon boyunca aynı forma giyilir.",
+    season: "Sezon",
+    seasonStart: "Sezon başlangıcı",
+    seasonEnd: "Sezon sonu",
+    stages: "Aşamalar",
+    stagesTitle:
+      "Lig ya aşamasız oynanır ya da play-off ayrı bir aşamaysa tek aşamayla; kupa ise iki veya daha fazla aşamayla.",
+    matches: "Takım başına maç",
+    reputation: "İtibar",
+    reputationShort: "İtb",
+    reputationTitle: "1–200: oyunun turnuvayı ne kadar büyük saydığı. Şampiyonlar Ligi 200, Premier League 189.",
+    rules: "Kurallar",
+    substitutionRules: "Oyuncu değişikliği kuralı",
+    substitutionRulesTitle: "Yarışmanın maçlarının oynandığı kural. \"Alt Kuralları Geçersiz Kılma\" yarışmanın kayıtlı kuralını olduğu gibi bırakır.",
+    substitutionRulesNote: "Oyun kuralı değişiklikten sonra oluşturulan fikstürlere uygular; önceden planlanmış maçlar kendi kuralıyla oynanır.",
+    /** What the game shows where a competition has no such value. */
+    none: "—",
+    seasonNote: "Oyunun kayıtta turnuvanın sezonu için tuttuğu tarihler.",
+  },
   /** The Clubs tab's national teams: each nation's men's and women's team, its senior team's squad and reputation. */
   national: {
     /** The button of the Clubs tab's switch that lists them, and the palette's command to go there. */
@@ -1390,6 +1461,7 @@ export const tr: Strings = {
     clubs: "kulüpler",
     cohesion: "kulüplerle uyum",
     tactics: "taktik aşinalığı",
+    competitions: "turnuvalar",
   },
 
   update: {
@@ -1500,7 +1572,7 @@ export const tr: Strings = {
       change: "Değişiklik",
       status: "Durum",
     },
-    kinds: { player: "Oyuncu", staff: "Personel", club: "Kulüp", nationalTeam: "Milli takım" } satisfies Record<EditEntity, string>,
+    kinds: { player: "Oyuncu", staff: "Personel", club: "Kulüp", competition: "Turnuva", nationalTeam: "Milli takım" } satisfies Record<EditEntity, string>,
     stored: (change) => `saklanan ${change}`,
     undone: (time) => `Geri alındı: ${time}`,
     undo: "Geri al",
@@ -1624,6 +1696,7 @@ export const tr: Strings = {
       player: "Oyuncuları toplu düzenle",
       staff: "Personeli toplu düzenle",
       club: "Kulüpleri toplu düzenle",
+      competition: "Turnuvaları toplu düzenle",
     } satisfies Record<Entity, string>,
 
     // What it applies to

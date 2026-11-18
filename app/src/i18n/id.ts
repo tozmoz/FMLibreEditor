@@ -30,7 +30,12 @@ const playerCount = (count: number) => `${format(count)} pemain`;
 const valuesLeftAlone = (count: number) => `${format(count)} nilai dibiarkan`;
 
 /** What each list holds. */
-const nouns: Record<Entity, string> = { player: "pemain", staff: "staf", club: "klub" };
+const nouns: Record<Entity, string> = {
+  player: "pemain",
+  staff: "staf",
+  club: "klub",
+  competition: "kompetisi",
+};
 
 /** "237 pemain", "1 staf", "12 klub". */
 const entityCount = (entity: Entity, count: number) => `${format(count)} ${nouns[entity]}`;
@@ -1127,6 +1132,77 @@ export const id: Strings = {
       maxReputation: "Reputasi tertinggi",
     },
   },
+
+  competitionList: {
+    nav: "Kompetisi",
+    count: (total: number) => `${format(total)} kompetisi`,
+    search: "Cari kompetisi berdasarkan nama atau UID",
+    summary: (total: number, shown: number) =>
+      total > shown
+        ? `${format(total)} kompetisi · ${shown} teratas menurut reputasi`
+        : `${format(total)} kompetisi`,
+    empty: (query: string, filtered: boolean) => {
+      if (query === "") {
+        return filtered ? "Tidak ada kompetisi yang cocok dengan filter ini." : "Tidak ada kompetisi.";
+      }
+      return filtered
+        ? `Tidak ada kompetisi yang cocok dengan “${query}” pada filter ini.`
+        : `Tidak ada kompetisi yang cocok dengan “${query}”.`;
+    },
+    /** The tag on a competition no nation's teams play in. */
+    international: "Internasional",
+    league: "Liga",
+    cup: "Piala",
+    columns: {
+      name: "Nama",
+      nation: "Negara",
+      reputation: "Reputasi",
+      matches: "Pertandingan",
+      uid: "UID",
+    },
+    filters: {
+      /** The name of the select, which has no label of its own. */
+      kind: "Kompetisi yang ditampilkan",
+      all: "Semua kompetisi",
+      domestic: "Nasional",
+      international: "Internasional",
+    },
+  },
+
+  competitionProfile: {
+    where: "Tempat dimainkan",
+    nation: "Negara",
+    continent: "Benua",
+    colours: "Warna",
+    background: "Latar",
+    foreground: "Teks",
+    kit: "Jersey",
+    championText: "Nama juara",
+    coloursNote: "Warna yang disimpan game untuk kompetisi ini: latar tabelnya, teks di atasnya, jersey timnya, dan warna nama juara.",
+    winter: "Jersey musim dingin",
+    winterKit: "Warna jersey musim dingin",
+    winterStart: "Berganti pada",
+    winterEnd: "Kembali pada",
+    winterNote: "Hampir semua kompetisi tidak berganti jersey; tanpa tanggal, jersey yang sama dipakai sepanjang musim.",
+    season: "Musim",
+    seasonStart: "Awal musim",
+    seasonEnd: "Akhir musim",
+    stages: "Tahap",
+    stagesTitle:
+      "Liga dimainkan tanpa tahap, atau satu tahap bila play-off menjadi tahap tersendiri; piala dua tahap atau lebih.",
+    matches: "Pertandingan per tim",
+    reputation: "Reputasi",
+    reputationShort: "Rep",
+    reputationTitle:
+      "1–200: seberapa besar game menilai kompetisi ini. Liga Champions 200, Premier League 189.",
+    rules: "Aturan",
+    substitutionRules: "Aturan pergantian pemain",
+    substitutionRulesTitle: "Aturan yang dipakai pertandingan kompetisi. \"Jangan ganti aturan\" membiarkan aturan tersimpan kompetisi apa adanya.",
+    substitutionRulesNote: "Permainan menerapkan aturan pada jadwal yang dibuat setelah perubahan; pertandingan yang sudah dijadwalkan tetap memakai aturannya.",
+    /** What the game shows where a competition has no such value. */
+    none: "—",
+    seasonNote: "Tanggal yang disimpan game untuk musim kompetisi ini di penyimpanan.",
+  },
   /** The Clubs tab's national teams: each nation's men's and women's team, its senior team's squad and reputation. */
   national: {
     /** The button of the Clubs tab's switch that lists them, and the palette's command to go there. */
@@ -1355,6 +1431,7 @@ export const id: Strings = {
     clubs: "klub",
     cohesion: "kekompakan dengan klub",
     tactics: "pemahaman taktik",
+    competitions: "kompetisi",
   },
 
   update: {
@@ -1460,7 +1537,7 @@ export const id: Strings = {
       change: "Perubahan",
       status: "Status",
     },
-    kinds: { player: "Pemain", staff: "Staf", club: "Klub", nationalTeam: "Tim nasional" },
+    kinds: { player: "Pemain", staff: "Staf", club: "Klub", competition: "Kompetisi", nationalTeam: "Tim nasional" },
     stored: (change: string) => `tersimpan ${change}`,
     undone: (time: string) => `Diurungkan pada ${time}`,
     undo: "Urungkan",
@@ -1588,6 +1665,7 @@ export const id: Strings = {
       player: "Edit massal pemain",
       staff: "Edit massal staf",
       club: "Edit massal klub",
+      competition: "Edit massal kompetisi",
     },
 
     scope: (entity: Entity, total: number) =>

@@ -36,6 +36,20 @@ export function formatPercent(percent: number, options?: Intl.NumberFormatOption
   return format.format(percent / 100);
 }
 
+/**
+ * A colour as the game packs one, written as a page does: the alpha goes, and the three bytes under it are blue, green
+ * and red, so that 0xFF380030 is "#380030".
+ */
+export function colourHex(value: number): string {
+  return `#${(value & 0xffffff).toString(16).padStart(6, "0")}`;
+}
+
+/** The colour a page's "#rrggbb" stands for, packed as the game packs it: under an alpha of 255. */
+export function colourValue(hex: string): number {
+  const rgb = Number.parseInt(hex.replace("#", ""), 16) & 0xffffff;
+  return (0xff000000 | rgb) >>> 0;
+}
+
 const dates = new Intl.DateTimeFormat(intlLocale, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 const daysOfYear = new Intl.DateTimeFormat(intlLocale, { day: "numeric", month: "short", timeZone: "UTC" });
 

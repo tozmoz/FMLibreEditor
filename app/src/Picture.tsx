@@ -25,6 +25,10 @@ export const PICTURE_SIZE = {
   rowFace: 28,
   /** A club's logo in the header of its profile. */
   clubLogo: 56,
+  /** A competition's logo in a row of the competitions table. */
+  competitionRowLogo: 22,
+  /** A competition's logo in the header of its profile. */
+  competitionLogo: 56,
   /** A flag, in a table cell or a line of text: the 3:2 of most flags, small. */
   flag: { width: 16, height: 11 },
 } as const;
@@ -181,6 +185,30 @@ export function ClubLogo({ uid, name, size, label = "" }: ClubLogoProps) {
     </span>
   ) : null;
   return <Picture kind="club" id={uid} size={size} label={label} fallback={badge} />;
+}
+
+interface CompetitionLogoProps {
+  /** The competition's UID, which its logo is filed under. */
+  uid: number;
+  /** The competition's name, for the initials of its badge; null when it is not known. */
+  name: string | null;
+  /** The side of the square box. */
+  size: number;
+  /** The alt text; "" (the default) when the name is written beside the logo. */
+  label?: string;
+}
+
+/**
+ * A competition's logo; where no pack has it, a rounded badge with the competition's initials on a colour that comes
+ * from its name. With no competition the box is left empty, as for a club.
+ */
+export function CompetitionLogo({ uid, name, size, label = "" }: CompetitionLogoProps) {
+  const badge = name ? (
+    <span className="picture-badge" style={{ "--hue": hueOf(name) } as CSSProperties}>
+      {clubInitials(name)}
+    </span>
+  ) : null;
+  return <Picture kind="competition" id={uid} size={size} label={label} fallback={badge} />;
 }
 
 interface PersonFaceProps {

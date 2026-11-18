@@ -30,6 +30,8 @@ pub enum Entity {
     Club,
     /// A nation's national team, by the UID of its container (see `national.rs`): the senior team is the one edited.
     NationalTeam,
+    /// A league or a cup (see `competitions.rs`).
+    Competition,
 }
 
 impl fmt::Display for Entity {
@@ -39,6 +41,7 @@ impl fmt::Display for Entity {
             Entity::Staff => "staff",
             Entity::Club => "club",
             Entity::NationalTeam => "national team",
+            Entity::Competition => "competition",
         })
     }
 }
@@ -101,6 +104,7 @@ impl Kind {
             Kind::I16 => i16::try_from(value).expect(FITS).to_le_bytes().to_vec(),
             Kind::I32 => i32::try_from(value).expect(FITS).to_le_bytes().to_vec(),
             Kind::U32 => u32::try_from(value).expect(FITS).to_le_bytes().to_vec(),
+            Kind::Date if value == 0 => NO_DATE.to_vec(),
             Kind::Date => {
                 let date = FmDate::from_number(value).expect(FITS);
                 let flags = u16::from_le_bytes([old[0], old[1]]) & !0x1FF;
@@ -110,6 +114,9 @@ impl Kind {
         }
     }
 }
+
+/// What a date the game has not set holds: the first day of 1900, a `u16` day of the year then the year.
+const NO_DATE: [u8; 4] = [1, 0, 0x6C, 0x07];
 
 /// The addresses a pointer field may hold: the user half of a 64-bit address space, past the first page.
 const POINTERS: RangeInclusive<i64> = 0x1_0000..=0x7FFF_FFFF_FFFF;
@@ -202,9 +209,23 @@ pub struct Field {
     /// Offset in its record, for the object before any person-block shift.
     #[serde(skip)]
     offset: u64,
+    /// The offset in the same record the game keeps the value at a second time, when it does: both are written, and
+    /// only where the two read the same, so a field kept twice is never left with two values (a competition's
+    /// reputation). `None` for a field kept once, which is nearly all of them.
+    #[serde(skip)]
+    mirror: Option<u64>,
+    /// What the game keeps in the mirror where it holds nothing, such as 65,535 in a `u16`: the write puts the value
+    /// there too, and the two are not held to agree.
+    #[serde(skip)]
+    mirror_blank: Option<i64>,
     /// Whether the field is in the object's person block and moves with its shift.
     #[serde(skip)]
     shifted: bool,
+    /// Whether the field may be written where the game has left it unset: a competition's winter dates, which nearly
+    /// every competition leaves at no date until the game sets them. Other dates the editor leaves alone, as an unset
+    /// one is often a record whose layout does not fit.
+    #[serde(skip)]
+    unset_writable: bool,
     /// The stored values a correct layout can produce; anything else means the layout
     /// does not fit this object, and the field is left alone.
     #[serde(skip)]
@@ -226,7 +247,10 @@ impl Field {
             bit: 0,
             place: Place::Object,
             offset,
+            mirror: None,
+            mirror_blank: None,
             shifted: false,
+            unset_writable: false,
             plausible: range,
         }
     }
@@ -294,6 +318,24 @@ impl Field {
         self
     }
 
+    /// Lets the field be written where the game has left it unset (no date, 0).
+    fn when_unset(mut self) -> Self {
+        self.unset_writable = true;
+        self
+    }
+
+    /// Marks the field as one the game keeps twice, at `offset` as well: both are written together.
+    fn mirrored(mut self, offset: u64) -> Self {
+        self.mirror = Some(offset);
+        self
+    }
+
+    /// See [`Field::mirror_blank`]: the mirror may hold `blank` where it holds nothing.
+    fn mirror_blank(mut self, blank: i64) -> Self {
+        self.mirror_blank = Some(blank);
+        self
+    }
+
     fn in_record(mut self, place: Place) -> Self {
         self.place = place;
         self
@@ -324,6 +366,7 @@ pub fn fields(layout: &Layout, entity: Entity) -> Vec<Field> {
         Entity::Staff => staff_fields(layout),
         Entity::Club => club_fields(layout),
         Entity::NationalTeam => national_team_fields(layout),
+        Entity::Competition => competition_fields(layout),
     }
 }
 
@@ -342,6 +385,84 @@ fn national_team_fields(layout: &Layout) -> Vec<Field> {
                 .in_record(Place::NationalTeamOfKind(kind))
         }))
         .collect()
+}
+
+/// A colour as the game packs one: blue, green and red under an alpha of 255 (the Premier League's background
+/// 0xFFF8F8F8).
+const COLOUR: i64 = 0xFF00_0000;
+
+/// The brightest a colour reads with that alpha.
+const COLOUR_MAX: i64 = 0xFFFF_FFFF;
+
+/// The codes of the substitution rules the editor offers, in the order FMRTE's dropdown lists them (the app has
+/// their names, see `app/src/substitutionRules.ts`). `0xFF` leaves the rule the competition is stored with alone;
+/// every other value is one of the game's substitution rules: `0x13` no substitutions, `0x02` three from three,
+/// `0x01` five from three, `0x00` seven from three, `0x12` fifteen from fifteen, and so on.
+const SUBSTITUTION_RULES: [i64; 76] = [
+    0xFF, 0x13, 0x02, 0x05, 0x06, 0x01, 0x03, 0x0D, 0x0E, 0x0B, 0x0C, 0x07, 0x0F, 0x1B, 0x04, 0x00, 0x34, 0x4C,
+    0x16, 0x2C, 0x4D, 0x0A, 0x22, 0x2B, 0x29, 0x19, 0x08, 0x2D, 0x1D, 0x15, 0x1A, 0x36, 0x32, 0x17, 0x47, 0x48,
+    0x20, 0x14, 0x33, 0x38, 0x3E, 0x10, 0x11, 0x31, 0x3A, 0x3F, 0x42, 0x3C, 0x44, 0x3B, 0x40, 0x46, 0x45, 0x3D,
+    0x30, 0x39, 0x43, 0x49, 0x4A, 0x4B, 0x1E, 0x37, 0x18, 0x2E, 0x21, 0x09, 0x2F, 0x23, 0x24, 0x25, 0x1C, 0x41,
+    0x26, 0x27, 0x28, 0x12,
+];
+
+/// What a competition offers to change: how big it is, the substitution rule its matches are played under, the season
+/// it runs in, the days it wears its winter kit and its colours. Its names are text the game keeps in its own strings,
+/// which the editor does not write; its prize money is its stages' (see `prize_money.rs`).
+fn competition_fields(layout: &Layout) -> Vec<Field> {
+    let Some(c) = layout.competition.as_ref() else {
+        return Vec::new();
+    };
+    let mut fields = Vec::new();
+    if let (Some(offset), Some(mirror)) = (c.reputation, c.reputation) {
+        // Kept twice over, the same value in the two `u16` of the field.
+        fields.push(
+            Field::new(Entity::Competition, "reputation", offset, Kind::U16, 1..=200)
+                .mirrored(mirror + 2)
+                .mirror_blank(i64::from(u16::MAX))
+                .single(),
+        );
+    }
+    if let Some(offset) = c.substitution_rules {
+        fields.push(
+            Field::new(Entity::Competition, "substitution_rules", offset, Kind::U8, 0..=255)
+                .choices(&SUBSTITUTION_RULES)
+                .single(),
+        );
+    }
+    for (key, offset) in [
+        ("season_start", c.season_start),
+        ("season_end", c.season_end),
+        ("winter_start", c.winter_start),
+        ("winter_end", c.winter_end),
+    ] {
+        if let Some(offset) = offset {
+            // A season or a winter the game has not set reads no date at all (0), which the field takes as read; only a
+            // date is written. A winter date may be given where the game set none: most competitions never switch kits,
+            // and setting one is how a competition is given a winter kit.
+            let mut field = Field::new(Entity::Competition, key, offset, Kind::Date, 19000101..=21001231)
+                .plausible(0..=21001231)
+                .single();
+            if key.starts_with("winter_") {
+                field = field.when_unset();
+            }
+            fields.push(field);
+        }
+    }
+    // The colours are `u32`s packed blue, green, red under an alpha of 255; the editor writes them with that alpha, and
+    // a field whose object reads any other is left alone.
+    for (key, offset) in [
+        ("colour.background", c.colour_background),
+        ("colour.foreground", c.colour_foreground),
+        ("colour.kit", c.colour_kit),
+        ("colour.text", c.colour_text),
+        ("colour.winter_kit", c.colour_winter_kit),
+    ] {
+        if let Some(offset) = offset {
+            fields.push(Field::new(Entity::Competition, key, offset, Kind::U32, COLOUR..=COLOUR_MAX).single());
+        }
+    }
+    fields
 }
 
 /// A wage in pounds per week, and a contract end between 2000 and 2100.
@@ -970,7 +1091,8 @@ impl Session {
             }
             return Err(EditError::OutOfRange { field: field.key.clone(), value, min: field.min, max: field.max });
         }
-        if field.kind == Kind::Date && FmDate::from_number(value).is_none() {
+        // A date the game has not set (0) is no date to read, and one the field may clear to where it takes that.
+        if field.kind == Kind::Date && value != 0 && FmDate::from_number(value).is_none() {
             return Err(EditError::NotADate { field: field.key.clone(), value });
         }
         // A loan ends on a day the game is yet to finish: the end of a day it has finished would never come, and with it
@@ -995,8 +1117,23 @@ impl Session {
         if !field.is_plausible(old) {
             return Err(EditError::Implausible { field: field.key.clone(), value: old });
         }
-        // A date the game has not set, or a pointer to nothing (a player without a city of birth), is left alone.
-        if matches!(field.kind, Kind::Date | Kind::Pointer) && old == 0 {
+        // A value the game keeps twice is only written where both places read it: two different values mean the record
+        // is not what the layout says it is.
+        let mirror = match field.mirror {
+            Some(offset) => {
+                let at = record + offset;
+                let bytes = self.process.read_bytes(at, field.kind.size())?;
+                let other = field.decode(&bytes);
+                if other != old && Some(other) != field.mirror_blank {
+                    return Err(EditError::Implausible { field: field.key.clone(), value: other });
+                }
+                Some((at, bytes))
+            }
+            None => None,
+        };
+        // A date the game has not set, or a pointer to nothing (a player without a city of birth), is left alone, unless
+        // the field is one the editor may fill in from nothing (a competition's winter dates).
+        if matches!(field.kind, Kind::Date | Kind::Pointer) && old == 0 && !field.unset_writable {
             return Err(EditError::Unset { field: field.key.clone() });
         }
         let change = Change { entity: target.entity, uid: target.uid, field: field.key.clone(), old, new: value };
@@ -1028,10 +1165,19 @@ impl Session {
             return Err(EditError::Taken { field: field.key.clone(), value, holder });
         }
         self.process.write_bytes(address, &field.encode(value, &old_bytes))?;
+        if let Some((at, bytes)) = &mirror {
+            self.process.write_bytes(*at, &field.encode(value, bytes))?;
+        }
         let read = field.decode(&self.process.read_bytes(address, field.kind.size())?);
-        if read != value {
+        let mirrored = mirror.as_ref().is_none_or(|(at, _)| {
+            self.process.read_bytes(*at, field.kind.size()).is_ok_and(|bytes| field.decode(&bytes) == value)
+        });
+        if read != value || !mirrored {
             // Best effort: put back what was there.
             let _ = self.process.write_bytes(address, &old_bytes);
+            if let Some((at, bytes)) = &mirror {
+                let _ = self.process.write_bytes(*at, bytes);
+            }
             return Err(EditError::NotApplied { field: field.key.clone(), wrote: value, read });
         }
         Ok(change)
@@ -1118,6 +1264,7 @@ impl Session {
                 Some(national) => national.container_uid,
                 None => return Err(EditError::Moved { entity: target.entity, uid: target.uid }),
             },
+            Entity::Competition => self.layout.competition.as_ref().map_or(0, |c| c.uid),
         };
         if self.process.read_u32(target.address + uid_offset)? != target.uid {
             return Err(EditError::Moved { entity: target.entity, uid: target.uid });

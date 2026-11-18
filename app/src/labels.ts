@@ -13,6 +13,7 @@
 import { formatNumber } from "./format";
 import { intlLocale, strings } from "./i18n";
 import type { Strings } from "./i18n/en";
+import { substitutionRuleName } from "./substitutionRules";
 import type { CaptainRole, City, EditEntity, Nation } from "./types";
 
 export const ATTRIBUTE_LABELS = strings.attributes;
@@ -95,6 +96,7 @@ const CHOICE_NAMES = new Map<string, (code: number) => string>([
   ["contract.squad_status", profileText.squadStatusName],
   ["nation", (address) => NATION_NAMES.get(address) ?? editText.unknownNation],
   ["city_of_birth", (address) => CITY_NAMES.get(address) ?? editText.unknownCity],
+  ["substitution_rules", substitutionRuleName],
 ]);
 
 /**
@@ -130,6 +132,12 @@ export const clubStaffText = strings.clubStaff;
 
 /** The club list, with the sidebar entry and the status-line count that go with it. */
 export const clubListText = strings.clubList;
+
+/** The competitions list, with its sidebar entry and the status-line count. */
+export const competitionListText = strings.competitionList;
+
+/** The competition profile: its names, where it is played and what can be changed. */
+export const competitionProfileText = strings.competitionProfile;
 
 /** A club's league prize money, in its finances: what the league pays this season, and changing it. */
 export const leaguePrizesText = strings.leaguePrizes;

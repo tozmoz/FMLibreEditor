@@ -151,6 +151,7 @@ const GROUP_ORDER: Record<Entity, readonly FieldGroupId[]> = {
   ],
   staff: ["ability", "coaching", "mental", "knowledge", "medical", "personality", "reputation", "contract", "other"],
   club: ["reputation", "facilities", "finances", "stadium", "other"],
+  competition: ["reputation", "other"],
 };
 
 /**

@@ -6,6 +6,7 @@ use fmlibre_mem::{Module, Process, find_processes, is_user_pointer, list_modules
 
 use crate::calibrate::{EntityArrays, calibrate, find_missing};
 use crate::clubs::{ClubDetails, ClubSummary, full_finance_class, read_club_details, read_clubs, stadium_class};
+use crate::competitions::{CompetitionSummary, competition_pool, read_competition_at, read_competitions};
 use crate::coded::Coded;
 use crate::date::FmDate;
 use crate::details::{PlayerDetails, read_player_details};
@@ -13,6 +14,7 @@ use crate::edit::Field;
 use crate::game::{GAME_EXE, GAME_PLUGIN, GameInfo};
 use crate::health::{Check, Health, Lock, STRUCTURE};
 use crate::locate::{DatePlace, Found, Place, find_game_ui, find_retirement_manager, game_date_from};
+use crate::object_pool::ObjectPool;
 use crate::players::{PlayerSummary, read_players};
 use crate::profile::{BuildProfile, Layout, PluginFingerprint, layout_of, profile_for};
 use crate::retirement::MANAGER_CLASS;
@@ -164,6 +166,8 @@ pub struct Session {
     finance_class: OnceLock<Option<u64>>,
     /// The class of stadiums, found the first time it is needed.
     stadium_class: OnceLock<Option<u64>>,
+    /// The pool the game keeps its competitions in, found the first time it is needed.
+    competitions_pool: OnceLock<Option<ObjectPool>>,
     /// The vtable of the retirement manager, once its class name has been checked.
     retirement_class: OnceLock<u64>,
     /// Where the static pointer to the retirement manager is, once looked for: kept when found, and looked for again
@@ -229,6 +233,7 @@ impl Session {
             arrays,
             finance_class: OnceLock::new(),
             stadium_class: OnceLock::new(),
+            competitions_pool: OnceLock::new(),
             retirement_class: OnceLock::new(),
             retirement_place: Mutex::new(None),
             game_class: OnceLock::new(),
@@ -513,6 +518,30 @@ impl Session {
         Ok(read_club_details(&self.process, &self.layout, club)?)
     }
 
+    /// Reads every competition the game holds, as its own pool keeps them: its leagues and cups, which are some
+    /// thousands. Empty where the game's pools of objects are not placed or none of them holds competitions. Only reads
+    /// memory.
+    pub fn competitions(&self) -> Result<Vec<CompetitionSummary>, SessionError> {
+        let Some(pool) = self.competition_pool() else {
+            return Ok(Vec::new());
+        };
+        Ok(read_competitions(&self.process, &self.layout, pool)?)
+    }
+
+    /// Reads the competition `competition` again, when the game still holds it in the same slot: what its profile
+    /// shows after the game, or the editor, changed it. `None` where that slot holds another object now.
+    pub fn competition_details(&self, competition: &CompetitionSummary) -> Option<CompetitionSummary> {
+        read_competition_at(&self.process, &self.layout, competition.address, competition.uid)
+    }
+
+    /// The pool holding the competitions, looked for the first time it is asked for: of the game's pools of objects,
+    /// the one whose slots hold competitions. `None` where the layout does not place pools, or none holds them.
+    pub fn competition_pool(&self) -> Option<&ObjectPool> {
+        self.competitions_pool
+            .get_or_init(|| competition_pool(&self.process, &self.layout, &self.object_pools()))
+            .as_ref()
+    }
+
     /// Reads every member of staff, with ages on the current in-game date. Only reads memory.
     pub fn staff(&self) -> Result<Vec<StaffSummary>, SessionError> {
         let Some(array) = self.arrays.staff.as_ref() else {
@@ -571,6 +600,7 @@ impl Session {
             arrays: EntityArrays::none(),
             finance_class: OnceLock::new(),
             stadium_class: OnceLock::new(),
+            competitions_pool: OnceLock::new(),
             retirement_class: OnceLock::new(),
             retirement_place: Mutex::new(None),
             game_class: OnceLock::new(),

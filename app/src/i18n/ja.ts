@@ -34,7 +34,12 @@ const playerCount = (count: number) => `選手${format(count)}人`;
 const valuesLeftAlone = (count: number) => `${format(count)}件の値はそのまま`;
 
 /** What each list holds. */
-const nouns: Record<Entity, string> = { player: "選手", staff: "スタッフ", club: "クラブ" };
+const nouns: Record<Entity, string> = {
+  player: "選手",
+  staff: "スタッフ",
+  club: "クラブ",
+  competition: "大会",
+};
 
 /** "選手237人", "スタッフ1人", "12クラブ". */
 const entityCount = (entity: Entity | ExportEntity, count: number) =>
@@ -1156,6 +1161,75 @@ export const ja: Strings = {
       maxReputation: "評価の上限",
     },
   },
+
+  competitionList: {
+    nav: "大会",
+    count: (total: number) => `${format(total)}大会`,
+    search: "名前またはUIDで大会を検索",
+    summary: (total: number, shown: number) =>
+      total > shown ? `${format(total)}大会 · 評価の上位${shown}大会を表示` : `${format(total)}大会`,
+    empty: (query: string, filtered: boolean) => {
+      if (query === "") {
+        return filtered ? "このフィルターに一致する大会はありません。" : "大会が見つかりません。";
+      }
+      return filtered
+        ? `このフィルターで「${query}」に一致する大会はありません。`
+        : `「${query}」に一致する大会はありません。`;
+    },
+    /** The tag on a competition no nation's teams play in. */
+    international: "国際大会",
+    league: "リーグ",
+    cup: "カップ",
+    columns: {
+      name: "名前",
+      nation: "国",
+      reputation: "評価",
+      matches: "試合数",
+      uid: "UID",
+    },
+    filters: {
+      /** The name of the select, which has no label of its own. */
+      kind: "表示する大会",
+      all: "すべての大会",
+      domestic: "国内大会",
+      international: "国際大会",
+    },
+  },
+
+  competitionProfile: {
+    where: "大会情報",
+    nation: "国",
+    continent: "大陸",
+    colours: "色",
+    background: "背景色",
+    foreground: "文字色",
+    kit: "ユニフォーム",
+    championText: "優勝者名の色",
+    coloursNote: "ゲームが大会ごとに保持している色です。順位表の背景、その上の文字、チームのユニフォーム、優勝者名の色。",
+    winter: "冬季ユニフォーム",
+    winterKit: "冬季ユニフォームの色",
+    winterStart: "切り替え日",
+    winterEnd: "戻す日",
+    winterNote: "ほとんどの大会はユニフォームを切り替えません。日付がない場合はシーズンを通して同じです。",
+    season: "シーズン",
+    seasonStart: "シーズン開始",
+    seasonEnd: "シーズン終了",
+    stages: "ステージ数",
+    stagesTitle:
+      "リーグは0ステージ、プレーオフが独立したステージなら1ステージです。カップは2ステージ以上です。",
+    matches: "1チームあたりの試合数",
+    reputation: "評価",
+    reputationShort: "評価",
+    reputationTitle:
+      "1–200：ゲームが大会の規模を評価した値です。チャンピオンズリーグは200、プレミアリーグは189。",
+    rules: "ルール",
+    substitutionRules: "交代ルール",
+    substitutionRulesTitle: "大会の試合で使われる交代ルール。「交代ルールを上書きしない」は大会に保存されたルールをそのまま使います。",
+    substitutionRulesNote: "変更後に作られる試合に適用されます。すでに組まれている試合は元のルールのままです。",
+    /** What the game shows where a competition has no such value. */
+    none: "—",
+    seasonNote: "ゲームがセーブ内でこの大会のシーズンに保持している日付です。",
+  },
   /** The Clubs tab's national teams: each nation's men's and women's team, its senior team's squad and reputation. */
   national: {
     /** The button of the Clubs tab's switch that lists them, and the palette's command to go there. */
@@ -1380,6 +1454,7 @@ export const ja: Strings = {
     clubs: "クラブ",
     cohesion: "クラブとの連携",
     tactics: "戦術理解度",
+    competitions: "大会",
   },
 
   update: {
@@ -1486,7 +1561,7 @@ export const ja: Strings = {
       change: "変更",
       status: "状態",
     },
-    kinds: { player: "選手", staff: "スタッフ", club: "クラブ", nationalTeam: "代表チーム" },
+    kinds: { player: "選手", staff: "スタッフ", club: "クラブ", competition: "大会", nationalTeam: "代表チーム" },
     stored: (change: string) => `内部値 ${change}`,
     undone: (time: string) => `${time}に元に戻しました`,
     undo: "元に戻す",
@@ -1608,6 +1683,7 @@ export const ja: Strings = {
       player: "選手を一括編集",
       staff: "スタッフを一括編集",
       club: "クラブを一括編集",
+      competition: "大会を一括編集",
     },
 
     // What it applies to

@@ -4,6 +4,7 @@
 import { dateFromNumber, numberFromDate, plusYears } from "../editing";
 import { fold } from "../format";
 import { scoutingOpportunities, scoutingOverview, scoutingSimilar, scoutingSuggest, youthIntakes } from "./mockScouting";
+import { SUBSTITUTION_RULES } from "../substitutionRules";
 import type {
   ApplyReport,
   ArrayRef,
@@ -37,6 +38,9 @@ import type {
   ClubStaffRow,
   ClubSummary,
   CheckKey,
+  CompetitionFilter,
+  CompetitionColours,
+  CompetitionSummary,
   ConnectionInfo,
   Detection,
   Failure,
@@ -1163,6 +1167,24 @@ function fieldTable(entity: EditEntity): EditField[] {
   const reputation = ["home", "current", "world"].map((key) => field(`reputation.${key}`, "u16", 0, 10_000));
   const personality = PERSONALITY.map((key) => field(`personality.${key}`, "u8", 1, 20));
   const contract = [field("contract.wage", "i32", 0, 10_000_000), field("contract.expires", "date", 20000101, 21001231)];
+  if (entity === "competition") {
+    // The game rates a competition out of 200, and keeps the season it runs in as two days.
+    return [
+      field("reputation", "u16", 1, 200),
+      // The substitution rule a competition's matches are played under (0xFF: leave its own alone).
+      { ...field("substitution_rules", "u8", 0, 255), choices: SUBSTITUTION_RULES.map((rule) => rule.code), mass: false },
+      field("season_start", "date", 19000101, 21001231),
+      field("season_end", "date", 19000101, 21001231),
+      field("winter_start", "date", 19000101, 21001231),
+      field("winter_end", "date", 19000101, 21001231),
+      // The colours the game packs blue, green and red under an alpha of 255.
+      field("colour.background", "u32", 0xff000000, 0xffffffff),
+      field("colour.foreground", "u32", 0xff000000, 0xffffffff),
+      field("colour.kit", "u32", 0xff000000, 0xffffffff),
+      field("colour.text", "u32", 0xff000000, 0xffffffff),
+      field("colour.winter_kit", "u32", 0xff000000, 0xffffffff),
+    ];
+  }
   if (entity === "nationalTeam") {
     // As the real table: the senior team's, then each other kind of team's (kind 3 too, which the fixture has not).
     const kinds = [3, 9, 33, 10, 18, 11, 12];
@@ -1530,14 +1552,16 @@ function failure(code: string, message: string, params: Record<string, string | 
 /** The real commands' failure for a player, member of staff or club the lists do not have. */
 const notFound = (entity: Entity, uid: number) => failure("app.notFound", `No ${entity} with id ${uid}`, { entity, uid });
 
-/** The profile of the person or club, or an error like the real commands give. */
-function profileOf(entity: Entity, uid: number): PlayerDetails | StaffDetails | ClubDetails {
+/** The profile of the person, club or competition, or an error like the real commands give. */
+function profileOf(entity: Entity, uid: number): PlayerDetails | StaffDetails | ClubDetails | CompetitionSummary {
   const found =
     entity === "player"
       ? players.find((p) => p.uid === uid)
       : entity === "staff"
         ? staff.find((s) => s.uid === uid)
-        : clubs.find((c) => c.uid === uid);
+        : entity === "competition"
+          ? competitions.find((c) => c.uid === uid)
+          : clubs.find((c) => c.uid === uid);
   if (!found) {
     throw notFound(entity, uid);
   }
@@ -1545,7 +1569,9 @@ function profileOf(entity: Entity, uid: number): PlayerDetails | StaffDetails | 
     ? details(found as PlayerSummary)
     : entity === "staff"
       ? staffDetails(found as StaffSummary)
-      : clubDetails(found as ClubSummary);
+      : entity === "competition"
+        ? (found as CompetitionSummary)
+        : clubDetails(found as ClubSummary);
 }
 
 /**
@@ -1564,6 +1590,7 @@ function currentValues(entity: EditEntity, uid: number): FieldValues {
   const d = profileOf(entity, uid);
   const person = d as PlayerDetails & StaffDetails;
   const club = d as ClubDetails;
+  const day = (date: FmDate | null) => (date === null ? 0 : numberFromDate(date));
   const value = (key: string): number | null | undefined => {
     const [group, name = ""] = key.split(".");
     switch (group) {
@@ -1592,7 +1619,11 @@ function currentValues(entity: EditEntity, uid: number): FieldValues {
       case "trait":
         return Number((person as PlayerDetails).traits.includes(Number(name)));
       case "reputation":
-        return entity === "club" ? club.reputation : person.reputation[name as "home" | "current" | "world"];
+        return entity === "club"
+          ? club.reputation
+          : entity === "competition"
+            ? (d as CompetitionSummary).reputation
+            : person.reputation[name as "home" | "current" | "world"];
       case "international":
         return person.international[INTERNATIONAL[name as keyof typeof INTERNATIONAL]];
       case "attribute":
@@ -1641,6 +1672,19 @@ function currentValues(entity: EditEntity, uid: number): FieldValues {
         return club.finances?.[FINANCE[name as keyof typeof FINANCE]];
       case "stadium":
         return club.stadium?.[name as "capacity" | "seating" | "used" | "expansion"];
+      // A competition's season and winter, which the editor sets a day at a time.
+      case "season_start":
+        return day((d as CompetitionSummary).seasonStart);
+      case "season_end":
+        return day((d as CompetitionSummary).seasonEnd);
+      case "winter_start":
+        return day((d as CompetitionSummary).winterStart);
+      case "winter_end":
+        return day((d as CompetitionSummary).winterEnd);
+      case "colour":
+        return (d as CompetitionSummary).colours?.[COLOUR_FIELD[name as keyof typeof COLOUR_FIELD]];
+      case "substitution_rules":
+        return (d as CompetitionSummary).substitutionRules;
     }
     throw new Error(`No fixture value for ${key}`);
   };
@@ -1664,6 +1708,40 @@ function writeValue(entity: EditEntity, uid: number, key: string, value: number)
     return;
   }
   const [group, name = ""] = key.split(".");
+  if (entity === "competition") {
+    // A competition's profile is the list row itself, so what is written is read back from it.
+    const competition = competitions.find((c) => c.uid === uid);
+    if (competition) {
+      if (key === "reputation") {
+        competition.reputation = value;
+        return;
+      }
+      if (key === "substitution_rules") {
+        competition.substitutionRules = value;
+        return;
+      }
+      if (key === "season_start") {
+        competition.seasonStart = dateFromNumber(value);
+        return;
+      }
+      if (key === "season_end") {
+        competition.seasonEnd = dateFromNumber(value);
+        return;
+      }
+      if (key === "winter_start") {
+        competition.winterStart = dateFromNumber(value);
+        return;
+      }
+      if (key === "winter_end") {
+        competition.winterEnd = dateFromNumber(value);
+        return;
+      }
+      if (group === "colour" && competition.colours) {
+        competition.colours[COLOUR_FIELD[name as keyof typeof COLOUR_FIELD]] = value;
+        return;
+      }
+    }
+  }
   if (entity === "club") {
     const club = clubs.find((c) => c.uid === uid);
     if (club && key === "reputation") {
@@ -3356,6 +3434,115 @@ function mockLeagues(filter: ClubFilter): League[] {
   );
 }
 
+/** The field names of a competition's colours, which the game's keys write in the page's style. */
+const COLOUR_FIELD = {
+  background: "background",
+  foreground: "foreground",
+  kit: "kit",
+  text: "text",
+  winter_kit: "winterKit",
+} as const;
+
+/**
+ * The colours the fixtures draw a competition in: a background, the text on it, a kit, the champion's name's colour
+ * and the winter kit's, packed as the game packs them (see `colourHex`).
+ */
+const PALETTES: CompetitionColours[] = [
+  { background: 0xfff8f8f8, foreground: 0xff380030, kit: 0xff000000, text: 0xff000000, winterKit: 0xfff8f000 },
+  { background: 0xfff8f8f8, foreground: 0xff4098b0, kit: 0xff000000, text: 0xff000000, winterKit: 0xfff8e848 },
+  { background: 0xff000000, foreground: 0xff404040, kit: 0xfff8f8f8, text: 0xff000000, winterKit: 0xfff05808 },
+  { background: 0xff1010a0, foreground: 0xfff8f8f8, kit: 0xff582810, text: 0xff000000, winterKit: 0xff00f8f8 },
+];
+
+/** The colours and winter kit of a fixture competition: the English leagues switch kit between two winter days. */
+function winter(
+  uid: number,
+  nation: string | null,
+): Pick<CompetitionSummary, "winterStart" | "winterEnd" | "colours" | "substitutionRules"> {
+  const swapped = nation === "England";
+  return {
+    winterStart: swapped ? { year: 2026, month: 10, day: 25 } : null,
+    winterEnd: swapped ? { year: 2027, month: 3, day: 28 } : null,
+    colours: PALETTES[uid % PALETTES.length],
+    // Fixture competitions keep the game's own rules unless the mock sets one; the English leagues play five from three.
+    substitutionRules: swapped ? 0x01 : 0xff,
+  };
+}
+
+/** A league of the fixtures: a competition its nation's clubs play over a season. */
+function league(
+  uid: number,
+  name: string,
+  abbreviation: string,
+  nation: string,
+  reputation: number,
+  stages: number,
+  matches: number,
+  seasonStart: FmDate,
+  seasonEnd: FmDate,
+): CompetitionSummary {
+  return {
+    uid,
+    name,
+    shortName: name,
+    abbreviation,
+    nation,
+    continent: "Europe",
+    reputation,
+    stages,
+    matches,
+    seasonStart,
+    seasonEnd,
+    ...winter(uid, nation),
+  };
+}
+
+/** A cup of the fixtures: a competition in stages, whose matches a team plays as far as it goes. */
+function cup(
+  uid: number,
+  name: string,
+  abbreviation: string,
+  /** The nation whose teams play it; null for one nations play between themselves. */
+  nation: string | null,
+  reputation: number,
+  stages: number,
+  seasonStart: FmDate,
+  seasonEnd: FmDate,
+): CompetitionSummary {
+  return {
+    uid,
+    name,
+    shortName: name,
+    abbreviation,
+    nation,
+    continent: nation === null ? "World" : "Europe",
+    reputation,
+    stages,
+    matches: null,
+    seasonStart,
+    seasonEnd,
+    ...winter(uid, nation),
+  };
+}
+
+/**
+ * The competitions of the fixtures: the leagues a nation's clubs play in, the cups between them, and those that
+ * nations play between themselves, whose nation is none. `stages` 0 or 1 marks a league (see `isLeague`).
+ */
+const competitions: CompetitionSummary[] = [
+  league(11, "Premier League", "PL", "England", 189, 0, 38, { year: 2026, month: 8, day: 15 }, { year: 2027, month: 5, day: 30 }),
+  league(12, "Championship", "CH", "England", 136, 1, 46, { year: 2026, month: 8, day: 8 }, { year: 2027, month: 5, day: 31 }),
+  league(21, "LaLiga", "LAL", "Spain", 173, 0, 34, { year: 2026, month: 8, day: 21 }, { year: 2027, month: 5, day: 23 }),
+  league(31, "Bundesliga", "BL", "Germany", 178, 0, 34, { year: 2026, month: 8, day: 14 }, { year: 2027, month: 5, day: 22 }),
+  league(41, "Serie A", "SA", "Italy", 175, 0, 38, { year: 2026, month: 8, day: 22 }, { year: 2027, month: 5, day: 30 }),
+  league(51, "Ligue 1", "L1", "France", 160, 0, 34, { year: 2026, month: 8, day: 15 }, { year: 2027, month: 5, day: 23 }),
+  cup(13, "FA Cup", "FAC", "England", 157, 2, { year: 2026, month: 8, day: 1 }, { year: 2027, month: 5, day: 22 }),
+  cup(101, "UEFA Champions League", "UCL", null, 200, 21, { year: 2026, month: 7, day: 7 }, { year: 2027, month: 6, day: 5 }),
+  cup(102, "UEFA Europa League", "UEL", null, 172, 18, { year: 2026, month: 7, day: 16 }, { year: 2027, month: 5, day: 26 }),
+  cup(103, "World Cup", "WC", null, 200, 6, { year: 2027, month: 6, day: 10 }, { year: 2027, month: 7, day: 11 }),
+  cup(104, "European Championship", "EURO", null, 185, 5, { year: 2028, month: 6, day: 9 }, { year: 2028, month: 7, day: 9 }),
+];
+
 /** Made-up but self-consistent profile for a fixture club; women's clubs have no finances. */
 function clubDetails(club: ClubSummary): ClubDetails {
   const next = random(club.uid);
@@ -3568,6 +3755,7 @@ const CHECKS: CheckKey[] = [
   "staff",
   "clubs",
   "cohesion",
+  "competitions",
 ];
 const FAILING: CheckKey[] = ["gameDate", "attributes", "contracts"];
 
@@ -3685,6 +3873,7 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
         players: players.length,
         staff: staff.length,
         clubs: clubs.length,
+        competitions: competitions.length,
         gameDate: failedChecks ? null : gameDate,
         loadMs: 480,
         editable: !unknownBuild,
@@ -3748,6 +3937,7 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
         players: players.length,
         staff: staff.length,
         clubs: clubs.length,
+        competitions: competitions.length,
         gameDate: failedChecks ? null : gameDate,
         health: mockHealth(),
       };
@@ -3812,6 +4002,30 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
         throw notFound("club", uid);
       }
       return clubDetails(club) as T;
+    }
+    case "search_competitions": {
+      const query = String(args?.query ?? "");
+      const limit = Number(args?.limit ?? 200);
+      const filter = (args?.filter ?? {}) as CompetitionFilter;
+      const words = fold(query).split(/\s+/).filter(Boolean);
+      const hits = competitions
+        .filter(
+          (c) =>
+            String(c.uid) === query.trim() ||
+            words.every((w) => fold(`${c.name} ${c.shortName ?? ""} ${c.abbreviation ?? ""}`).includes(w)),
+        )
+        // An international competition is one no nation's teams play in.
+        .filter((c) => filter.international === undefined || (c.nation === null) === filter.international)
+        .sort((a, b) => (b.reputation ?? -1) - (a.reputation ?? -1) || a.name.localeCompare(b.name));
+      return { total: hits.length, rows: hits.slice(0, limit) } as T;
+    }
+    case "competition_details": {
+      const uid = Number(args?.uid);
+      const competition = competitions.find((c) => c.uid === uid);
+      if (!competition) {
+        throw notFound("competition", uid);
+      }
+      return competition as T;
     }
     case "search_staff": {
       const query = String(args?.query ?? "");

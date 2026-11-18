@@ -173,10 +173,90 @@ pub struct CompetitionLayout {
     /// FM string pointers, to names in the game's language.
     pub name: u64,
     pub short_name: u64,
-    /// Pointer to the nation whose competition it is (England for the Premier League); unset where the layout has
-    /// not placed it.
+    /// FM string pointer to the game's own tag for it ("英超"), which may be null.
+    #[serde(default)]
+    pub abbreviation: Option<u64>,
+    /// Pointer to its nation (`db::NATION`), null for an international competition (the Champions League).
     #[serde(default)]
     pub nation: Option<u64>,
+    /// Pointer to its continent (`db::CONTINENT`).
+    #[serde(default)]
+    pub continent: Option<u64>,
+    /// `u16`: where the league stands in the game's order of leagues, the Premier League 7 and the Championship 8; a
+    /// cup's value is not a level (the FA Cup reads 419).
+    #[serde(default)]
+    pub league_order: Option<u64>,
+    /// Two `u16`, the competition's reputation (1–200), the same twice: Premier League 189, Champions League 200.
+    #[serde(default)]
+    pub reputation: Option<u64>,
+    /// `u8`: the substitution rule to play the competition's matches under, which overrides the rule the
+    /// competition is stored with; 0xFF leaves it alone. The codes are the game's substitution-rule values (see
+    /// `edit.rs`), e.g. 0x13 for no substitutions, 0x01 for five from three.
+    #[serde(default)]
+    pub substitution_rules: Option<u64>,
+    /// `u16`: the stages it is played in, which tells a league (0 or 1) from a cup (2 and more).
+    #[serde(default)]
+    pub stages: Option<u64>,
+    /// `u16`: the matches one team plays in it (Premier League 38, Championship 46); 0 before they are drawn, 255 in
+    /// a cup.
+    #[serde(default)]
+    pub matches: Option<u64>,
+    /// Dates the competition's season runs between.
+    #[serde(default)]
+    pub season_start: Option<u64>,
+    #[serde(default)]
+    pub season_end: Option<u64>,
+    /// `u32` colours, in the game's packing: blue, green, red and an alpha of 255 (the Premier League's background
+    /// reads 0xFFF8F8F8, its foreground 0xFF380030). Background, foreground, the kit's colour, the colour of the
+    /// champion's name, and the kit the competition switches to in winter.
+    #[serde(default)]
+    pub colour_background: Option<u64>,
+    #[serde(default)]
+    pub colour_foreground: Option<u64>,
+    #[serde(default)]
+    pub colour_kit: Option<u64>,
+    #[serde(default)]
+    pub colour_text: Option<u64>,
+    #[serde(default)]
+    pub colour_winter_kit: Option<u64>,
+    /// Dates the competition switches to its winter kit and back; none where it never does (the game keeps the first
+    /// day of 1900 there, which reads as no date).
+    #[serde(default)]
+    pub winter_start: Option<u64>,
+    #[serde(default)]
+    pub winter_end: Option<u64>,
+}
+
+impl CompetitionLayout {
+    /// One past the last byte of every field there is.
+    pub fn end(&self) -> u64 {
+        [
+            Some(self.uid + 4),
+            Some(self.name + 8),
+            Some(self.short_name + 8),
+            self.abbreviation.map(|at| at + 8),
+            self.nation.map(|at| at + 8),
+            self.continent.map(|at| at + 8),
+            self.league_order.map(|at| at + 2),
+            self.reputation.map(|at| at + 4),
+            self.substitution_rules.map(|at| at + 1),
+            self.stages.map(|at| at + 2),
+            self.matches.map(|at| at + 2),
+            self.season_start.map(|at| at + 4),
+            self.season_end.map(|at| at + 4),
+            self.colour_background.map(|at| at + 4),
+            self.colour_foreground.map(|at| at + 4),
+            self.colour_kit.map(|at| at + 4),
+            self.colour_text.map(|at| at + 4),
+            self.colour_winter_kit.map(|at| at + 4),
+            self.winter_start.map(|at| at + 4),
+            self.winter_end.map(|at| at + 4),
+        ]
+        .into_iter()
+        .flatten()
+        .max()
+        .expect("fields")
+    }
 }
 
 /// The prize money a competition's stages pay, which their settings hold (see `prize_money.rs`).
@@ -1298,10 +1378,20 @@ mod tests {
         assert_eq!(mac.staff.current_ability, windows.staff.current_ability);
         assert_eq!(mac.staff.uid - mac.staff.identity(), windows.staff.uid - windows.staff.identity());
 
-        // Competitions and their prize money are laid out alike.
+        // Competitions and their prize money are laid out alike, as far as the Mac layout places them: it is read field
+        // by field, and one it has not been read for yet is left out of it until it is. Where it places a field, it is
+        // the byte Windows places it at; a layout that reads the reputation reads the whole object.
         assert!(windows.prize_money.is_some() && windows.competition.is_some());
         assert_eq!(mac.prize_money, windows.prize_money);
-        assert_eq!(mac.competition, windows.competition);
+        let mac_competition = mac.competition.clone().expect("the Mac layout places competitions");
+        let windows_competition = windows.competition.clone().expect("the Windows layout places competitions");
+        assert_eq!(
+            (mac_competition.uid, mac_competition.name, mac_competition.short_name),
+            (windows_competition.uid, windows_competition.name, windows_competition.short_name)
+        );
+        if mac_competition.reputation.is_some() {
+            assert_eq!(mac_competition, windows_competition);
+        }
         assert_eq!(mac.player.identity() - mac.player.person_block, mac.staff.identity() - mac.staff.person_block);
 
         // A nation's containers of national teams read alike; the nation keeps its pointers to them 8 bytes later on

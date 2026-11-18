@@ -55,10 +55,11 @@ const entityCount: Record<Entity, (count: number) => string> = {
   player: (count) => (count === 1 ? "1 player" : `${format(count)} players`),
   staff: (count) => (count === 1 ? "1 member of staff" : `${format(count)} staff`),
   club: (count) => (count === 1 ? "1 club" : `${format(count)} clubs`),
+  competition: (count) => (count === 1 ? "1 competition" : `${format(count)} competitions`),
 };
 
 /** What each list holds, in the plural. */
-const entityNouns: Record<Entity, string> = { player: "players", staff: "staff", club: "clubs" };
+const entityNouns: Record<Entity, string> = { player: "players", staff: "staff", club: "clubs", competition: "competitions" };
 
 /**
  * Squad statuses, by the codes contracts hold them as; named as the game's English contract screen names them. 15, 16,
@@ -1216,6 +1217,73 @@ export const en = {
       maxReputation: "Highest reputation",
     },
   },
+
+  competitionList: {
+    nav: "Competitions",
+    count: (total: number) => `${format(total)} competitions`,
+    search: "Search competitions by name or UID",
+    summary: (total: number, shown: number) =>
+      total > shown
+        ? `${format(total)} competitions · showing the top ${shown} by reputation`
+        : `${format(total)} competitions`,
+    empty: (query: string, filtered: boolean) => {
+      if (query === "") {
+        return filtered ? "No competitions match this filter." : "No competitions found.";
+      }
+      return filtered ? `No competitions match “${query}” with this filter.` : `No competitions match “${query}”.`;
+    },
+    /** The tag on a competition no nation's teams play in. */
+    international: "International",
+    league: "League",
+    cup: "Cup",
+    columns: {
+      name: "Name",
+      nation: "Nation",
+      reputation: "Reputation",
+      matches: "Matches",
+      uid: "UID",
+    },
+    filters: {
+      /** The name of the select, which has no label of its own. */
+      kind: "Competitions to show",
+      all: "All competitions",
+      domestic: "National",
+      international: "International",
+    },
+  },
+
+  competitionProfile: {
+    where: "Where it is played",
+    nation: "Nation",
+    continent: "Continent",
+    colours: "Colours",
+    background: "Background",
+    foreground: "Text",
+    kit: "Kit",
+    championText: "Champion's name",
+    coloursNote: "The colours the game keeps for the competition: the background its tables are drawn on, the text on it, the kit its teams wear and the colour of the champion's name.",
+    winter: "Winter kit",
+    winterKit: "Winter kit colour",
+    winterStart: "Switches on",
+    winterEnd: "Switches back",
+    winterNote: "Most competitions never change kit; one with no dates wears the same all season.",
+    season: "Season",
+    seasonStart: "Season starts",
+    seasonEnd: "Season ends",
+    stages: "Stages",
+    stagesTitle: "A league is played in none, or one when its play-offs are a stage of their own; a cup in two or more.",
+    matches: "Matches a team plays",
+    reputation: "Reputation",
+    reputationShort: "Rep",
+    reputationTitle: "1–200: how big the game rates the competition. The Champions League is 200, the Premier League 189.",
+    rules: "Rules",
+    substitutionRules: "Substitution rule",
+    substitutionRulesTitle: "The rule the competition's matches are played under. \"Do Not Override Sub Rules\" leaves the rule the competition is stored with alone.",
+    substitutionRulesNote: "The game applies the rule to fixtures made after the change; matches already scheduled keep the ones they were made with.",
+    /** What the game shows where a competition has no such value. */
+    none: "—",
+    seasonNote: "The dates the game keeps for the competition's season in the save.",
+  },
   /** The Clubs tab's national teams: each nation's men's and women's team, its senior team's squad and reputation. */
   national: {
     /** The button of the Clubs tab's switch that lists them, and the palette's command to go there. */
@@ -1520,6 +1588,7 @@ export const en = {
     clubs: "clubs",
     cohesion: "cohesion with clubs",
     tactics: "tactical familiarity",
+    competitions: "competitions",
   } satisfies Record<CheckKey, string>,
 
   /** New versions: the notice under the masthead, and the version and Check for updates at the foot of the window. */
@@ -1674,7 +1743,7 @@ export const en = {
       status: "Status",
     },
     /** The small tag after a name. */
-    kinds: { player: "Player", staff: "Staff", club: "Club", nationalTeam: "National team" } satisfies Record<EditEntity, string>,
+    kinds: { player: "Player", staff: "Staff", club: "Club", competition: "Competition", nationalTeam: "National team" } satisfies Record<EditEntity, string>,
     /** Hover text of a change of an attribute: the values as stored; `change` is from `valueChange`. */
     stored: (change: string) => `stored ${change}`,
     undone: (time: string) => `Undone at ${time}`,
@@ -1823,6 +1892,7 @@ export const en = {
       player: "Mass edit players",
       staff: "Mass edit staff",
       club: "Mass edit clubs",
+      competition: "Mass edit competitions",
     } satisfies Record<Entity, string>,
 
     // What it applies to

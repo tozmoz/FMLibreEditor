@@ -578,9 +578,43 @@ nation = 0x20             # nation pointer
 uid = 0x0C                # u32
 name = 0x40               # FM string pointer
 short_name = 0x48         # FM string pointer
-# The nation whose competition it is: a nation pointer (England for the Premier League; the United States for Major
-# League Soccer, which Toronto FC plays in). Read on the Mac (Steam build 26577676), whose layout is the same.
-nation = 0x60
+abbreviation = 0x50       # FM string pointer ("英超"); null on a few competitions
+nation = 0x60             # pointer to its db::NATION (England on the Premier League); null when international
+continent = 0x58          # pointer to its db::CONTINENT (Europe on the Premier League)
+league_order = 0xF0       # u16: the league's place in the game's order of leagues, not a level in a cup
+reputation = 0x188        # 2 x u16, the competition's reputation (1..200), the same twice
+# u8: the substitution rule the competition's matches are played under, as an override of the rule the
+# competition is stored with: 0xFF leaves that rule alone, every other value is one of the game's
+# substitution-rule codes (0x13 no substitutions, 0x02 three from three, 0x01 five from three, 0x00 seven
+# from three, 0x12 fifteen from fifteen, ...: the full list, which FMRTE's dropdown shows, is in
+# `app/src/substitutionRules.ts` and `edit.rs`). Read on the Steam build 26577676: FMRTE's 替补规则 set to
+# 不允许替补 wrote 0x13 here (and a competition set back to 不覆盖换人规则 reads 0xFF).
+substitution_rules = 0xFD
+stages = 0xF8             # u16: the stages it is played in; 0 or 1 for a league (the Championship's 1 being its
+                          # play-offs), more for a cup: the FA Cup 2, the World Cup 6, the Champions League 21
+matches = 0xFA            # u16: matches one team plays once they are drawn (Premier League 38, Championship 46); 0
+                          # before they are, and 255 in a cup
+season_start = 0x148      # date: the first day of the season the competition is in
+season_end = 0x14C        # date: its last
+winter_start = 0x150      # date: the day it switches to its winter kit; 0x076C0001 (1 January 1900) where it never does
+winter_end = 0x154        # date: and the day it switches back
+# u32 colours, packed blue, green, red, alpha 255: background, foreground, the kit's, the champion's name, and the
+# winter kit's. All 8,226 competitions read an alpha of 255 in each of the five; 0x13C and 0x140 (the champion's name)
+# then read black in every one of them, and 0x15C, past the two dates, is the winter kit: the Premier League's
+# 0xFFF8F000, the bright yellow FMRTE shows for it. Its background 0xFFF8F8F8 and foreground 0xFF380030 (the purple),
+# the Championship's foreground 0xFF4098B0 (the sky blue of its name) and the Bundesliga's black and 0xFF404040.
+colour_background = 0x130
+colour_foreground = 0x134
+colour_kit = 0x138
+colour_text = 0x13C
+colour_winter_kit = 0x15C
+# Checked on the Steam build 26577676 save of 21 September 2026, over the game's 8,226 competitions: the Premier League
+# (11) names England (nation 765) and Europe, its reputation 189 twice, 38 matches a team and a season of 21 August 2026
+# to 30 May 2027; the Championship (12) reads 136 and 46 matches, League One (13) 108, League Two (14) 87, Ligue 1 (16)
+# 173 and 34 matches, the Bundesliga (22) 178, the Champions League (1394) 200 with no nation and 21 stages, the FA Cup
+# (1426) 157 with 2 stages and no league matches, and the World Cup (1385) 200 with 6. The league order runs 7, 8, 9, 10
+# down the English leagues and 11 to 20 through France, Germany and the Netherlands, so the leagues sort by it; the cups
+# read in the 390s to 660s, which is why a competition whose `matches` is 0 is taken to be a cup.
 
 # The prize money a competition's stages pay (#123: found by RootTourist on the Windows Steam build, checked by
 # Reckbeg on the Mac against the game's Competition Stages screens). A stage played as a league (a league, a league

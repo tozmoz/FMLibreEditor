@@ -4,7 +4,7 @@
 import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from "react";
 import { valueText, type Pending } from "./editDraft";
 import { isoFromNumber, isStoredFiner } from "./editing";
-import { currencySymbol } from "./format";
+import { colourHex, colourValue, currencySymbol } from "./format";
 import { changesText, choiceLabel, editText, fieldLabel, valueChange } from "./labels";
 import { useEditableField, useEditSession, type ProfileEditing, type Report } from "./useProfileEditing";
 
@@ -69,6 +69,27 @@ export function EditInput({ field, inFact = false }: { field: string; inFact?: b
           </option>
         ))}
       </select>
+    );
+  }
+
+  // A colour is the page's colour picker over the packed number the game keeps: it reads the three bytes of red,
+  // green and blue under the alpha (see `colourHex`), and writes them back under it.
+  if (field.startsWith("colour.")) {
+    const stored = text === "" ? 0 : Number(text);
+    const hex = colourHex(Number.isFinite(stored) ? stored : 0);
+    return (
+      <span className={`edit-colour${outline}`} title={title || undefined}>
+        <input
+          type="color"
+          className="edit-swatch"
+          value={hex}
+          disabled={session.busy}
+          aria-label={label}
+          {...common}
+          onChange={(e) => session.type(field, String(colourValue(e.currentTarget.value)))}
+        />
+        <span className="edit-colour-code">{hex.toUpperCase()}</span>
+      </span>
     );
   }
 

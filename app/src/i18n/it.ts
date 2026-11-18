@@ -43,6 +43,7 @@ const nouns: Record<Entity, { one: string; many: string; feminine: boolean }> = 
   player: { one: "giocatore", many: "giocatori", feminine: false },
   staff: { one: "membro dello staff", many: "membri dello staff", feminine: false },
   club: { one: "società", many: "società", feminine: true },
+  competition: { one: "competizione", many: "competizioni", feminine: true },
 };
 
 /** "237 giocatori", "1 membro dello staff", "12 società". */
@@ -1223,6 +1224,77 @@ export const it: Strings = {
       maxReputation: "Reputazione massima",
     },
   },
+
+  competitionList: {
+    nav: "Competizioni",
+    count: (total) => entityCount("competition", total),
+    search: "Cerca competizioni per nome o UID",
+    summary: (total, shown) =>
+      total > shown
+        ? `${entityCount("competition", total)} · le prime ${shown} per reputazione`
+        : entityCount("competition", total),
+    empty: (query, filtered) => {
+      if (query === "") {
+        return filtered ? "Nessuna competizione corrisponde a questo filtro." : "Nessuna competizione trovata.";
+      }
+      return filtered
+        ? `Nessuna competizione corrisponde a «${query}» con questo filtro.`
+        : `Nessuna competizione corrisponde a «${query}».`;
+    },
+    /** The tag on a competition no nation's teams play in. */
+    international: "Internazionale",
+    league: "Campionato",
+    cup: "Coppa",
+    columns: {
+      name: "Nome",
+      nation: "Paese",
+      reputation: "Reputazione",
+      matches: "Partite",
+      uid: "UID",
+    },
+    filters: {
+      /** The name of the select, which has no label of its own. */
+      kind: "Competizioni da mostrare",
+      all: "Tutte le competizioni",
+      domestic: "Nazionali",
+      international: "Internazionali",
+    },
+  },
+
+  competitionProfile: {
+    where: "Dove si gioca",
+    nation: "Paese",
+    continent: "Continente",
+    colours: "Colori",
+    background: "Sfondo",
+    foreground: "Testo",
+    kit: "Maglia",
+    championText: "Nome del campione",
+    coloursNote: "I colori che il gioco tiene per la competizione: lo sfondo delle sue classifiche, il testo sopra, la maglia delle sue squadre e il colore del nome del campione.",
+    winter: "Maglia invernale",
+    winterKit: "Colore della maglia invernale",
+    winterStart: "Cambia il",
+    winterEnd: "Torna il",
+    winterNote: "Quasi nessuna competizione cambia maglia; senza date si gioca tutta la stagione con la stessa.",
+    season: "Stagione",
+    seasonStart: "Inizio stagione",
+    seasonEnd: "Fine stagione",
+    stages: "Fasi",
+    stagesTitle:
+      "Un campionato si gioca senza fasi, o con una quando i play-off sono una fase a sé; una coppa con due o più.",
+    matches: "Partite per squadra",
+    reputation: "Reputazione",
+    reputationShort: "Rep",
+    reputationTitle:
+      "1–200: quanto il gioco ritiene grande la competizione. La Champions League 200, la Premier League 189.",
+    rules: "Regole",
+    substitutionRules: "Regola delle sostituzioni",
+    substitutionRulesTitle: "La regola con cui si giocano le partite della competizione. «Non sostituire le regole» lascia invariata la regola salvata della competizione.",
+    substitutionRulesNote: "Il gioco applica la regola alle partite create dopo la modifica; quelle già in calendario mantengono la loro.",
+    /** What the game shows where a competition has no such value. */
+    none: "—",
+    seasonNote: "Le date che il gioco conserva per la stagione della competizione nel salvataggio.",
+  },
   /** The Clubs tab's national teams: each nation's men's and women's team, its senior team's squad and reputation. */
   national: {
     /** The button of the Clubs tab's switch that lists them, and the palette's command to go there. */
@@ -1461,6 +1533,7 @@ export const it: Strings = {
     clubs: "le società",
     cohesion: "l'affiatamento con le società",
     tactics: "la familiarità tattica",
+    competitions: "le competizioni",
   },
 
   update: {
@@ -1569,7 +1642,7 @@ export const it: Strings = {
       change: "Modifica",
       status: "Stato",
     },
-    kinds: { player: "Giocatore", staff: "Staff", club: "Società", nationalTeam: "Nazionale" },
+    kinds: { player: "Giocatore", staff: "Staff", club: "Società", competition: "Competizione", nationalTeam: "Nazionale" },
     stored: (change) => `valore interno ${change}`,
     undone: (time) => `Annullata alle ${time}`,
     undo: "Ripristina",
@@ -1700,6 +1773,7 @@ export const it: Strings = {
       player: "Modifica multipla dei giocatori",
       staff: "Modifica multipla dello staff",
       club: "Modifica multipla delle società",
+      competition: "Modifica multipla delle competizioni",
     },
 
     // A cosa si applica

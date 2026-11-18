@@ -79,6 +79,9 @@ pub enum Check {
     /// tactics. It passes unchecked where the layout or the build's profile does not place them: Max tactics has
     /// nothing to write there, and the app shows no familiarity.
     Tactics,
+    /// The competitions the game holds read as competitions: a reputation of 1–200 and a season that ends after it
+    /// begins (see `competitions.rs`). Guards the competition fields.
+    Competitions,
 }
 
 /// The checks a change to the game's lists and records needs (moves, swaps, healing, captains, ties, clauses,
@@ -86,7 +89,7 @@ pub enum Check {
 pub const STRUCTURE: [Check; 4] = [Check::Contracts, Check::Teams, Check::Staff, Check::Clubs];
 
 impl Check {
-    pub const ALL: [Check; 12] = [
+    pub const ALL: [Check; 13] = [
         Check::GameDate,
         Check::Players,
         Check::Positions,
@@ -99,6 +102,7 @@ impl Check {
         Check::Clubs,
         Check::Cohesion,
         Check::Tactics,
+        Check::Competitions,
     ];
 
     /// The name of the check in error codes' parameters and in the app: `gameDate`, `liveValues`, ...
@@ -116,6 +120,7 @@ impl Check {
             Check::Clubs => "clubs",
             Check::Cohesion => "cohesion",
             Check::Tactics => "tactics",
+            Check::Competitions => "competitions",
         }
     }
 
@@ -126,6 +131,7 @@ impl Check {
             Entity::Staff => Check::Staff,
             // A national team's reputations sit where a club's does, which the clubs' check reads.
             Entity::Club | Entity::NationalTeam => Check::Clubs,
+            Entity::Competition => Check::Competitions,
             Entity::Player if key.starts_with("attribute.") => Check::Attributes,
             Entity::Player if key.starts_with("position.") => Check::Positions,
             Entity::Player if key.starts_with("personality.") => Check::Personality,
@@ -153,6 +159,7 @@ impl fmt::Display for Check {
             Check::Clubs => "the clubs",
             Check::Cohesion => "the cohesion with clubs",
             Check::Tactics => "the tactical familiarity",
+            Check::Competitions => "the competitions",
         })
     }
 }
@@ -654,6 +661,7 @@ pub(crate) fn check(session: &Session) -> Health {
     let (date, date_result) = find_date(session, &evidence);
     let staff = check_staff(session);
     let clubs = check_clubs(session);
+    let competitions = check_competitions(session);
     let mut cohesion = cohesion_lists.result(Check::Cohesion, 0.99, String::new());
     cohesion.passed &= cohesion_own.holds(MOST_WITH_COHESION);
     cohesion.note = match layout.cohesion {
@@ -711,6 +719,7 @@ pub(crate) fn check(session: &Session) -> Health {
             clubs,
             cohesion,
             tactics,
+            competitions,
         ],
         date,
         evidence,
@@ -1024,6 +1033,37 @@ const ASSISTANT: u8 = 20;
 const GOALKEEPING_COACH: u8 = 34;
 const CHIEF_SCOUT: u8 = 44;
 const HEAD_PHYSIO: u8 = 50;
+
+/// Competitions read as competitions: a reputation of 1–200, kept twice over, a season that ends after it begins, a
+/// winter that ends after it begins, and five colours under the alpha the game packs into them. A game whose layout
+/// does not place competitions has none to check, and the check does not pass.
+fn check_competitions(session: &Session) -> CheckResult {
+    let mut tally = Tally::default();
+    let layout = &session.layout;
+    let Ok(competitions) = session.competitions() else {
+        return tally.result(Check::Competitions, 0.95, String::new());
+    };
+    let step = (competitions.len() / SAMPLES as usize).max(1);
+    for c in competitions.iter().step_by(step) {
+        // A season runs from its first day to its last; a competition the game has not put a season in reads none.
+        let season_holds = match (c.season_start, c.season_end) {
+            (Some(start), Some(end)) => start.to_number() <= end.to_number(),
+            _ => true,
+        };
+        // Many competitions the game never rates read no reputation at all; one it rates is 1–200.
+        let reputation_holds = c.reputation.is_none_or(|reputation| (1..=200).contains(&reputation));
+        // The winter runs from its first day to the one it switches back on, where the game sets them at all.
+        let winter_holds = match (c.winter_start, c.winter_end) {
+            (Some(start), Some(end)) => start.to_number() <= end.to_number(),
+            _ => true,
+        };
+        // Where the layout places the colours, all five of them read as colours (see `Colours`).
+        let colours_hold =
+            c.colours.is_some() || layout.competition.as_ref().is_none_or(|l| l.colour_background.is_none());
+        tally.add(season_holds && reputation_holds && winter_holds && colours_hold);
+    }
+    tally.result(Check::Competitions, 0.95, String::new())
+}
 
 /// Clubs whose senior team points back at them, with a reputation in range.
 fn check_clubs(session: &Session) -> CheckResult {

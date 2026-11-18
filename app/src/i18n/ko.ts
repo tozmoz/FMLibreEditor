@@ -60,6 +60,7 @@ const nouns: Record<Entity, { noun: string; counter: string }> = {
   player: { noun: "선수", counter: "명" },
   staff: { noun: "스태프", counter: "명" },
   club: { noun: "구단", counter: "개" },
+  competition: { noun: "대회", counter: "개" },
 };
 
 /** "선수 237명", "스태프 1명", "구단 12개". */
@@ -1182,6 +1183,74 @@ export const ko: Strings = {
       maxReputation: "최고 명성",
     },
   },
+
+  competitionList: {
+    nav: "대회",
+    count: (total) => entityCount("competition", total),
+    search: "이름 또는 UID로 대회 검색",
+    summary: (total, shown) =>
+      total > shown
+        ? `${entityCount("competition", total)} · 명성 상위 ${shown}개 표시`
+        : entityCount("competition", total),
+    empty: (query, filtered) => {
+      if (query === "") {
+        return filtered ? "이 필터에 맞는 대회가 없습니다." : "대회를 찾지 못했습니다.";
+      }
+      return filtered ? `이 필터에서 “${query}”에 맞는 대회가 없습니다.` : `“${query}”에 맞는 대회가 없습니다.`;
+    },
+    /** The tag on a competition no nation's teams play in. */
+    international: "국제",
+    league: "리그",
+    cup: "컵",
+    columns: {
+      name: "이름",
+      nation: "국가",
+      reputation: "명성",
+      matches: "경기 수",
+      uid: "UID",
+    },
+    filters: {
+      /** The name of the select, which has no label of its own. */
+      kind: "표시할 대회",
+      all: "모든 대회",
+      domestic: "국내 대회",
+      international: "국제 대회",
+    },
+  },
+
+  competitionProfile: {
+    where: "대회 정보",
+    nation: "국가",
+    continent: "대륙",
+    colours: "색상",
+    background: "배경색",
+    foreground: "글자색",
+    kit: "유니폼",
+    championText: "우승자 이름 색",
+    coloursNote: "게임이 대회마다 저장하는 색입니다. 순위표 배경, 그 위의 글자, 팀의 유니폼, 우승자 이름의 색.",
+    winter: "동계 유니폼",
+    winterKit: "동계 유니폼 색",
+    winterStart: "전환일",
+    winterEnd: "복귀일",
+    winterNote: "대부분의 대회는 유니폼을 바꾸지 않습니다. 날짜가 없으면 시즌 내내 같은 유니폼을 입습니다.",
+    season: "시즌",
+    seasonStart: "시즌 시작",
+    seasonEnd: "시즌 종료",
+    stages: "단계 수",
+    stagesTitle:
+      "리그는 0단계이며, 플레이오프가 별도 단계이면 1단계입니다. 컵 대회는 2단계 이상입니다.",
+    matches: "팀당 경기 수",
+    reputation: "명성",
+    reputationShort: "명성",
+    reputationTitle: "1–200: 게임이 평가한 대회의 규모입니다. 챔피언스리그 200, 프리미어리그 189.",
+    rules: "규칙",
+    substitutionRules: "교체 규칙",
+    substitutionRulesTitle: "대회 경기에 적용되는 교체 규칙입니다. \"교체 규칙 덮어쓰지 않음\"은 대회에 저장된 규칙을 그대로 둡니다.",
+    substitutionRulesNote: "변경 이후 생성되는 일정에 적용되며, 이미 잡힌 경기는 기존 규칙을 유지합니다.",
+    /** What the game shows where a competition has no such value. */
+    none: "—",
+    seasonNote: "게임이 세이브에 이 대회의 시즌으로 저장한 날짜입니다.",
+  },
   /** The Clubs tab's national teams: each nation's men's and women's team, its senior team's squad and reputation. */
   national: {
     /** The button of the Clubs tab's switch that lists them, and the palette's command to go there. */
@@ -1413,6 +1482,7 @@ export const ko: Strings = {
     clubs: "구단",
     cohesion: "구단과의 결속력",
     tactics: "전술 숙련도",
+    competitions: "대회",
   },
 
   update: {
@@ -1520,7 +1590,7 @@ export const ko: Strings = {
       change: "변경",
       status: "상태",
     },
-    kinds: { player: "선수", staff: "스태프", club: "구단", nationalTeam: "국가대표" },
+    kinds: { player: "선수", staff: "스태프", club: "구단", competition: "대회", nationalTeam: "국가대표" },
     stored: (change) => `저장된 값 ${change}`,
     undone: (time) => `${time}에 되돌림`,
     undo: "되돌리기",
@@ -1642,6 +1712,7 @@ export const ko: Strings = {
       player: "선수 일괄 편집",
       staff: "스태프 일괄 편집",
       club: "구단 일괄 편집",
+      competition: "대회 일괄 편집",
     },
 
     // What it applies to

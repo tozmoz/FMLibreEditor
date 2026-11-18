@@ -1549,6 +1549,46 @@ input::placeholder {
 }
 
 /*
+ * The competitions table: name, nation, reputation, matches and UID. As in the clubs table a long name wraps rather
+ * than pushing the other columns out, and the columns it can do without drop out by the room the list has.
+ */
+.competition-grid td.col-name {
+  width: 100%;
+  max-width: 0;
+}
+
+.competition-grid .col-name .name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.competition-grid .col-name :is(.name-text, .sub) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.competition-grid .col-name .tag {
+  flex: none;
+  margin-left: 0;
+}
+
+@container (max-width: 460px) {
+  .competition-grid .col-matches {
+    display: none;
+  }
+}
+
+@container (max-width: 300px) {
+  .competition-grid .col-rep {
+    display: none;
+  }
+}
+
+/*
  * The staff table has one more text column, so its columns drop out sooner, whether or not a
  * profile is open: Born and ID, then Nation, then Age and PA, and the text columns wrap.
  */
@@ -2591,6 +2631,68 @@ select.edit-input {
 .edit-flag:has(input:disabled) {
   opacity: 0.6;
   cursor: default;
+}
+
+/* A colour: a chip of it and its page name, in a fact, and while the profile is edited a picker over both. */
+.colour {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.colour-chip {
+  width: 22px;
+  height: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+}
+
+.edit-colour {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The picker itself is the swatch: the browser's frame around it would take more room than the value it shows. */
+.edit-colour input[type="color"] {
+  width: 30px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--field);
+  cursor: pointer;
+}
+
+.edit-colour input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.edit-colour input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+.edit-colour.changed,
+.edit-colour.invalid {
+  border-radius: var(--radius);
+  outline: 2px solid transparent;
+}
+
+.edit-colour.changed {
+  background: var(--pending-soft);
+  outline-color: var(--text);
+}
+
+.edit-colour.invalid {
+  outline-color: var(--danger, var(--text));
+}
+
+.edit-colour-code {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
 }
 
 /* An amount of money: the pound sign before an input that takes plain whole pounds. A percentage has its sign after. */

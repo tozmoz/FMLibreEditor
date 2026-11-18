@@ -75,6 +75,7 @@ export interface ConnectionInfo {
   players: number;
   staff: number;
   clubs: number;
+  competitions: number;
   /** Current in-game date, when it could be read. */
   gameDate: FmDate | null;
   loadMs: number;
@@ -99,6 +100,7 @@ export interface ReloadInfo {
   players: number;
   staff: number;
   clubs: number;
+  competitions: number;
   gameDate: FmDate | null;
   /** The checks, run again with the game as it is now. */
   health: Health;
@@ -116,7 +118,8 @@ export interface ReloadInfo {
 export type ExportFormat = "csv" | "csvSemicolon" | "json";
 
 /** What can be exported: the player, staff and club lists. */
-export type ExportEntity = Entity;
+/** What the lists export and mass-edit: the player, staff and club ones; competitions have neither. */
+export type ExportEntity = "player" | "staff" | "club";
 
 /** Which changes the Changes view lists: all of them, those of this connection, or the earlier ones from the history. */
 export type SessionChoice = "all" | "this" | "earlier";
@@ -204,7 +207,8 @@ export type CheckKey =
   | "staff"
   | "clubs"
   | "cohesion"
-  | "tactics";
+  | "tactics"
+  | "competitions";
 
 /** What one check found: how many of the players, staff or clubs it looked at fit. */
 export interface CheckResult {
@@ -358,6 +362,54 @@ export interface StagePrizes {
 export interface ClubPage {
   total: number;
   rows: ClubSummary[];
+}
+
+/**
+ * A competition: a league or a cup, from `search_competitions`. Its names are the game's own, in the game's language.
+ */
+export interface CompetitionSummary {
+  uid: number;
+  /** Full name, e.g. "英格兰超级联赛". */
+  name: string;
+  shortName: string | null;
+  /** The game's own tag for it, e.g. "英超". */
+  abbreviation: string | null;
+  /** The nation it belongs to; null for an international competition. */
+  nation: string | null;
+  continent: string | null;
+  /** 1–200, the game's scale for how big it is: the Champions League 200, the Premier League 189. Null where it is unrated. */
+  reputation: number | null;
+  /**
+   * The substitution rule its matches are played under, as one of the game's codes (see `SUBSTITUTION_RULES`); 255
+   * leaves the rule the competition is stored with alone. Null where the layout does not place it.
+   */
+  substitutionRules: number | null;
+  /** The stages it is played in: 0 or 1 in a league, more in a cup. */
+  stages: number | null;
+  /** The matches one team plays, once they are drawn; null before that, and in a cup. */
+  matches: number | null;
+  seasonStart: FmDate | null;
+  seasonEnd: FmDate | null;
+  /** The days it wears its winter kit between; null where the game sets none. */
+  winterStart: FmDate | null;
+  winterEnd: FmDate | null;
+  /** Its colours as the game packs them (see `colourHex`); null where the layout does not place them. */
+  colours: CompetitionColours | null;
+}
+
+/** A competition's colours, packed blue, green and red under an alpha of 255: 0xFF380030 is "#380030". */
+export interface CompetitionColours {
+  background: number;
+  foreground: number;
+  kit: number;
+  /** The colour of the champion's name. */
+  text: number;
+  winterKit: number;
+}
+
+/** Which competitions a list shows: all of them, a nation's, or the international ones. */
+export interface CompetitionFilter {
+  international?: boolean;
 }
 
 export interface Finances {
@@ -821,7 +873,7 @@ export interface Ban {
 }
 
 /** What an edit is for. */
-export type Entity = "player" | "staff" | "club";
+export type Entity = "player" | "staff" | "club" | "competition";
 
 /** What a change can be made to: the lists' entities, and a nation's national team (its senior team's reputation). */
 export type EditEntity = Entity | "nationalTeam";

@@ -54,6 +54,7 @@ const nouns: Record<Entity, { one: string; few: string; many: string; genOne: st
   player: { one: "игрок", few: "игрока", many: "игроков", genOne: "игрока", genMany: "игроков" },
   staff: { one: "сотрудник", few: "сотрудника", many: "сотрудников", genOne: "сотрудника", genMany: "сотрудников" },
   club: { one: "клуб", few: "клуба", many: "клубов", genOne: "клуба", genMany: "клубов" },
+  competition: { one: "турнир", few: "турнира", many: "турниров", genOne: "турнира", genMany: "турниров" },
 };
 
 /** "237 игроков", "1 сотрудник", "12 клубов". */
@@ -65,7 +66,12 @@ const entityGenitive = (entity: Entity, count: number) =>
   `${format(count)} ${count % 10 === 1 && count % 100 !== 11 ? nouns[entity].genOne : nouns[entity].genMany}`;
 
 /** What each list holds, in the genitive plural. */
-const entityNouns: Record<Entity, string> = { player: "игроков", staff: "сотрудников", club: "клубов" };
+const entityNouns: Record<Entity, string> = {
+  player: "игроков",
+  staff: "сотрудников",
+  club: "клубов",
+  competition: "турниров",
+};
 
 /** Squad statuses, by the codes contracts hold them as (see `en.ts`). */
 const SQUAD_STATUSES: Partial<Record<number, string>> = {
@@ -1190,6 +1196,75 @@ export const ru: Strings = {
       maxReputation: "Максимальная репутация",
     },
   },
+
+  competitionList: {
+    nav: "Турниры",
+    count: (total) => counted(total, "турнир", "турнира", "турниров"),
+    search: "Поиск турниров по названию или UID",
+    summary: (total, shown) =>
+      total > shown
+        ? `${counted(total, "турнир", "турнира", "турниров")} · показаны первые ${shown} по репутации`
+        : counted(total, "турнир", "турнира", "турниров"),
+    empty: (query, filtered) => {
+      if (query === "") {
+        return filtered ? "Нет турниров, подходящих под этот фильтр." : "Турниры не найдены.";
+      }
+      return filtered ? `Нет турниров по запросу «${query}» с этим фильтром.` : `Нет турниров по запросу «${query}».`;
+    },
+    /** The tag on a competition no nation's teams play in. */
+    international: "Международный",
+    league: "Лига",
+    cup: "Кубок",
+    columns: {
+      name: "Название",
+      nation: "Страна",
+      reputation: "Репутация",
+      matches: "Матчи",
+      uid: "UID",
+    },
+    filters: {
+      /** The name of the select, which has no label of its own. */
+      kind: "Показывать турниры",
+      all: "Все турниры",
+      domestic: "Национальные",
+      international: "Международные",
+    },
+  },
+
+  competitionProfile: {
+    where: "Где играют",
+    nation: "Страна",
+    continent: "Континент",
+    colours: "Цвета",
+    background: "Фон",
+    foreground: "Текст",
+    kit: "Форма",
+    championText: "Имя победителя",
+    coloursNote: "Цвета, которые игра хранит для турнира: фон его таблиц, текст на нём, форма его команд и цвет имени победителя.",
+    winter: "Зимняя форма",
+    winterKit: "Цвет зимней формы",
+    winterStart: "Переход с",
+    winterEnd: "Возврат с",
+    winterNote: "Почти все турниры не меняют форму; без дат один комплект носится весь сезон.",
+    season: "Сезон",
+    seasonStart: "Начало сезона",
+    seasonEnd: "Конец сезона",
+    stages: "Этапы",
+    stagesTitle:
+      "Лига играется без этапов, или с одним, если плей-офф — отдельный этап; кубок — с двумя и более.",
+    matches: "Матчей на команду",
+    reputation: "Репутация",
+    reputationShort: "Реп",
+    reputationTitle:
+      "1–200: насколько крупным игра считает турнир. Лига чемпионов 200, Премьер-лига 189.",
+    rules: "Правила",
+    substitutionRules: "Правило замен",
+    substitutionRulesTitle: "Правило, по которому проводятся матчи турнира. «Не переопределять правила» оставляет сохранённое правило турнира без изменений.",
+    substitutionRulesNote: "Игра применяет правило к матчам, созданным после изменения; уже запланированные матчи сохраняют своё правило.",
+    /** What the game shows where a competition has no such value. */
+    none: "—",
+    seasonNote: "Даты, которые игра хранит для сезона турнира в сохранении.",
+  },
   /** The Clubs tab's national teams: each nation's men's and women's team, its senior team's squad and reputation. */
   national: {
     /** The button of the Clubs tab's switch that lists them, and the palette's command to go there. */
@@ -1416,6 +1491,7 @@ export const ru: Strings = {
     clubs: "клубы",
     cohesion: "сыгранность с клубами",
     tactics: "знание тактики",
+    competitions: "турниры",
   },
 
   update: {
@@ -1520,7 +1596,7 @@ export const ru: Strings = {
       change: "Изменение",
       status: "Статус",
     },
-    kinds: { player: "Игрок", staff: "Персонал", club: "Клуб", nationalTeam: "Сборная" },
+    kinds: { player: "Игрок", staff: "Персонал", club: "Клуб", competition: "Турнир", nationalTeam: "Сборная" },
     stored: (change) => `хранится ${change}`,
     undone: (time) => `Отменено в ${time}`,
     undo: "Отменить",
@@ -1643,6 +1719,7 @@ export const ru: Strings = {
       player: "Массовое редактирование игроков",
       staff: "Массовое редактирование персонала",
       club: "Массовое редактирование клубов",
+      competition: "Массовое редактирование турниров",
     },
 
     scope: (entity, total) => `Сейчас в списке (поиск и фильтры): ${entityCount(entity, total)}`,

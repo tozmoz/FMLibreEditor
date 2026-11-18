@@ -485,19 +485,20 @@ function ReputationBar({ label, value, field }: { label: string; value: number; 
 }
 
 /** How much of a bar a reputation fills, as a CSS length. */
-function reputationFill(value: number): string {
-  return `${Math.min(100, (value * 100) / REPUTATION_MAX)}%`;
+/** How much of a bar a reputation fills, as a CSS length: `max` is what fills it (10,000 for a club, 200 a competition). */
+function reputationFill(value: number, max = REPUTATION_MAX): string {
+  return `${Math.min(100, (value * 100) / max)}%`;
 }
 
 /**
  * One reputation as a compact bar with the number on it, in the style of the abilities; a dash
- * when the reputation is unknown. For the club list and the club header.
+ * when the reputation is unknown. For the club list, the club header and a competition.
  */
-export function ReputationMeter({ value }: { value: number | null }) {
+export function ReputationMeter({ value, max }: { value: number | null; max?: number }) {
   if (value === null) {
     return <span className="muted">{profileText.none}</span>;
   }
-  const style = { "--fill": reputationFill(value) } as CSSProperties;
+  const style = { "--fill": reputationFill(value, max) } as CSSProperties;
   return (
     <span className="ability rep" style={style}>
       {formatNumber(value)}

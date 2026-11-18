@@ -43,10 +43,11 @@ const entityCount: Record<Entity, (count: number) => string> = {
   player: (count) => `${format(count)} 名球员`,
   staff: (count) => `${format(count)} 名职员`,
   club: (count) => `${format(count)} 家俱乐部`,
+  competition: (count) => `${format(count)} 个赛事`,
 };
 
 /** What each list holds, in the plural. */
-const entityNouns: Record<Entity, string> = { player: "球员", staff: "职员", club: "俱乐部" };
+const entityNouns: Record<Entity, string> = { player: "球员", staff: "职员", club: "俱乐部", competition: "赛事" };
 
 /**
  * Squad statuses, by the codes contracts hold them as; named as the game's English contract screen names them. 15, 16,
@@ -1273,6 +1274,73 @@ export const zhCN: Strings = {
       maxReputation: "最高声望",
     },
   },
+
+  competitionList: {
+    nav: "赛事",
+    count: (total: number) => `${format(total)} 个赛事`,
+    search: "按名称或 UID 搜索赛事",
+    summary: (total: number, shown: number) =>
+      total > shown
+        ? `${format(total)} 个赛事 · 按声望显示前 ${shown} 个`
+        : `${format(total)} 个赛事`,
+    empty: (query: string, filtered: boolean) => {
+      if (query === "") {
+        return filtered ? "没有符合该筛选条件的赛事。" : "没有找到赛事。";
+      }
+      return filtered ? `没有符合“${query}”和该筛选条件的赛事。` : `没有找到“${query}”的赛事。`;
+    },
+    /** The tag on a competition no nation's teams play in. */
+    international: "国际",
+    league: "联赛",
+    cup: "杯赛",
+    columns: {
+      name: "名称",
+      nation: "国家",
+      reputation: "声望",
+      matches: "场次",
+      uid: "UID",
+    },
+    filters: {
+      /** The name of the select, which has no label of its own. */
+      kind: "显示的赛事",
+      all: "全部赛事",
+      domestic: "国内赛事",
+      international: "国际赛事",
+    },
+  },
+
+  competitionProfile: {
+    where: "赛事信息",
+    nation: "国家",
+    continent: "大洲",
+    colours: "颜色",
+    background: "底色",
+    foreground: "文字色",
+    kit: "球衣色",
+    championText: "冠军文字色",
+    coloursNote: "游戏为赛事保存的颜色：表格的底色与上面的文字色、球队在赛事中穿的球衣色，以及冠军名字的颜色。",
+    winter: "冬季球衣",
+    winterKit: "冬季球衣色",
+    winterStart: "换装日期",
+    winterEnd: "换回日期",
+    winterNote: "多数赛事不做冬季换装；没有日期时，整个赛季穿同一套球衣。",
+    season: "赛季",
+    seasonStart: "赛季开始",
+    seasonEnd: "赛季结束",
+    stages: "阶段数",
+    stagesTitle: "联赛为 0 个阶段；若附加赛单独成阶段则为 1 个。杯赛为两个或更多阶段。",
+    matches: "每队场次",
+    reputation: "声望",
+    reputationShort: "声望",
+    reputationTitle: "1–200：游戏对这项赛事规模的评定。欧冠 200，英超 189。",
+    rules: "规则",
+    substitutionRules: "替补规则",
+    substitutionRulesTitle: "该赛事比赛使用的换人规则；「不覆盖换人规则」表示沿用赛事原本的规则。",
+    substitutionRulesNote: "游戏会把新规则用于改动后新产生的赛程；已经排好的比赛仍按原规则进行。",
+    /** What the game shows where a competition has no such value. */
+    none: "—",
+    seasonNote: "这里是游戏在存档中为该项赛事保存的赛季日期。",
+  },
   /** The Clubs tab's national teams: each nation's men's and women's team, its senior team's squad and reputation. */
   national: {
     /** The button of the Clubs tab's switch that lists them, and the palette's command to go there. */
@@ -1529,6 +1597,7 @@ export const zhCN: Strings = {
     clubs: "俱乐部",
     cohesion: "与俱乐部的凝聚力",
     tactics: "战术熟悉度",
+    competitions: "赛事",
   } satisfies Record<CheckKey, string>,
 
   /** New versions: the notice under the masthead, and the version and Check for updates at the foot of the window. */
@@ -1681,7 +1750,7 @@ export const zhCN: Strings = {
       status: "状态",
     },
     /** The small tag after a name. */
-    kinds: { player: "球员", staff: "职员", club: "俱乐部", nationalTeam: "国家队" } satisfies Record<EditEntity, string>,
+    kinds: { player: "球员", staff: "职员", club: "俱乐部", competition: "赛事", nationalTeam: "国家队" } satisfies Record<EditEntity, string>,
     /** Hover text of a change of an attribute: the values as stored; `change` is from `valueChange`. */
     stored: (change: string) => `游戏中记录为：${change}`,
     undone: (time: string) => `已于 ${time} 撤销`,
@@ -1818,6 +1887,7 @@ export const zhCN: Strings = {
       player: "批量编辑球员",
       staff: "批量编辑职员",
       club: "批量编辑俱乐部",
+      competition: "批量编辑赛事",
     } satisfies Record<Entity, string>,
 
     // What it applies to

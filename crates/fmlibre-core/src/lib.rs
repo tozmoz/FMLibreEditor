@@ -9,6 +9,7 @@ mod calibrate;
 mod clauses;
 mod clubs;
 mod coded;
+mod competitions;
 mod cohesion;
 mod concerns;
 mod date;
@@ -63,6 +64,7 @@ pub use clubs::{
     read_clubs,
 };
 pub use coded::Coded;
+pub use competitions::{CompetitionIndex, CompetitionSummary, competition_pool, read_competitions};
 pub use cohesion::{COHESION_RANGE, CohesionPlan, CohesionSet};
 pub use concerns::{ABOUT_A_TEAMMATE, People};
 pub use date::FmDate;
