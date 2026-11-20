@@ -322,9 +322,10 @@ mod tests {
         // before (0x14A0 on Game Pass 0.9.2524.0, 0x1480 on Steam build 26620374): there the search found it, the one
         // date that fits best on a save of 18 January 2028, and the only one but the field beside the arrays on a save
         // of 14 October 2026. Their profiles guess the next builds' dates.
+        // The Epic profile of the same update now guesses Steam build 26620374's date, so it is no longer beyond the guesses.
         let kind = |profile: &BuildProfile| std::mem::discriminant(&profile.plugin);
         let beyond_the_guesses = |profile: &BuildProfile| {
-            profile.package_version.as_deref() == Some("0.9.2524.0") || profile.name == "FM27 Steam build 26620374"
+            profile.package_version.as_deref() == Some("0.9.2524.0")
         };
         for profile in profiles.iter().filter(|profile| profile.current_date.is_some()) {
             let date = profile.current_date.expect("a date");

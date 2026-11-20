@@ -1,0 +1,32 @@
+# FM27 (Epic Games Store), worked out by fmlibre-probe 0.5.3 on a save
+# of 2028-10-09: all 12 checks passed.
+name = "FM27 (Epic Games Store)"
+edition = 27
+storefront = "epic"
+
+# The in-game date, 2028-10-09 on the save: 3862 of 3862 contract dates
+# before it, and 98 of 98 current injuries begun by then and not over.
+current_date = 0x58268E0
+
+# The static pointer to the retirement manager (RETIREMENT_MANAGER),
+# 0xC068 before the players pair; 2808 planned retirements on the save.
+retirement_manager = 0x586F850
+
+# The static pointer to the game's own object (game_plugin::GAME_UI), whose count of saves loaded
+# tells a load from a save: 0xBB8 after the players pair; 2 loaded when it was found.
+game_ui = 0x587C470
+
+# The prize money competitions pay (layout.toml, [prize_money]; #123) was read on this build on a save of 2028/29 and
+# matched to the game's screens: the Champions League league phase pays £1.8M per win and £601K per draw there.
+prize_money = true
+
+# game_plugin as mapped in memory; these values identify the build.
+[plugin]
+size_of_image = 0x18095000
+link_timestamp = 0x6AF5C793
+
+# RVAs in game_plugin of the (begin, end) pointer pairs of the entity arrays.
+[arrays]
+players = 0x587B8B8
+staff = 0x587B900
+clubs = 0x587BA70

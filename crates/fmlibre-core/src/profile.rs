@@ -1247,6 +1247,7 @@ const BUILDS: &[&str] = &[
     include_str!("../../../profiles/fm27/steam-26577676-macos-arm64.toml"),
     include_str!("../../../profiles/fm27/steam-26620374-macos-x86_64.toml"),
     include_str!("../../../profiles/fm27/steam-26620374-macos-arm64.toml"),
+    include_str!("../../../profiles/fm27/epic-27.1.0.toml"),
 ];
 
 /// The built-in object layout for `edition`, if there is one.
@@ -1799,6 +1800,7 @@ mod tests {
                 "FM27 Steam build 26577676 (macOS, Apple silicon)",
                 "FM27 Steam build 26620374 (macOS, Intel)",
                 "FM27 Steam build 26620374 (macOS, Apple silicon)",
+                "FM27 (Epic Games Store)",
             ]
         );
     }
@@ -1836,6 +1838,7 @@ mod tests {
         assert_eq!(
             checked,
             [
+                "FM27 (Epic Games Store)",
                 "FM27 0.9.2409.0 (Game Pass)",
                 "FM27 0.9.2435.0 (Game Pass)",
                 "FM27 0.9.2524.0 (Game Pass)",

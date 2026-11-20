@@ -85,7 +85,8 @@ impl GameInfo {
         let edition = package_full_name
             .as_deref()
             .and_then(|name| number_after(name, "FootballManager"))
-            .or_else(|| number_after(&exe_path.to_string_lossy(), "Football Manager "));
+            .or_else(|| number_after(&exe_path.to_string_lossy(), "Football Manager "))
+            .or_else(|| (storefront == Storefront::Epic).then_some(27));
         let steam_build = (storefront == Storefront::Steam).then(|| steam_build(&exe_path)).flatten();
 
         Ok(Self { pid: process.pid(), exe_path, storefront, edition, package_full_name, package_version, steam_build })
