@@ -1113,9 +1113,18 @@ export type CaptainRole = "captain" | "viceCaptain";
  * What a team-wide action does to every player of the team, those out on loan too: "heal" heals every injury,
  * "liftBans" lifts every ban, "inspire" sets morale to 20, "refresh" sets energy and match sharpness to 100%,
  * "maxCohesion" sets cohesion with the club to 100 for those who have one, "maxTactics" has the players know the
- * tactic the team plays at its best.
+ * tactic the team plays at its best, and "atItsBest" does Heal all, Inspire all, Refresh all, Max cohesion and Max
+ * tactics in that order, as one batch.
  */
-export type TeamAction = "heal" | "liftBans" | "inspire" | "refresh" | "maxAttributes" | "maxCohesion" | "maxTactics";
+export type TeamAction =
+  | "heal"
+  | "liftBans"
+  | "inspire"
+  | "refresh"
+  | "maxAttributes"
+  | "maxCohesion"
+  | "maxTactics"
+  | "atItsBest";
 
 /** The actions a national team's senior team has: Heal all, Inspire all and Refresh all. */
 export type NationalTeamAction = Extract<TeamAction, "heal" | "inspire" | "refresh">;
@@ -1317,6 +1326,11 @@ export interface MassReport {
   applied: number;
   /** Changes not written, e.g. because the game changed the value after the preview. */
   failed: { uid: number; name: string; field: string; error: Failure }[];
+}
+
+/** From `team_action`: a mass report, and the steps of Team at its best it left out (none for any other action). */
+export interface TeamReport extends MassReport {
+  skipped: { action: TeamAction; reason: Failure }[];
 }
 
 /** From `undo_batch`. */

@@ -2251,6 +2251,13 @@ export const tr: Strings = {
     maxAll: "Özellikleri tamamla",
     maxAllTitle:
       "Bu takımdaki her oyuncunun bütün özelliklerini en iyiye çıkar: 20; sakatlık eğilimi ve sertlik için 1",
+    atItsBest: "Team at its best",
+    atItsBestTitle:
+      "Heal all, Inspire all, Refresh all, Max cohesion and Max tactics in one press, which one Undo takes back. " +
+      "Attributes and bans stay as they are. A step that cannot run, such as Heal all while nobody is injured, is " +
+      "skipped, and the result says so. The areas of the tactic fall again as the training ages, after some six weeks, " +
+      "and another tactic needs another press. The game shows the changes once it moves on: press Continue in the game",
+    atItsBestSkipped: (step, reason) => `${step} skipped: ${reason}`,
     hint:
       "İşlemler listedeki her oyuncuyu kapsar, kiralık gönderilenler de dahil. " +
       "Geri alma işlemi Değişiklikler bölümünde de yapılabilir.",

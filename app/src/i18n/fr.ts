@@ -2415,6 +2415,13 @@ export const fr: Strings = {
     maxAllTitle:
       "Porter chaque attribut de chaque joueur de cette équipe à son meilleur niveau\u00a0: 20, et 1 pour la tendance à " +
       "se blesser et la violence",
+    atItsBest: "Team at its best",
+    atItsBestTitle:
+      "Heal all, Inspire all, Refresh all, Max cohesion and Max tactics in one press, which one Undo takes back. " +
+      "Attributes and bans stay as they are. A step that cannot run, such as Heal all while nobody is injured, is " +
+      "skipped, and the result says so. The areas of the tactic fall again as the training ages, after some six weeks, " +
+      "and another tactic needs another press. The game shows the changes once it moves on: press Continue in the game",
+    atItsBestSkipped: (step, reason) => `${step} skipped: ${reason}`,
     hint:
       "Les actions concernent chaque joueur de la liste, y compris ceux prêtés ailleurs. L'annulation se trouve aussi " +
       "dans la vue Modifications.",

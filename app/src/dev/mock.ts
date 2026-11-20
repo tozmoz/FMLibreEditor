@@ -25,6 +25,7 @@ import type {
   SquadPlayer,
   TeamAction,
   TeamFreeze,
+  TeamReport,
   FreezeKind,
   ClubDetails,
   ClubFilter,
@@ -2951,8 +2952,24 @@ function undoCaptain(entry: LoggedChange): void {
 }
 
 /** `team_action`: the action on every player of the fixture team, logged as one batch like a mass edit. */
-function teamAction(clubUid: number, index: number, action: TeamAction): MassReport {
-  return actOnPlayers(fixtureTeam(clubUid, index).players, action);
+function teamAction(clubUid: number, index: number, action: TeamAction): TeamReport {
+  const players = fixtureTeam(clubUid, index).players;
+  if (action !== "atItsBest") {
+    return { ...actOnPlayers(players, action), skipped: [] };
+  }
+  // Team at its best: each step under one batch, the steps that cannot run left out and named.
+  const batch = nextMassId++;
+  const report: TeamReport = { batch, applied: 0, failed: [], skipped: [] };
+  for (const step of ["heal", "inspire", "refresh", "maxCohesion", "maxTactics"] as const) {
+    if (step === "heal" && !players.some((player) => player.injuries > 0)) {
+      report.skipped.push({ action: step, reason: failure("team.nobodyInjured", "nobody in the team is injured") });
+      continue;
+    }
+    const done = actOnPlayers(players, step, batch);
+    report.applied += done.applied;
+    report.failed.push(...done.failed);
+  }
+  return report;
 }
 
 /** `national_team_action`: Heal all, Inspire all or Refresh all for the players the senior team lists. */
@@ -2964,9 +2981,8 @@ function nationalTeamAction(uid: number, action: TeamAction): MassReport {
 }
 
 /** The action on every one of `players`, logged as one batch like a mass edit. */
-function actOnPlayers(players: readonly SquadPlayer[], action: TeamAction): MassReport {
+function actOnPlayers(players: readonly SquadPlayer[], action: TeamAction, batch = nextMassId++): MassReport {
   const team = { players };
-  const batch = nextMassId++;
   const report: MassReport = { batch, applied: 0, failed: [] };
   if (action === "heal") {
     for (const player of team.players.filter((p) => p.injuries > 0)) {

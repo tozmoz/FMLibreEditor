@@ -37,6 +37,7 @@ import type {
   StadiumName,
   TeamAction,
   TeamFreeze,
+  TeamReport,
   TieKind,
 } from "./types";
 
@@ -467,7 +468,7 @@ export const setCaptain = (club: number, team: number, role: CaptainRole, uid: n
  * batch, undone with `undoBatch`; `applied` counts the changes (an injured player healed counts once).
  */
 export const teamAction = (club: number, team: number, action: TeamAction) =>
-  call<MassReport>("team_action", { club, team, action });
+  call<TeamReport>("team_action", { club, team, action });
 
 /** Heal all, Inspire all or Refresh all for the players the senior team of the national team `uid` lists. */
 export const nationalTeamAction = (uid: number, action: NationalTeamAction) =>

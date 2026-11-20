@@ -2180,6 +2180,13 @@ export const id: Strings = {
     maxAll: "Maksimalkan atribut",
     maxAllTitle:
       "Atur setiap atribut setiap pemain di tim ini ke nilai terbaiknya: 20, dan 1 untuk kerentanan cedera dan kekasaran",
+    atItsBest: "Team at its best",
+    atItsBestTitle:
+      "Heal all, Inspire all, Refresh all, Max cohesion and Max tactics in one press, which one Undo takes back. " +
+      "Attributes and bans stay as they are. A step that cannot run, such as Heal all while nobody is injured, is " +
+      "skipped, and the result says so. The areas of the tactic fall again as the training ages, after some six weeks, " +
+      "and another tactic needs another press. The game shows the changes once it moves on: press Continue in the game",
+    atItsBestSkipped: (step, reason) => `${step} skipped: ${reason}`,
     hint: "Tindakan ini mencakup setiap pemain di daftar, termasuk yang sedang dipinjamkan. Urungkan juga ada di tampilan Perubahan.",
 
     freezeLabel: "Bekukan seluruh tim",

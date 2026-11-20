@@ -2204,6 +2204,13 @@ export const ja: Strings = {
     refreshAllTitle: "このチームの全選手のコンディションと試合勘を100%にし、完全に休養させます（疲労蓄積 -500）",
     maxAll: "能力値を最大化",
     maxAllTitle: "このチームの全選手の能力値をすべて最高にします：20（負傷しやすさとラフプレーは1）",
+    atItsBest: "Team at its best",
+    atItsBestTitle:
+      "Heal all, Inspire all, Refresh all, Max cohesion and Max tactics in one press, which one Undo takes back. " +
+      "Attributes and bans stay as they are. A step that cannot run, such as Heal all while nobody is injured, is " +
+      "skipped, and the result says so. The areas of the tactic fall again as the training ages, after some six weeks, " +
+      "and another tactic needs another press. The game shows the changes once it moves on: press Continue in the game",
+    atItsBestSkipped: (step, reason) => `${step} skipped: ${reason}`,
     hint: "操作は一覧のすべての選手（ローン移籍中の選手も含む）が対象です。元に戻す操作は変更履歴でも行えます。",
 
     // Freezing the whole team, under the actions

@@ -115,6 +115,11 @@ const checkName = (key: string | undefined) => {
 
 /** The commands' own English is kept where it names no field. */
 const errors: ErrorTexts = {
+  "team.nobodyInjured": () => "Nobody in this team is injured.",
+  "team.noCohesion": () =>
+    "The editor cannot read this team's cohesion: this version of the game has not been checked for it, or none of its players has an entry for the club.",
+  "team.noTactics": () =>
+    "The editor cannot read how well this team knows its tactic: this version of the game has not been checked for it, or the team does not play a tactic you pick.",
   "edit.unknownField": (p) => `There is no editable field “${p.field}” here.`,
   "edit.outOfRange": (p) => `${p.value} is not a valid ${field(p.field)}: it takes ${p.min} to ${p.max}.`,
   "edit.notADate": (p) => `${p.value} is not a date for ${field(p.field)}.`,
@@ -2638,6 +2643,14 @@ export const en = {
     maxAll: "Max attributes",
     maxAllTitle:
       "Set every attribute of every player in this team to its best: 20, and 1 for injury proneness and dirtiness",
+    atItsBest: "Team at its best",
+    atItsBestTitle:
+      "Heal all, Inspire all, Refresh all, Max cohesion and Max tactics in one press, which one Undo takes back. " +
+      "Attributes and bans stay as they are. A step that cannot run, such as Heal all while nobody is injured, is " +
+      "skipped, and the result says so. The areas of the tactic fall again as the training ages, after some six weeks, " +
+      "and another tactic needs another press. The game shows the changes once it moves on: press Continue in the game",
+    /** After Team at its best: a step it left out, by the name of its button, and why. */
+    atItsBestSkipped: (step: string, reason: string) => `${step} skipped: ${reason}`,
     /** Beside the buttons: whom they cover, and where undoing is. */
     hint: "The actions cover every player in the list, those out on loan too. Undo is in the Changes view as well.",
 

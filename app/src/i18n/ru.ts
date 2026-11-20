@@ -2226,6 +2226,13 @@ export const ru: Strings = {
     maxAll: "Максимум атрибутов",
     maxAllTitle:
       "Поднять все атрибуты всех игроков этой команды до максимума: 20, и 1 для склонности к травмам и грубости",
+    atItsBest: "Team at its best",
+    atItsBestTitle:
+      "Heal all, Inspire all, Refresh all, Max cohesion and Max tactics in one press, which one Undo takes back. " +
+      "Attributes and bans stay as they are. A step that cannot run, such as Heal all while nobody is injured, is " +
+      "skipped, and the result says so. The areas of the tactic fall again as the training ages, after some six weeks, " +
+      "and another tactic needs another press. The game shows the changes once it moves on: press Continue in the game",
+    atItsBestSkipped: (step, reason) => `${step} skipped: ${reason}`,
     hint: "Действия затрагивают всех игроков списка, включая находящихся в аренде. Отмена есть и в разделе «Изменения».",
 
     freezeLabel: "Заморозить всю команду",

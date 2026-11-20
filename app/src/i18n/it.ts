@@ -247,6 +247,11 @@ const checkName = (key: string | undefined) => {
 const jobName = (code: string | undefined) => (it.jobs as Partial<Record<number, string>>)[Number(code)] ?? code;
 
 const errors: ErrorTexts = {
+  "team.nobodyInjured": () => "Nessuno in questa squadra è infortunato.",
+  "team.noCohesion": () =>
+    "L'editor non riesce a leggere l'affiatamento di questa squadra: questa versione del gioco non è stata verificata, oppure nessuno dei suoi giocatori ha affiatamento con la società.",
+  "team.noTactics": () =>
+    "L'editor non riesce a leggere quanto questa squadra conosce la sua tattica: questa versione del gioco non è stata verificata, oppure la squadra non gioca una tattica scelta da te.",
   "guard.unknownBuild": () =>
     "FMLibreEditor non è stato verificato con questa versione del gioco, quindi non vi scrive. «Modifica comunque», " +
     "nell'avviso in alto, attiva la modifica.",
@@ -2342,6 +2347,14 @@ export const it: Strings = {
     maxAllTitle:
       "Porta ogni attributo di ogni giocatore di questa squadra al suo meglio: 20, e 1 per propensione agli infortuni " +
       "e fallosità",
+    atItsBest: "Squadra al top",
+    atItsBestTitle:
+      "Guarisci tutti, Motiva tutti, Rigenera tutti, Massimo affiatamento e Tattica al massimo con un solo clic, che un " +
+      "solo Ripristina annulla. Gli attributi e le squalifiche restano come sono. Un passo che non si può eseguire, come " +
+      "Guarisci tutti quando nessuno è infortunato, viene saltato e il risultato lo dice. Le aree della tattica tornano " +
+      "a calare man mano che l'allenamento invecchia, dopo circa sei settimane, e un'altra tattica chiede un altro clic. " +
+      "Il gioco mostra le modifiche quando va avanti: premi Continua nel gioco",
+    atItsBestSkipped: (step, reason) => `${step} saltato: ${reason}`,
     hint:
       "Le azioni riguardano ogni giocatore dell'elenco, anche quelli in prestito altrove. Si possono annullare anche " +
       "nella vista Modifiche.",

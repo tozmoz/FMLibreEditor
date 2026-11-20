@@ -212,6 +212,10 @@ before trusting them.
   managers: 27.0.0, 27.0.1 and Steam build 26577676 on the Mac (Apple silicon), Steam
   builds 26385295 and 26577676 and Game Pass 0.9.2435.0 on Windows. On the others the column stays empty and
   the button waits.
+- [x] Team at its best in the squad tab: Heal all, Inspire all, Refresh all, Max cohesion and Max tactics as one
+  team action and one batch, undone with one Undo; attributes and bans stay. A step that cannot run (nobody
+  injured, a lock, a build where Max tactics is off) is skipped and named, and the others still run (#227).
+- [ ] Team at its best for one player, in his profile.
 
 ## Phase 7: what FMRTE, FM Live Editor and FM27€0 users reach for (in progress)
 

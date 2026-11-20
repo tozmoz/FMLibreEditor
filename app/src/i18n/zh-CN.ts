@@ -2555,6 +2555,13 @@ export const zhCN: Strings = {
     maxAll: "属性拉满",
     maxAllTitle:
       "将全队所有球员的属性设为最高值 20；受伤倾向和肮脏动作设为最低值 1",
+    atItsBest: "Team at its best",
+    atItsBestTitle:
+      "Heal all, Inspire all, Refresh all, Max cohesion and Max tactics in one press, which one Undo takes back. " +
+      "Attributes and bans stay as they are. A step that cannot run, such as Heal all while nobody is injured, is " +
+      "skipped, and the result says so. The areas of the tactic fall again as the training ages, after some six weeks, " +
+      "and another tactic needs another press. The game shows the changes once it moves on: press Continue in the game",
+    atItsBestSkipped: (step, reason) => `${step} skipped: ${reason}`,
     /** Beside the buttons: whom they cover, and where undoing is. */
     hint: "操作会应用于列表中的所有球员，包括外租球员。也可以在“改动记录”中撤销。",
 

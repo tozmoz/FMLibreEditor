@@ -276,14 +276,16 @@ export function SquadTab({ clubUid, version, panel, label, overview }: SquadTabP
   const act = (target: ClubTeam, action: TeamAction) =>
     write(target.index, async () => {
       const report = await teamAction(clubUid, target.index, action);
+      // Whether the step `step` ran: the action itself, or a step of Team at its best that was not skipped.
+      const ran = (step: TeamAction) =>
+        action === step || (action === "atItsBest" && !report.skipped.some((skipped) => skipped.action === step));
       // Max cohesion leaves out the players who have no entry for the club yet, and Max tactics the history of those
       // who do not train; each says how many.
-      const without =
-        action === "maxCohesion" ? target.players.filter((player) => player.cohesion === null).length : 0;
-      const untrained =
-        action === "maxTactics"
-          ? target.players.filter((player) => player.tactics !== null && !player.trains).length
-          : 0;
+      const without = ran("maxCohesion") ? target.players.filter((player) => player.cohesion === null).length : 0;
+      const untrained = ran("maxTactics")
+        ? target.players.filter((player) => player.tactics !== null && !player.trains).length
+        : 0;
+      const skipped = report.skipped.map((step) => text.atItsBestSkipped(stepName(step.action), describeError(step.reason)));
       const notes = [
         text.written(report.applied),
         without > 0 ? text.cohesionWithout(without) : null,
@@ -293,7 +295,7 @@ export function SquadTab({ clubUid, version, panel, label, overview }: SquadTabP
         team: target.index,
         message: notes.filter((note) => note !== null).join(" · "),
         failed: false,
-        problems: refusalLines(report.failed),
+        problems: [...skipped, ...refusalLines(report.failed)],
         // An action that wrote nothing has nothing to take back.
         undo: report.applied > 0 ? () => undoBatch(report.batch) : null,
       };
@@ -507,6 +509,24 @@ function TeamSummary({ teams, team, onTeam }: TeamSummaryProps) {
   );
 }
 
+/** The name of the button of a step of Team at its best. */
+function stepName(action: TeamAction): string {
+  switch (action) {
+    case "heal":
+      return text.healAll(0);
+    case "inspire":
+      return text.inspireAll;
+    case "refresh":
+      return text.refreshAll;
+    case "maxCohesion":
+      return text.maxCohesion;
+    case "maxTactics":
+      return text.maxTactics;
+    default:
+      return action;
+  }
+}
+
 interface TeamActionsProps {
   team: ClubTeam;
   /** Whether the game can be written to. */
@@ -517,7 +537,8 @@ interface TeamActionsProps {
 }
 
 /**
- * Heal all, Lift bans, Inspire all, Refresh all, Max attributes, Max cohesion and Max tactics for the shown team. Heal
+ * Heal all, Lift bans, Inspire all, Refresh all, Max attributes, Max cohesion, Max tactics and Team at its best (the
+ * five that leave attributes and bans alone, in one go) for the shown team. Heal
  * all and Lift bans say how many players are injured or banned and wait until somebody is, Max cohesion until
  * somebody's cohesion can be read and Max tactics until somebody's familiarity with the tactic can; every one waits
  * while the game cannot be written to, and says why.
@@ -584,6 +605,13 @@ function TeamActions({ team, editable, busy, onAction }: TeamActionsProps) {
         waiting={!editable || tactical === 0}
         busy={busy}
         onPress={() => onAction("maxTactics")}
+      />
+      <ActionButton
+        label={text.atItsBest}
+        title={hover(text.atItsBestTitle, empty ? text.empty : null)}
+        waiting={!editable || empty}
+        busy={busy}
+        onPress={() => onAction("atItsBest")}
       />
     </div>
   );

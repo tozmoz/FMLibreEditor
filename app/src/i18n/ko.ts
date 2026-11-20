@@ -2244,6 +2244,13 @@ export const ko: Strings = {
     refreshAllTitle: "이 팀 모든 선수의 컨디션과 경기력을 100%로 설정하고 완전히 쉬게 합니다(피로도 -500)",
     maxAll: "능력치 최대",
     maxAllTitle: "이 팀 모든 선수의 모든 능력치를 최고로 만듭니다. 20으로, 부상 빈도와 더티 플레이는 1로 설정합니다",
+    atItsBest: "Team at its best",
+    atItsBestTitle:
+      "Heal all, Inspire all, Refresh all, Max cohesion and Max tactics in one press, which one Undo takes back. " +
+      "Attributes and bans stay as they are. A step that cannot run, such as Heal all while nobody is injured, is " +
+      "skipped, and the result says so. The areas of the tactic fall again as the training ages, after some six weeks, " +
+      "and another tactic needs another press. The game shows the changes once it moves on: press Continue in the game",
+    atItsBestSkipped: (step, reason) => `${step} skipped: ${reason}`,
     hint: "작업은 목록의 모든 선수에게 적용되며, 임대를 떠난 선수도 포함됩니다. 변경 내역 화면에서도 되돌릴 수 있습니다.",
 
     // Freezing the whole team
