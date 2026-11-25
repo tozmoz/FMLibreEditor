@@ -125,9 +125,9 @@ Above the teams, the profile shows what the game shows of the nation and its fed
 (`Session::nation_details`, #210): the year the federation was founded, from the container, the continent's name, from
 the nation, and the federation's staff as the game's staff list of the nation's team has them: each team's manager and
 the people of the container's medical, coaching and scouting lists, each with the job and the team of his contract with
-the federation, which is not his contract with a club. Where they are is the layout's `[national.details]`, which only
-`layout-macos.toml` has so far: on Windows the profile shows none of it. `fmlibre-probe national-teams italia
---details` prints them, and then how many of all the containers have each and the jobs of all their staff.
+the federation, which is not his contract with a club. Where they are is the layout's `[national.details]`, in both
+`layout.toml` and `layout-macos.toml`: on Windows the container keeps the founding year, and the nation its continent,
+8 bytes earlier than on the Mac. `fmlibre-probe national-teams italia --details` prints them, and then how many of all the containers have each and the jobs of all their staff.
 
 ### After an update of the game
 

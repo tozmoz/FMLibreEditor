@@ -19,9 +19,9 @@ The game shows a change once you press **Continue** in FM.
   commands. The tabs (Ctrl+1 to 7), the list's search (Ctrl+F), Edit (Ctrl+E), Apply (Ctrl+S)
   and Reload data (Ctrl+R) have shortcuts too, with ⌘ on macOS.
 - See each nation's men's and women's national team in the Clubs tab (its **National teams**
-  switch), with the players the game lists for its senior team. On Apple silicon Macs, its
-  profile also shows, read only, the year its federation was founded, the nation's continent and
-  the federation's staff, team by team, each with their job in the national team.
+  switch), with the players the game lists for its senior team. On Windows and Apple silicon
+  Macs, its profile also shows, read only, the year its federation was founded, the nation's
+  continent and the federation's staff, team by team, each with their job in the national team.
 - Logos, flags and faces come from your graphics packs.
 
 ![The player list and a player's profile](images/players.png)

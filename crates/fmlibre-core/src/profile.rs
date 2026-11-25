@@ -1593,19 +1593,19 @@ mod tests {
         }
     }
 
-    /// A nation's details were read on the Mac only (#210): the Windows layout leaves them unplaced, and a national
-    /// team's profile there shows none of them.
+    /// A nation's details (#210), read on the Mac and then on Windows: the container keeps the founding year, and the
+    /// nation its continent, 8 bytes earlier on Windows; the departments sit alike.
     #[test]
-    fn only_the_mac_layout_places_a_nations_details() {
-        let windows: Layout = parse(WINDOWS);
-        let macos: Layout = parse(MACOS);
-        assert!(windows.national.expect("national teams on Windows").details.is_none());
-        let details = macos.national.expect("national teams on the Mac").details.expect("a nation's details");
-        assert_eq!((details.founded, details.continent, details.continent_name), (0x870, 0xF8, 0x18));
-        assert_eq!((details.medical_staff, details.coaching_staff, details.scouting_staff), (0x60, 0x78, 0x90));
-        // The record of a member of staff's other contracts comes right after his contract.
-        assert_eq!(details.staff_contracts, macos.staff.contract + 8);
-        assert_eq!(details.national_contract, 0x10);
+    fn both_layouts_place_a_nations_details() {
+        for (text, founded, continent) in [(WINDOWS, 0x868, 0xF0), (MACOS, 0x870, 0xF8)] {
+            let layout: Layout = parse(text);
+            let details = layout.national.expect("national teams").details.expect("a nation's details");
+            assert_eq!((details.founded, details.continent, details.continent_name), (founded, continent, 0x18));
+            assert_eq!((details.medical_staff, details.coaching_staff, details.scouting_staff), (0x60, 0x78, 0x90));
+            // The record of a member of staff's other contracts comes right after his contract.
+            assert_eq!(details.staff_contracts, layout.staff.contract + 8);
+            assert_eq!(details.national_contract, 0x10);
+        }
     }
 
     #[test]

@@ -647,6 +647,24 @@ nation_code = 0x28            # an FM string: "ITA"
 nation_men = 0x108            # 0x110 on the Mac
 nation_women = 0x110          # 0x118 on the Mac
 
+# What a national team's profile shows of its nation and federation (#210, docs/recon/fm27-national-teams.md), read on
+# Steam build 26797085 (FM 27.1.1, a save of 26 October 2026, the game in English): Italy's federation founded in
+# 1898, in Europe, and the 24 members of staff of its men's senior, under-21, under-20 and under-19 teams, each with
+# his job in one of them, as on the Mac. The container, 8 bytes shorter than the Mac's, keeps the founding year 8 bytes
+# earlier; the nation keeps its continent 8 bytes earlier, as everything from its capital on.
+[national.details]
+founded = 0x868               # u16 in the container: Italy 1898, 0 at 50 of the 502 (0x870 on the Mac)
+medical_staff = 0x60          # in the container, where a club keeps its departments: Italy's men's, 2 physios
+coaching_staff = 0x78         # 16, of its senior, under-21 and under-20 teams; their 4 managers are not in any
+scouting_staff = 0x90         # 2
+continent = 0xF0              # pointer in the nation to its db::CONTINENT (0xF8 on the Mac)
+continent_name = 0x18         # an FM string there: "Europe", in the game's language
+# In a staff object, right after his contract (0x1A8): the record of his other contracts, whose slot 0x10 points at
+# his contract with one of a federation's teams, laid out as his contract with a club ([contract]): owner +0x08, the
+# team +0x10, his job +0x26 (Mauro Doimi, a physio at a club too: a db::BASIC_CONTRACT, physio, 12, of Italy's senior team).
+staff_contracts = 0x1B0
+national_contract = 0x10
+
 # The game's transfers, and a move agreed for a later day, which the game makes on that day as it makes its own: it
 # keeps the player's season with the club he leaves, opens one with the club he joins, writes the fee into the
 # history and pays it (see crates/fmlibre-core/src/arranged.rs and docs/recon/fm27-transfers.md). Read on Game Pass

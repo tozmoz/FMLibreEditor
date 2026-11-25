@@ -69,6 +69,38 @@ function probeTeams(probe, uid) {
 
 const teamKey = (side) => `${side.index}:${side.kind}:${side.ageLimit ?? "none"}:${side.reputation}:${side.players}`;
 
+/**
+ * What `fmlibre-probe national-teams UID --details` reads of one team's nation and federation (#210): the year its
+ * federation was founded and the continent (null for none), and its staff in their order, each with his job in English
+ * and the kind of his team (null for none found); null where the build's layout does not place them. A member's line
+ * is his name, his job and his team, two spaces or more apart.
+ */
+function probeDetails(probe, uid) {
+  let out;
+  try {
+    out = probe.run(["national-teams", uid, "--details", "--limit", "1"]);
+  } catch (error) {
+    if (/does not place a nation's details/.test(String(error.stderr ?? error.message))) return null;
+    throw error;
+  }
+  const lines = out.split(/\r?\n/);
+  const at = lines.findIndex((line) => line.endsWith(` (${uid}):`));
+  const value = (label) => {
+    const line = lines.slice(at + 1, at + 4).find((l) => l.startsWith(`  ${label} `));
+    const text = line?.slice(`  ${label} `.length).trim();
+    return text === undefined || text === "none" ? null : text;
+  };
+  const staff = [];
+  for (const line of at < 0 ? [] : lines.slice(at + 4)) {
+    if (!line.startsWith("    ")) break;
+    const [name, job, side] = line.trim().split(/\s{2,}/);
+    const kind = side?.match(/^team of kind (\d+)$/)?.[1];
+    staff.push({ name, job: job === "no job found" ? null : job, teamKind: kind === undefined ? null : Number(kind) });
+  }
+  const founded = value("founded");
+  return { founded: founded === null ? null : Number(founded), continent: value("continent"), staff };
+}
+
 export async function run({ app, report, probe }) {
   const tabs = await app.js(TAB_NAMES);
   report.check("the national teams have no tab of their own", tabs.includes("Clubs") && !tabs.includes("National teams"),
@@ -124,6 +156,26 @@ export async function run({ app, report, probe }) {
     profile.squad.kind === 0 && squad.length === team.players && JSON.stringify(squad) === JSON.stringify(seen.squad),
     `${squad.length} players: ${profile.squad.players.slice(0, 4).map((p) => p.name).join(", ")}`);
 
+  // What its profile shows of the nation and its federation (#210) as the probe's `--details` reads it, and nothing
+  // where the build's layout does not place it.
+  const details = probeDetails(probe, team.uid);
+  const nation = profile.nation;
+  if (details === null) {
+    report.check("its profile shows no nation's details where the layout places none", nation === null,
+      JSON.stringify(nation));
+  } else {
+    report.check("its nation's details are the probe's: the year its federation was founded and the continent",
+      nation !== null && nation.founded === details.founded && nation.continent === details.continent,
+      `founded ${nation?.founded ?? "none"}, ${nation?.continent ?? "no continent"}`);
+    const key = (name, job, kind) => `${name}|${job !== null}|${kind ?? "none"}`;
+    const staff = (nation?.staff ?? []).map((m) => key(m.member.name, m.job, m.teamKind));
+    const placed = (nation?.staff ?? []).filter((m) => m.job !== null && m.teamKind !== null).length;
+    report.check("its federation's staff are the probe's, in its order, each with a job in one of its teams",
+      staff.length > 0 && placed === staff.length &&
+        JSON.stringify(staff) === JSON.stringify(details.staff.map((m) => key(m.name, m.job, m.teamKind))),
+      `${staff.length}, ${placed} placed: ${(nation?.staff ?? []).slice(0, 3).map((m) => m.member.name).join(", ")}`);
+  }
+
   // Its teams: the senior team first, then its youth teams, as the probe reads them; one youth team's squad.
   const sides = profile.teams;
   const seenSides = probeTeams(probe, team.uid);
@@ -169,6 +221,19 @@ export async function run({ app, report, probe }) {
     JSON.stringify(shownNames) === JSON.stringify(profile.squad.players.map((p) => p.name)), shownNames.slice(0, 4).join(", "));
   const heading = await app.js(`${PROFILE}.querySelector(".squad-count")?.textContent`);
   report.check("the heading counts them", heading?.includes(String(squad.length)), heading);
+  // Above its teams, the nation's details and its federation's staff, each with his job as the probe names it.
+  if (details && nation) {
+    const block = `${PROFILE}.querySelector(".nation-details")`;
+    const facts = await app.js(`${block}?.querySelector("dl.stats")?.textContent ?? ""`);
+    report.check("the profile shows the year its federation was founded and the continent",
+      [nation.founded, nation.continent].every((fact) => fact === null || facts.includes(String(fact))), facts);
+    const rows = await app.js(
+      `[...(${block}?.querySelectorAll("table.squad-grid tbody tr") ?? [])].map((tr) => [...tr.cells].map((td) => td.textContent.trim()))`);
+    report.check("and its federation's staff, each with his job",
+      rows.length === details.staff.length &&
+        rows.every(([name, job], i) => name === details.staff[i].name && (details.staff[i].job ?? job) === job),
+      rows.slice(0, 3).map((cells) => cells.join(" / ")).join("; "));
+  }
   const buttons = `[...${PROFILE}.querySelectorAll(".squad-teams button")]`;
   const labels = await app.js(`${buttons}.map((b) => b.textContent)`);
   report.check("the switch has a button for each of its teams, the senior team's pressed",
