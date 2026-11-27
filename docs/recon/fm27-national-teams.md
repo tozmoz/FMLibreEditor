@@ -193,8 +193,28 @@ The game's Italian names job 2 "Collaboratore Tecnico" in this column; the edito
 elsewhere. Which the game uses at a club was not checked.
 
 The national team's profile in the editor shows the founding year, the continent and these people, each with his job
-in the national team and his team, read only (`layout-macos.toml`, `[national.details]`). The record's place was only
-read on the Mac; on Windows the profile shows none of this.
+in the national team and his team, read only (`[national.details]` in `layout-macos.toml` and `layout.toml`).
+
+On Windows (Steam build 26797085, FM 27.1.1, a save of 26 October 2026 with the game in English; probe only, nothing
+written), the same reads 8 bytes earlier in two places, and alike elsewhere:
+
+| What | Windows | Mac |
+| --- | --- | --- |
+| founding year, `u16` in the container | `+0x868` | `+0x870` |
+| the three staff lists in the container | `+0x60`, `+0x78`, `+0x90` | the same |
+| continent pointer in the nation | `+0xF0` | `+0xF8` |
+| continent name in `db::CONTINENT` | `+0x18` ("Europe") | the same |
+| record of other contracts in a staff object | `+0x1B0`, right after his contract (`+0x1A8`) | `+0x178`, after `+0x170` |
+| his contract with the federation's team, in the record | `+0x10` | the same |
+
+Italy's men's read as on the Mac: founded 1898, Europe, and the same 24 people (13 for the senior team, 6 for the
+under-21s, 4 for the under-20s, 1 for the under-19s, the managers Mancini, Baldini, Nunziata and Bianchessi, the
+physios Mauro Doimi and Walter Martinelli). England 1863 and Brazil 1914, each the same in its women's container. Over
+the 502 containers: 452 founding years from 1863 to 2011, the continents counted as on the Mac (Africa 114, Asia 94,
+Europe 114, North America 86, Oceania 30, South America 20, none 44), and 1,628 people at 447 containers, every one
+of the 378 managers' and 1,250 listed pointers a member of staff the editor knows, each with a job in one of his
+container's teams. Fewer than the Mac's 2,090 because the save has no women's football: 20 women's teams have a
+manager.
 
 ## Youth teams
 
@@ -269,8 +289,8 @@ September 2026), with a reputation of 8477.
   turns the reputation into words ("Mondiale").
 - The world ranking (15 for Italia), which none of the three objects holds as a byte. Where a manager keeps his
   contract is now known (see [A nation's details](#a-nations-details-and-its-federations-staff)).
-- A nation's details and its federation's staff on Windows, and whether the game's Italian names job 2 "Preparatore"
-  anywhere.
+- A nation's details on Game Pass (read on Steam only, with the same layout), and whether the game's Italian names job
+  2 "Preparatore" anywhere.
 - The two arrays' places on the Mac's Steam build 26577676 and on the Intel Macs (Windows Game Pass 0.9.2435.0 and
   Steam build 26577676 are read: see [On Windows](#on-windows)).
 - The names of team kinds 3 and 33, and what the numbers from `+0x180` of a nation are.
