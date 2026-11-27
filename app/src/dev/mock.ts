@@ -19,6 +19,7 @@ import type {
   EarlierAbility,
   EditEntity,
   NationDetails,
+  NationSettings,
   NationalProfile,
   NationalSide,
   NationalStatus,
@@ -1184,10 +1185,21 @@ function fieldTable(entity: EditEntity): EditField[] {
   if (entity === "nationalTeam") {
     // As the real table: the senior team's, then each other kind of team's (kind 3 too, which the fixture has not).
     const kinds = [3, 9, 33, 10, 18, 11, 12];
-    return ["reputation", ...kinds.map((kind) => `team.${kind}.reputation`)].map((key) => ({
-      ...field(key, "u16", 0, 10_000),
-      mass: false,
-    }));
+    const settings: EditField[] = [
+      { ...field("game_importance", "u8", 1, 4), choices: [1, 2, 3, 4] },
+      field("fa_financial_power", "u8", 0, 20),
+      field("fa_patience", "u8", 0, 20),
+      field("attendance", "u32", 0, 250_000),
+      field("min_attendance", "u32", 0, 250_000),
+      field("max_attendance", "u32", 0, 250_000),
+      field("economic_factor", "u8", 0, 20),
+      { ...field("state_of_development", "u8", 1, 3), choices: [1, 2, 3] },
+    ];
+    return [
+      ...["reputation", ...kinds.map((kind) => `team.${kind}.reputation`)].map((key) => field(key, "u16", 0, 10_000)),
+      field("youth_rating", "u16", 0, 200),
+      ...settings,
+    ].map((spec) => ({ ...spec, mass: false }));
   }
   if (entity === "club") {
     return [
@@ -1577,7 +1589,14 @@ function currentValues(entity: EditEntity, uid: number): FieldValues {
       return {};
     }
     const youth = Object.fromEntries(NATIONAL_YOUTH.map(({ kind }) => [`team.${kind}.reputation`, youthReputation(team, kind)]));
-    return { reputation: team.reputation, ...youth };
+    const rating = youthRating(team);
+    const settings = Object.fromEntries(NATION_SETTINGS.map(([field]) => [field, nationSetting(team, field)]));
+    return {
+      reputation: team.reputation,
+      ...youth,
+      youth_rating: rating,
+      ...settings,
+    };
   }
   if (entity === "competition") {
     // A competition has no fields: its squad rules are changed in the Competitions tab.
@@ -1682,6 +1701,12 @@ function writeValue(entity: EditEntity, uid: number, key: string, value: number)
       team.reputation = value;
     } else if (team && /^team\.\d+\.reputation$/.test(key)) {
       youthReputations.set(`${team.uid}.${key.split(".")[1]}`, value);
+    } else if (team && key === "youth_rating") {
+      youthRatings.set(team.uid, value);
+    } else if (team && NATION_SETTINGS.some(([field]) => field === key)) {
+      const field = key as NationSettingField;
+      const uid = NATION_SETTINGS_SHARED.has(field) ? team.nationUid : team.uid;
+      nationSettingsWritten.set(`${uid}:${field}`, value);
     }
     return;
   }
@@ -3790,6 +3815,73 @@ function youthReputation(team: NationalTeamSummary, kind: number): number {
   return youthReputations.get(key) ?? Math.round((team.reputation ?? 0) * share);
 }
 
+const youthRatings = new Map<number, number>();
+
+/** The youth rating of the national team `team`, from 0 to 200: made up from its reputation until written. */
+function youthRating(team: NationalTeamSummary): number {
+  return youthRatings.get(team.uid) ?? Math.round(((team.reputation ?? 0) / 10_000) * 170);
+}
+
+/** The settings of a nation's national team, by the keys the editor uses for them and those of its profile. */
+const NATION_SETTINGS = [
+  ["game_importance", "gameImportance"],
+  ["fa_financial_power", "faFinancialPower"],
+  ["fa_patience", "faPatience"],
+  ["attendance", "attendance"],
+  ["min_attendance", "minAttendance"],
+  ["max_attendance", "maxAttendance"],
+  ["economic_factor", "economicFactor"],
+  ["state_of_development", "stateOfDevelopment"],
+] as const;
+
+type NationSettingField = (typeof NATION_SETTINGS)[number][0];
+
+/** The settings of a nation, which its men's and women's teams share rather than keep in a container. */
+const NATION_SETTINGS_SHARED: ReadonlySet<NationSettingField> = new Set(["economic_factor", "state_of_development"]);
+
+const nationSettingsWritten = new Map<string, number>();
+
+/** The value of `field` of the national team `team`: made up from its UID, or its nation's, until written. */
+function nationSetting(team: NationalTeamSummary, field: NationSettingField): number {
+  const uid = NATION_SETTINGS_SHARED.has(field) ? team.nationUid : team.uid;
+  const written = nationSettingsWritten.get(`${uid}:${field}`);
+  if (written !== undefined) {
+    return written;
+  }
+  switch (field) {
+    case "game_importance":
+      return 1 + (uid % 4);
+    case "fa_financial_power":
+      return 6 + (uid % 15);
+    case "fa_patience":
+      return (uid * 3) % 21;
+    case "attendance":
+      return 10_000 + (uid % 40) * 1_000;
+    case "min_attendance":
+      return Math.round((10_000 + (uid % 40) * 1_000) * 0.6);
+    case "max_attendance":
+      return Math.round((10_000 + (uid % 40) * 1_000) * 1.25);
+    case "economic_factor":
+      return 8 + (uid % 13);
+    case "state_of_development":
+      return 1 + (uid % 3);
+  }
+}
+
+/** The settings of the nation of the national team `team`, men's or women's. */
+function nationSettings(team: NationalTeamSummary): NationSettings {
+  return {
+    gameImportance: nationSetting(team, "game_importance"),
+    faFinancialPower: nationSetting(team, "fa_financial_power"),
+    faPatience: nationSetting(team, "fa_patience"),
+    attendance: nationSetting(team, "attendance"),
+    minAttendance: nationSetting(team, "min_attendance"),
+    maxAttendance: nationSetting(team, "max_attendance"),
+    economicFactor: nationSetting(team, "economic_factor"),
+    stateOfDevelopment: nationSetting(team, "state_of_development"),
+  };
+}
+
 /** What the tab says of the fixture: it has national teams, unless the address of the page says it has not. */
 function mockNationalStatus(): NationalStatus {
   const asked = new URLSearchParams(window.location.search).get("nationals");
@@ -3874,6 +3966,8 @@ function nationalProfile(uid: number, kind: number | null): NationalProfile {
   const shown = teams.find((side) => side.kind === (youth?.kind ?? 0))!;
   return {
     team: { ...team, players: ofNation.length },
+    youthRating: youthRating(team),
+    settings: nationSettings(team),
     teams,
     squad: {
       clubUid: team.uid,

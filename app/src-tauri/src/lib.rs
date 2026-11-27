@@ -4051,15 +4051,39 @@ fn national_teams_of(connection: &Connection) -> Result<&NationalIndex, Failure>
     })
 }
 
+/// A nation's settings as the pre-game editor shows them, read from the game: the game importance and the federation's
+/// financial power and patience in the men's or women's container, the attendance of the record behind it, and the
+/// economic factor and state of development of its nation, which both containers share. Each is none where the layout
+/// does not place it or it does not read.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct NationSettings {
+    game_importance: Option<i64>,
+    fa_financial_power: Option<i64>,
+    fa_patience: Option<i64>,
+    attendance: Option<i64>,
+    min_attendance: Option<i64>,
+    max_attendance: Option<i64>,
+    economic_factor: Option<i64>,
+    state_of_development: Option<i64>,
+}
+
 /// A national team as its profile shows it: its list row, its teams (the senior team and the youth teams), and the one
 /// asked for with its players.
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct NationalProfile {
     team: NationalTeamSummary,
     teams: Vec<NationalSide>,
     squad: TeamView,
     /// What the profile shows of the nation and its federation; none where the layout does not place it.
     nation: Option<fmlibre_core::NationDetails>,
+    /// The youth rating of a men's or women's container, 0–200; none where the layout does not place it, or where it
+    /// does not read.
+    youth_rating: Option<i64>,
+    /// The settings of a men's or women's container, its attendance record and its nation; none where the layout does
+    /// not place them.
+    settings: Option<NationSettings>,
 }
 
 /// The national team `uid` with its teams, and the players of its team of kind `kind` (its senior team when none is
@@ -4122,7 +4146,43 @@ fn national_squad(state: State<'_, AppState>, uid: u32, kind: Option<u8>) -> Res
             .collect(),
     };
     let nation = connection.session.nation_details(team, &connection.staff)?;
-    Ok(NationalProfile { team: team.clone(), teams, squad, nation })
+    let youth_rating =
+        connection.session.field(Entity::NationalTeam, fmlibre_core::YOUTH_RATING).ok().and_then(|field| {
+            connection.session.read_field(&team.target(), &field).ok().filter(|&v| field.is_plausible(v))
+        });
+    let keys = [
+        "game_importance",
+        "fa_financial_power",
+        "fa_patience",
+        "attendance",
+        "min_attendance",
+        "max_attendance",
+        "economic_factor",
+        "state_of_development",
+    ];
+    let settings_fields: Vec<Field> =
+        keys.iter().filter_map(|key| connection.session.field(Entity::NationalTeam, key).ok()).collect();
+    let settings = if settings_fields.is_empty() {
+        None
+    } else {
+        let values = connection.session.read_fields(&team.target(), &settings_fields).ok();
+        let value = |key: &str| -> Option<i64> {
+            let at = settings_fields.iter().position(|field| field.key == key)?;
+            let value = values.as_deref()?[at]?;
+            settings_fields[at].is_plausible(value).then_some(value)
+        };
+        Some(NationSettings {
+            game_importance: value("game_importance"),
+            fa_financial_power: value("fa_financial_power"),
+            fa_patience: value("fa_patience"),
+            attendance: value("attendance"),
+            min_attendance: value("min_attendance"),
+            max_attendance: value("max_attendance"),
+            economic_factor: value("economic_factor"),
+            state_of_development: value("state_of_development"),
+        })
+    };
+    Ok(NationalProfile { team: team.clone(), teams, squad, nation, youth_rating, settings })
 }
 
 /// The full profile of the player with `uid`. Only reads memory.

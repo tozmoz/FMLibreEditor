@@ -651,6 +651,33 @@ container_nation = 0x170      # pointer back to its nation
 nation_code = 0x28            # an FM string: "ITA"
 nation_men = 0x108            # 0x110 on the Mac
 nation_women = 0x110          # 0x118 on the Mac
+# The youth rating, as the pre-game editor shows it: San Marino 29, Poland 94, England 135, France 155 (their men's
+# containers), from 0 to 165 across all 502. The game keeps it twice, equal at every container read; the editor writes
+# both, at men's and women's containers alike (England's women 161, France's 160, Poland's 103, San Marino's 4). Not
+# read on the Mac yet.
+youth_rating = 0x86A          # u16
+youth_rating_copy = 0x86C     # u16
+# A container's game importance and the federation's financial power and patience, as the pre-game editor shows them:
+# ENG men 1 / 18 / 8 and women 1 / 18 / 19, POL 2 / 12 / 8 and 1 / 12 / 15, SMR 2 / 4 / 20 and 4 / 1 / 0. The first two
+# have a second copy right after them, equal at all 251 containers of either kind; the editor writes both. Game
+# importance is 0 at the defunct nations (USSR, Yugoslavia, GDR...), fa_patience at 86 men's and 218 women's containers.
+game_importance = 0x87C       # u8, 1 to 4
+game_importance_copy = 0x87D  # u8
+fa_financial_power = 0x882    # u8, 0 to 20
+fa_financial_power_copy = 0x883  # u8
+fa_patience = 0x885           # u8, 0 to 20
+# Each container, men's or women's, points at a record of 0xB0 bytes of its own, which holds the attendance triple: ENG
+# men 80,000 / 50,000 / 100,000 and women 60,000 / 45,000 / 90,000, POL 50,000 / 25,000 / 55,000 and 7,000 / 2,000 /
+# 12,000, SMR 1,750 / 500 / 4,900 and 800 / 200 / 1,600. The editor takes the record only when its list at +0x00 reads
+# as the game's own (begin, end, capacity), or as three zeros where it holds nothing.
+container_record = 0xB0       # pointer to the record
+attendance = 0x68             # in the record: u32
+min_attendance = 0x6C         # in the record: u32
+max_attendance = 0x70         # in the record: u32
+# In the nation: its economic factor and state of development, as the pre-game editor shows them (ENG 19 / 1, POL
+# 16 / 1, SMR 12 / 1), which its men's and women's containers share. Not read on the Mac yet.
+economic_factor = 0x1F0       # u8, 0 to 20
+state_of_development = 0x1EC  # u8, 1 to 3
 
 # The game's transfers, and a move agreed for a later day, which the game makes on that day as it makes its own: it
 # keeps the player's season with the club he leaves, opens one with the club he joins, writes the fee into the

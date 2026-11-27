@@ -267,6 +267,42 @@ pub struct NationalLayout {
     pub nation_code: u64,
     pub nation_men: u64,
     pub nation_women: u64,
+    /// In a container: the `u16` youth rating of the nation's men's or women's football, as the pre-game editor shows
+    /// it, and the second copy the game keeps of it, equal to it at every container read. Unset where nobody has read
+    /// them, and the field is then not offered.
+    #[serde(default)]
+    pub youth_rating: Option<u64>,
+    #[serde(default)]
+    pub youth_rating_copy: Option<u64>,
+    /// In a container, the men's or the women's: the `u8` game importance and the federation's `u8` financial power,
+    /// each with a second copy right after it, equal to it at every container read. Unset where nobody has read them, and
+    /// the fields are then not offered.
+    #[serde(default)]
+    pub game_importance: Option<u64>,
+    #[serde(default)]
+    pub game_importance_copy: Option<u64>,
+    #[serde(default)]
+    pub fa_financial_power: Option<u64>,
+    #[serde(default)]
+    pub fa_financial_power_copy: Option<u64>,
+    /// In a container, the men's or the women's: the `u8` patience of the federation, from 0 to 20.
+    #[serde(default)]
+    pub fa_patience: Option<u64>,
+    /// In a container: the pointer to its own record of its nation's attendance, and in the record the `u32` attendance
+    /// of its matches with the `u32` least and most it may be.
+    #[serde(default)]
+    pub container_record: Option<u64>,
+    #[serde(default)]
+    pub attendance: Option<u64>,
+    #[serde(default)]
+    pub min_attendance: Option<u64>,
+    #[serde(default)]
+    pub max_attendance: Option<u64>,
+    /// In a nation: its `u8` economic factor and its `u8` state of development, which its men's and women's teams share.
+    #[serde(default)]
+    pub economic_factor: Option<u64>,
+    #[serde(default)]
+    pub state_of_development: Option<u64>,
     /// What a national team's profile shows of its nation and federation; unset where nobody has read it, and the
     /// profile then shows none of it.
     #[serde(default)]
@@ -1615,6 +1651,55 @@ mod tests {
         // The record of a member of staff's other contracts comes right after his contract.
         assert_eq!(details.staff_contracts, macos.staff.contract + 8);
         assert_eq!(details.national_contract, 0x10);
+    }
+
+    /// A nation's youth rating and settings were read on Windows only: the Mac layout leaves them unplaced, and offers
+    /// no field for them. The youth rating is in a container of either kind, men's or women's, at the same offsets.
+    #[test]
+    fn only_the_windows_layout_places_the_nation_settings() {
+        let windows: Layout = parse(WINDOWS);
+        let macos: Layout = parse(MACOS);
+        let w = windows.national.as_ref().expect("national teams on Windows");
+        assert_eq!((w.youth_rating, w.youth_rating_copy), (Some(0x86A), Some(0x86C)));
+        assert_eq!((w.game_importance, w.game_importance_copy), (Some(0x87C), Some(0x87D)));
+        assert_eq!((w.fa_financial_power, w.fa_financial_power_copy), (Some(0x882), Some(0x883)));
+        assert_eq!(w.fa_patience, Some(0x885));
+        assert_eq!(w.container_record, Some(0xB0));
+        assert_eq!((w.attendance, w.min_attendance, w.max_attendance), (Some(0x68), Some(0x6C), Some(0x70)));
+        assert_eq!((w.economic_factor, w.state_of_development), (Some(0x1F0), Some(0x1EC)));
+        let m = macos.national.as_ref().expect("national teams on the Mac");
+        let unplaced = [
+            m.youth_rating,
+            m.youth_rating_copy,
+            m.game_importance,
+            m.game_importance_copy,
+            m.fa_financial_power,
+            m.fa_financial_power_copy,
+            m.fa_patience,
+            m.container_record,
+            m.attendance,
+            m.min_attendance,
+            m.max_attendance,
+            m.economic_factor,
+            m.state_of_development,
+        ];
+        assert!(unplaced.iter().all(Option::is_none));
+        let keys = [
+            crate::YOUTH_RATING,
+            "game_importance",
+            "fa_financial_power",
+            "fa_patience",
+            "attendance",
+            "min_attendance",
+            "max_attendance",
+            "economic_factor",
+            "state_of_development",
+        ];
+        let has_fields = |layout: &Layout| {
+            let fields = crate::fields(layout, crate::Entity::NationalTeam);
+            keys.iter().all(|key| fields.iter().any(|field| field.key == *key))
+        };
+        assert!(has_fields(&windows) && !has_fields(&macos));
     }
 
     #[test]

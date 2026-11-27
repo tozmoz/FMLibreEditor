@@ -509,26 +509,61 @@ mod tests {
     }
 
     #[test]
-    fn the_reputations_are_the_only_fields_and_follow_the_layout() {
+    fn the_reputations_the_youth_rating_and_the_settings_are_the_fields_and_follow_the_layout() {
         // Both layouts place national teams, the Mac's and the Windows one.
         let layout = crate::layout_for(27).expect("FM27 layout");
-        assert!(layout.national.is_some());
+        let national = layout.national.as_ref().expect("national teams");
         let fields = crate::fields(&layout, crate::Entity::NationalTeam);
         let keys: Vec<&str> = fields.iter().map(|field| field.key.as_str()).collect();
-        assert_eq!(
-            keys,
-            [
-                "reputation",
-                "team.3.reputation",
-                "team.9.reputation",
-                "team.33.reputation",
-                "team.10.reputation",
-                "team.18.reputation",
-                "team.11.reputation",
-                "team.12.reputation"
-            ]
-        );
-        assert!(fields.iter().all(|field| field.takes(10_000) && !field.takes(10_001)));
+        let reputations = [
+            "reputation",
+            "team.3.reputation",
+            "team.9.reputation",
+            "team.33.reputation",
+            "team.10.reputation",
+            "team.18.reputation",
+            "team.11.reputation",
+            "team.12.reputation",
+        ];
+        let settings = [
+            ("game_importance", 1, 4),
+            ("fa_financial_power", 0, 20),
+            ("fa_patience", 0, 20),
+            ("attendance", 0, 250_000),
+            ("min_attendance", 0, 250_000),
+            ("max_attendance", 0, 250_000),
+            ("economic_factor", 0, 20),
+            ("state_of_development", 1, 3),
+        ];
+        let mut expected: Vec<&str> = reputations.to_vec();
+        if national.youth_rating.is_some() {
+            expected.push(crate::YOUTH_RATING);
+        }
+        if national.game_importance.is_some() {
+            expected.extend(settings.iter().map(|(key, _, _)| *key));
+        }
+        assert_eq!(keys, expected);
+        let (reputation_fields, rest) = fields.split_at(reputations.len());
+        assert!(reputation_fields.iter().all(|field| field.takes(10_000) && !field.takes(10_001)));
+        // The youth rating of a container of either kind, men's or women's: every national team has one.
+        let youth = rest.iter().find(|field| field.key == crate::YOUTH_RATING);
+        if let Some(youth) = youth {
+            assert!(youth.takes(0) && youth.takes(200) && !youth.takes(201) && !youth.mass);
+        }
+        let (setting_fields, _) = rest.split_at(usize::from(youth.is_some()));
+        assert!(setting_fields.iter().all(|field| !field.mass));
+        for (key, min, max) in settings {
+            let Some(field) = fields.iter().find(|field| field.key == key) else {
+                continue;
+            };
+            assert!(field.takes(min) && field.takes(max) && !field.takes(max + 1), "{key}");
+            assert!(field.is_plausible(0) && !field.is_plausible(10_000_001), "{key}");
+        }
+        if national.game_importance.is_some() {
+            let choices = |key: &str| fields.iter().find(|field| field.key == key).unwrap().choices.clone().unwrap();
+            assert_eq!(choices("game_importance"), [1, 2, 3, 4]);
+            assert_eq!(choices("state_of_development"), [1, 2, 3]);
+        }
         // The senior team's kind is not among the others.
         assert!(!OTHER_KINDS.contains(&SENIOR_KIND));
     }

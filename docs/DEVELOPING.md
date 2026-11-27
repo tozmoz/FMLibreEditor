@@ -117,6 +117,13 @@ profile reads them all (`Session::national_sides`) and edits each one's reputati
 `national::OTHER_KINDS`. A kind two teams of a container share is neither shown nor written. The app names the kinds by
 `national.teamKinds` in the languages' files, and a kind missing there as "Type N".
 
+The containers also place, on Windows only, the nation's youth rating and its federation's settings: game importance,
+FA financial power and FA patience. The game keeps the youth rating and the first two settings twice; the editor writes
+both copies and refuses a write while they differ. The attendance of the nation's matches, its least and its most, are
+in a record the container points at (`container_record`), and the nation's economic factor and state of development are
+in the nation itself, which its men's and women's teams share. See
+[fm27-national-teams.md](recon/fm27-national-teams.md).
+
 The senior team's profile has Heal all, Inspire all and Refresh all for the players it lists, as a club's Squad tab
 has them: the `national_team_action` command reads the squad (`Session::national_squad`) and hands it to
 `act_on_players`, which `team_action` uses for a club's team too. The changes are one batch, undone as one.

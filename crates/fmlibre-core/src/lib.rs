@@ -79,7 +79,9 @@ pub use details::{
     PlayerDetails, Reputation, read_player_details,
 };
 pub use diagnostics::{date_line, diagnostics_report, layout_line, manager_line, retirement_line, saves_loaded_line};
-pub use edit::{Change, EditError, Entity, Field, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Scale, Target, fields};
+pub use edit::{
+    Change, EditError, Entity, Field, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Scale, Target, YOUTH_RATING, fields,
+};
 pub use export::{ChangeRow, ExportFormat, ExportHeader, Exported, export_changes};
 pub use familiarity::{Familiarity, TacticsPlan, TacticsSet, TrainingHistory};
 pub use filter::{

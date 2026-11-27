@@ -168,6 +168,10 @@ enum Place {
     SeniorTeam,
     /// The one team of a national team's container of this kind, which points back at the container.
     NationalTeamOfKind(u8),
+    /// The record a national team's container points at, which holds the nation's attendance.
+    NationalContainerRecord,
+    /// The nation a national team's container points at, which points back at it.
+    NationalNation,
     /// The stadium the club's senior team plays at, written only when it is of the stadium class.
     Stadium,
     /// The record of a player's reasons to be unhappy, which his contract points at.
@@ -209,6 +213,9 @@ pub struct Field {
     /// Whether the field is in the object's person block and moves with its shift.
     #[serde(skip)]
     shifted: bool,
+    /// Offset in its record of a second copy the game keeps of the value, written with it.
+    #[serde(skip)]
+    copy: Option<u64>,
     /// The stored values a correct layout can produce; anything else means the layout
     /// does not fit this object, and the field is left alone.
     #[serde(skip)]
@@ -231,6 +238,7 @@ impl Field {
             place: Place::Object,
             offset,
             shifted: false,
+            copy: None,
             plausible: range,
         }
     }
@@ -303,6 +311,12 @@ impl Field {
         self
     }
 
+    /// Writes the value to the copy at `offset` of its record as well.
+    fn with_copy(mut self, offset: u64) -> Self {
+        self.copy = Some(offset);
+        self
+    }
+
     fn in_person_block(mut self, person_block: u64) -> Self {
         self.shifted = self.place == Place::Object && self.offset >= person_block;
         self
@@ -333,21 +347,69 @@ pub fn fields(layout: &Layout, entity: Entity) -> Vec<Field> {
 }
 
 /// What can be changed of a national team, where the layout places national teams: the reputation of its senior team,
-/// and that of each of its other teams by kind (`team.10.reputation` for the under-21s).
+/// that of each of its other teams by kind (`team.10.reputation` for the under-21s), and where the layout places them,
+/// the youth rating and settings of its container, men's or women's, and the attendance of the record behind it, and the
+/// economic factor and state of development of its nation, which the men's and women's teams share.
 fn national_team_fields(layout: &Layout) -> Vec<Field> {
-    if layout.national.is_none() {
+    let Some(national) = &layout.national else {
         return Vec::new();
-    }
+    };
     let reputation = layout.team.reputation;
     let senior =
         Field::new(Entity::NationalTeam, "reputation", reputation, Kind::U16, 0..=10_000).in_record(Place::SeniorTeam);
+    let in_container = |key: &str, offset: u64, kind: Kind, range: RangeInclusive<i64>| {
+        Field::new(Entity::NationalTeam, key, offset, kind, range).single()
+    };
+    let in_nation = |key: &str, offset: u64, kind: Kind, range: RangeInclusive<i64>| {
+        Field::new(Entity::NationalTeam, key, offset, kind, range).single().in_record(Place::NationalNation)
+    };
+    let in_attendance = |key: &str, offset: u64| {
+        Field::new(Entity::NationalTeam, key, offset, Kind::U32, 0..=250_000)
+            .plausible(0..=10_000_000)
+            .single()
+            .in_record(Place::NationalContainerRecord)
+    };
+    let youth = national
+        .youth_rating
+        .zip(national.youth_rating_copy)
+        .map(|(offset, copy)| in_container(YOUTH_RATING, offset, Kind::U16, 0..=200).with_copy(copy));
+    let game_importance = national.game_importance.zip(national.game_importance_copy).map(|(offset, copy)| {
+        in_container("game_importance", offset, Kind::U8, 1..=4).choices(&[1, 2, 3, 4]).plausible(0..=4).with_copy(copy)
+    });
+    let fa_financial_power = national
+        .fa_financial_power
+        .zip(national.fa_financial_power_copy)
+        .map(|(offset, copy)| in_container("fa_financial_power", offset, Kind::U8, 0..=20).with_copy(copy));
+    let fa_patience = national.fa_patience.map(|offset| in_container("fa_patience", offset, Kind::U8, 0..=20));
+    let attendance =
+        national.container_record.and(national.attendance).map(|offset| in_attendance("attendance", offset));
+    let min_attendance =
+        national.container_record.and(national.min_attendance).map(|offset| in_attendance("min_attendance", offset));
+    let max_attendance =
+        national.container_record.and(national.max_attendance).map(|offset| in_attendance("max_attendance", offset));
+    let economic_factor = national.economic_factor.map(|offset| in_nation("economic_factor", offset, Kind::U8, 0..=20));
+    let state_of_development = national
+        .state_of_development
+        .map(|offset| in_nation("state_of_development", offset, Kind::U8, 1..=3).choices(&[1, 2, 3]).plausible(0..=3));
     std::iter::once(senior)
         .chain(crate::national::OTHER_KINDS.iter().map(|&kind| {
             Field::new(Entity::NationalTeam, format!("team.{kind}.reputation"), reputation, Kind::U16, 0..=10_000)
                 .in_record(Place::NationalTeamOfKind(kind))
         }))
+        .chain(youth)
+        .chain(game_importance)
+        .chain(fa_financial_power)
+        .chain(fa_patience)
+        .chain(attendance)
+        .chain(min_attendance)
+        .chain(max_attendance)
+        .chain(economic_factor)
+        .chain(state_of_development)
         .collect()
 }
+
+/// The field of a national team's youth rating.
+pub const YOUTH_RATING: &str = "youth_rating";
 
 /// A wage in pounds per week, and a contract end between 2000 and 2100.
 fn contract_fields(layout: &Layout, entity: Entity) -> [Field; 2] {
@@ -1008,6 +1070,19 @@ impl Session {
         if old == value {
             return Ok(change);
         }
+        // The game's second copy is written along, and only while it holds what the first does.
+        let copy = match field.copy {
+            Some(offset) => {
+                let at = record + offset;
+                let bytes = self.process.read_bytes(at, field.kind.size())?;
+                let held = field.decode(&bytes);
+                if held != old {
+                    return Err(EditError::Implausible { field: field.key.clone(), value: held });
+                }
+                Some((at, bytes))
+            }
+            None => None,
+        };
         if field.kind == Kind::Pointer && !self.same_class(old, value)? {
             return Err(EditError::Unsupported { field: field.key.clone(), reason: OTHER_CLASS });
         }
@@ -1032,12 +1107,31 @@ impl Session {
         {
             return Err(EditError::Taken { field: field.key.clone(), value, holder });
         }
-        self.process.write_bytes(address, &field.encode(value, &old_bytes))?;
-        let read = field.decode(&self.process.read_bytes(address, field.kind.size())?);
-        if read != value {
-            // Best effort: put back what was there.
-            let _ = self.process.write_bytes(address, &old_bytes);
-            return Err(EditError::NotApplied { field: field.key.clone(), wrote: value, read });
+        let places: Vec<(u64, Vec<u8>)> = std::iter::once((address, old_bytes)).chain(copy).collect();
+        // Best effort, on any failure: put back what was there.
+        let restore = || {
+            for (at, bytes) in &places {
+                let _ = self.process.write_bytes(*at, bytes);
+            }
+        };
+        for (at, bytes) in &places {
+            if let Err(error) = self.process.write_bytes(*at, &field.encode(value, bytes)) {
+                restore();
+                return Err(error.into());
+            }
+        }
+        for (at, _) in &places {
+            let read = match self.process.read_bytes(*at, field.kind.size()) {
+                Ok(bytes) => field.decode(&bytes),
+                Err(error) => {
+                    restore();
+                    return Err(error.into());
+                }
+            };
+            if read != value {
+                restore();
+                return Err(EditError::NotApplied { field: field.key.clone(), wrote: value, read });
+            }
         }
         Ok(change)
     }
@@ -1228,6 +1322,36 @@ impl Session {
                 }
                 found
             }
+            (Place::NationalContainerRecord, Entity::NationalTeam) => {
+                let Some(national) = &self.layout.national else {
+                    return Ok(None);
+                };
+                let Some(offset) = national.container_record else {
+                    return Ok(None);
+                };
+                let Some(record) = pointer(offset)? else {
+                    return Ok(None);
+                };
+                // The record starts with a list of the game's own pointers, three zeros where it holds none.
+                let list = crate::transfer::PointerList::read_or_empty(&self.process, record).ok().flatten();
+                list.is_some().then_some(record)
+            }
+            (Place::NationalNation, Entity::NationalTeam) => {
+                let Some(national) = &self.layout.national else {
+                    return Ok(None);
+                };
+                let women = self.process.read_bytes(target.address + national.container_women, 1)?[0];
+                let back = match women {
+                    0 => national.nation_men,
+                    1 => national.nation_women,
+                    _ => return Ok(None),
+                };
+                let Some(nation) = pointer(national.container_nation)? else {
+                    return Ok(None);
+                };
+                let points_back = self.process.read_u64(nation + back)?;
+                (points_back == target.address).then_some(nation)
+            }
             (Place::Concerns, Entity::Player) => {
                 let Some(contract) = self.record(target, Place::Contract)? else {
                     return Ok(None);
@@ -1409,6 +1533,138 @@ mod tests {
         undo(1, 255, 3).expect("none is never taken");
         undo(0, 255, 5).expect("none is never taken");
         assert_eq!((wears(0), wears(1), wears(2)), (255, 255, 5));
+        std::hint::black_box(&memory);
+    }
+
+    /// A national team's youth rating is in its container itself, men's or women's: it reads on either, and the undo of
+    /// a change writes both copies. Only where a process can open itself (Windows).
+    #[cfg(windows)]
+    #[test]
+    fn a_national_team_s_youth_rating_is_in_a_container_of_either_kind() {
+        use crate::session::Blocks;
+
+        // Two containers, two blocks each: the youth rating sits past a block's 0x800 bytes.
+        let memory = Blocks::new(4);
+        let layout = crate::layout_for(27).expect("FM27 layout");
+        let (uid_offset, women, offset, copy) = {
+            let national = layout.national.as_ref().expect("national teams");
+            (
+                national.container_uid,
+                national.container_women,
+                national.youth_rating.expect("the youth rating"),
+                national.youth_rating_copy.expect("its copy"),
+            )
+        };
+        let process =
+            fmlibre_mem::Process::open_read_write(std::process::id()).expect("the test opens its own process");
+        let session = Session::over(process, layout);
+        let field = session.field(Entity::NationalTeam, YOUTH_RATING).expect("the youth rating");
+        assert_eq!((field.place, field.copy), (Place::Object, Some(copy)));
+        // England's men's and women's containers, each with the rating it holds.
+        for (i, (uid, rating)) in [(765u32, 135u16), (2000169621, 161)].into_iter().enumerate() {
+            let container = memory.at(2 * i as u64);
+            session.put(container + uid_offset, &uid.to_le_bytes());
+            session.put(container + women, &[u8::from(i == 1)]);
+            session.put(container + offset, &rating.to_le_bytes());
+            session.put(container + copy, &rating.to_le_bytes());
+            let target = Target { entity: Entity::NationalTeam, uid, address: container, shift: 0 };
+            assert_eq!(session.read_field(&target, &field).expect("its rating"), i64::from(rating));
+            // A change the game made to 200 in both copies, which the undo puts back into both.
+            session.put(container + offset, &200u16.to_le_bytes());
+            session.put(container + copy, &200u16.to_le_bytes());
+            let change = Change {
+                entity: Entity::NationalTeam,
+                uid,
+                field: YOUTH_RATING.to_owned(),
+                old: i64::from(rating),
+                new: 200,
+            };
+            session.revert(&target, &change).expect("the undo");
+            assert_eq!(session.read_field(&target, &field).expect("the rating back"), i64::from(rating));
+            let bytes = session.process.read_bytes(container + offset, 4).expect("both copies");
+            assert_eq!(bytes, [rating.to_le_bytes(), rating.to_le_bytes()].concat());
+        }
+        std::hint::black_box(&memory);
+    }
+
+    /// A national team's nation is the one its container points at that points back at it, the men's through
+    /// `nation_men` and the women's through `nation_women`; and a setting the game keeps twice takes a change only while
+    /// the two copies agree, while the value it already holds is put back without a write. The change is made as its
+    /// undo, which writes as a new one does; a new one asks the game's checks, which a test's memory cannot pass. Only
+    /// where a process can open itself (Windows).
+    #[cfg(windows)]
+    #[test]
+    fn a_national_team_finds_its_nation_and_changes_a_setting_twice() {
+        use crate::session::Blocks;
+
+        // Two containers of two blocks each, and a nation for each: their fields reach past a block's 0x800 bytes.
+        let memory = Blocks::new(6);
+        let layout = crate::layout_for(27).expect("FM27 layout");
+        let (uid_offset, women, nation_at, men_back, women_back, importance, copy, factor) = {
+            let national = layout.national.as_ref().expect("national teams");
+            (
+                national.container_uid,
+                national.container_women,
+                national.container_nation,
+                national.nation_men,
+                national.nation_women,
+                national.game_importance.expect("game importance"),
+                national.game_importance_copy.expect("the setting's copy"),
+                national.economic_factor.expect("the nation's economic factor"),
+            )
+        };
+        let process =
+            fmlibre_mem::Process::open_read_write(std::process::id()).expect("the test opens its own process");
+        let session = Session::over(process, layout);
+        let field = |key: &str| session.field(Entity::NationalTeam, key).expect(key);
+        let (setting, nation_field) = (field("game_importance"), field("economic_factor"));
+        // San Marino's men's container at block 0 and its nation at 2, the women's at 3 and 5.
+        let (men, men_nation) = (memory.at(0), memory.at(2));
+        let (women_team, women_nation) = (memory.at(3), memory.at(5));
+        for (container, nation, uid, flag) in
+            [(men, men_nation, 792u32, 0u8), (women_team, women_nation, 2000169648, 1)]
+        {
+            session.put(container + uid_offset, &uid.to_le_bytes());
+            session.put(container + women, &[flag]);
+            session.put_pointer(container + nation_at, nation);
+            session.put(nation + factor, &[12]);
+        }
+        session.put_pointer(men_nation + men_back, men);
+        session.put_pointer(women_nation + women_back, women_team);
+        let target = |uid, address| Target { entity: Entity::NationalTeam, uid, address, shift: 0 };
+        let (men_target, women_target) = (target(792, men), target(2000169648, women_team));
+        let no_nation = |target: &Target| {
+            let error = session.read_field(target, &nation_field).expect_err("no nation to read");
+            assert_eq!(error.code(), "edit.noRecord");
+        };
+        // Both nations point back at their container, so both containers read the value in the nation.
+        assert_eq!(session.read_field(&men_target, &nation_field).expect("the men's nation"), 12);
+        assert_eq!(session.read_field(&women_target, &nation_field).expect("the women's nation"), 12);
+        // A women's byte the layout does not know is no kind of container.
+        for (container, flag, target) in [(men, 0u8, &men_target), (women_team, 1, &women_target)] {
+            session.put(container + women, &[2]);
+            no_nation(target);
+            session.put(container + women, &[flag]);
+        }
+        // A nation that points at another container is not this team's.
+        session.put_pointer(men_nation + men_back, women_team);
+        no_nation(&men_target);
+        session.put_pointer(men_nation + men_back, men);
+        session.put_pointer(women_nation + women_back, men);
+        no_nation(&women_target);
+        session.put_pointer(women_nation + women_back, women_team);
+        assert_eq!(session.read_field(&women_target, &nation_field).expect("the women's nation"), 12);
+        // The game keeps game importance twice: its undo is a write like any other, refused while the copies differ.
+        let at = men + importance;
+        session.put(at, &[2]);
+        session.put(men + copy, &[3]);
+        let change = |old, new| Change { entity: Entity::NationalTeam, uid: 792, field: setting.key.clone(), old, new };
+        let refused = session.revert(&men_target, &change(4, 2)).expect_err("the copies differ");
+        assert!(matches!(refused, EditError::Implausible { value: 3, .. }), "{refused}");
+        assert_eq!(session.process.read_bytes(at, 2).expect("both copies"), [2, 3]);
+        // The value the first copy already holds is put back without a write, though the copies differ.
+        session.revert(&men_target, &change(2, 2)).expect("the same value");
+        assert_eq!(session.process.read_bytes(at, 2).expect("both copies"), [2, 3]);
         std::hint::black_box(&memory);
     }
 

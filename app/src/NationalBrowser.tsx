@@ -10,8 +10,10 @@ import { Ability } from "./Ability";
 import { EditableValue } from "./EditControls";
 import { changeLog, nationalProfile, nationalStatus, nationalTeamAction, undoBatch } from "./editing";
 import { FilterBar } from "./FilterBar";
-import { describeError } from "./format";
+import { describeError, formatNumber } from "./format";
 import {
+  choiceLabel,
+  fieldLabel,
   jobLabel,
   massEditText,
   nationalTeamLabel,
@@ -32,6 +34,7 @@ import { restored, useSnapshot } from "./restore";
 import { ActionButton, refusalLines, ResultLine, type Result, type Undo } from "./SquadTab";
 import type {
   NationDetails,
+  NationSettings,
   NationalProfile,
   NationalSide,
   NationalStatus,
@@ -168,6 +171,8 @@ function NationalProfileView({ team, version, onClose }: NationalProfileViewProp
   const teams = loaded?.details?.teams;
   const squad = loaded?.details?.squad;
   const shown = teams?.find((side) => side.kind === squad?.kind);
+  const youthRating = loaded?.details?.youthRating ?? null;
+  const settings = loaded?.details?.settings ?? null;
 
   return (
     <ProfileFrame
@@ -183,6 +188,14 @@ function NationalProfileView({ team, version, onClose }: NationalProfileViewProp
           <EditableValue field="reputation">
             <ReputationMeter value={info.reputation} />
           </EditableValue>
+          {youthRating !== null && (
+            <>
+              <abbr title={text.youthRatingTitle}>{text.youthRatingShort}</abbr>
+              <EditableValue field="youth_rating">
+                <Ability value={youthRating} />
+              </EditableValue>
+            </>
+          )}
         </div>
       }
       wide
@@ -193,6 +206,7 @@ function NationalProfileView({ team, version, onClose }: NationalProfileViewProp
       {loaded?.details && teams && (
         <div className="squad-tab">
           {loaded.details.nation && <NationDetailsBlock nation={loaded.details.nation} />}
+          {settings && <NationSettingsBlock settings={settings} />}
           {teams.length === 0 || !shown ? (
             <p className="empty">{text.noTeams}</p>
           ) : (
@@ -265,6 +279,47 @@ function NationDetailsBlock({ nation }: { nation: NationDetails }) {
         <p className="note">{text.details.staffNote}</p>
       </section>
     </div>
+  );
+}
+
+/**
+ * A nation's settings as the pre-game editor shows them, read from the game: the game importance and the federation's
+ * financial power and patience, the attendance of its matches, and the economic factor and state of development of the
+ * nation. Each value is an input while the profile is edited; the two codes are shown by their names. The rows stand in
+ * two columns, as a club's facts do, so that the squad under them keeps room on a window of ordinary height.
+ */
+function NationSettingsBlock({ settings }: { settings: NationSettings }) {
+  const none = <span className="muted">{profileText.none}</span>;
+  const rows: { field: string; value: number | null }[] = [
+    { field: "game_importance", value: settings.gameImportance },
+    { field: "fa_financial_power", value: settings.faFinancialPower },
+    { field: "fa_patience", value: settings.faPatience },
+    { field: "attendance", value: settings.attendance },
+    { field: "min_attendance", value: settings.minAttendance },
+    { field: "max_attendance", value: settings.maxAttendance },
+    { field: "economic_factor", value: settings.economicFactor },
+    { field: "state_of_development", value: settings.stateOfDevelopment },
+  ];
+  const shown = (field: string, value: number) =>
+    field === "game_importance" || field === "state_of_development" ? choiceLabel(field, value) : formatNumber(value);
+  const fact = ({ field, value }: { field: string; value: number | null }) => (
+    <Fact key={field} label={fieldLabel("nationalTeam", field)}>
+      {value === null ? none : (
+        <EditableValue field={field} inFact>
+          {shown(field, value)}
+        </EditableValue>
+      )}
+    </Fact>
+  );
+  return (
+    <section className="profile-group">
+      <h3>{text.settings.heading}</h3>
+      <div className="profile-split">
+        <dl className="stats">{rows.slice(0, rows.length / 2).map(fact)}</dl>
+        <dl className="stats">{rows.slice(rows.length / 2).map(fact)}</dl>
+      </div>
+      <p className="note">{text.settings.note}</p>
+    </section>
   );
 }
 

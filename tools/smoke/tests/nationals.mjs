@@ -3,9 +3,10 @@
 // the game lists for it, as the probe reads them; no tab of their own; the switch, the list, its search and its filter,
 // a team's profile with its squad, its teams (the senior team and its youth teams, #210) and the squad of one of its
 // youth teams as the probe reads them, a player opened from it, the senior team's Heal all, Inspire all and Refresh all
-// (#217) and none for a youth team, Edit offering the reputations of the senior and the youth team (nothing is applied:
-// the edits and the actions themselves are in the `edit` test), and the switch back to the clubs. Writes nothing. On a
-// build whose profile places no national teams, the note saying why, with the switch back.
+// (#217) and none for a youth team, Edit offering the reputations of the senior and the youth team and, where the build
+// places them, the nation's youth rating and settings (nothing is applied: the edits and the actions themselves are in
+// the `edit` test), and the switch back to the clubs. Writes nothing. On a build whose profile places no national teams,
+// the note saying why, with the switch back.
 import { SHOWN, VIS } from "../lib/app.mjs";
 
 export const name = "nationals";
@@ -144,10 +145,27 @@ export async function run({ app, report, probe }) {
   } else {
     report.skip("a youth team's squad", `no youth team of ${team.name} lists players`);
   }
+  // The youth rating and the settings follow the reputations, where the build's profile places them: a build that does
+  // not place them, the Mac's for one, has none of them.
+  const settings = [
+    "youth_rating",
+    "game_importance",
+    "fa_financial_power",
+    "fa_patience",
+    "attendance",
+    "min_attendance",
+    "max_attendance",
+    "economic_factor",
+    "state_of_development",
+  ];
   const fields = (await app.must("edit_fields", { entity: "nationalTeam" })).map((field) => field.key);
-  report.check("its reputations are the fields to edit, the senior team's first",
-    fields[0] === "reputation" && fields.slice(1).every((key) => /^team\.\d+\.reputation$/.test(key)) &&
-      sides.slice(1).every((side) => fields.includes(`team.${side.kind}.reputation`)),
+  const settingsAt = fields.indexOf(settings[0]);
+  const reputations = settingsAt < 0 ? fields : fields.slice(0, settingsAt);
+  const extras = settingsAt < 0 ? [] : fields.slice(settingsAt);
+  report.check("its reputations are the fields to edit, the senior team's first, then its youth rating and settings",
+    reputations[0] === "reputation" && reputations.slice(1).every((key) => /^team\.\d+\.reputation$/.test(key)) &&
+      sides.slice(1).every((side) => reputations.includes(`team.${side.kind}.reputation`)) &&
+      (extras.length === 0 || JSON.stringify(extras) === JSON.stringify(settings)),
     fields.join(", "));
 
   // The same in the Clubs tab, by its switch: found by its code, its profile and its squad, a player opened over it.
