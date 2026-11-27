@@ -117,6 +117,13 @@ export const freezeTeam = (club: number, team: number, kind: FreezeKind, frozen:
   call<TeamFreeze>("freeze_team", { club, team, kind, frozen });
 
 /**
+ * Gives every attribute of every player of the team its best until the game's day is over, when the app puts each back
+ * as it was; with `on` false, puts back those of its boosted players now.
+ */
+export const boostTeam = (club: number, team: number, on: boolean) =>
+  call<TeamFreeze>("boost_team", { club, team, on });
+
+/**
  * Sets every attribute of the player `uid` to its best: 20, and 1 for injury proneness and dirtiness. The changes are
  * logged as one batch, undone with `undoBatch`; `applied` counts them.
  */

@@ -181,6 +181,10 @@ export interface Refrozen {
   fitness: string[];
   positions: string[];
   stadiums: string[];
+  /** The players whose boost for the match holds again, the game being on its day (see `boost_team`). */
+  boosted: string[];
+  /** The players whose attributes went back as they were, the day of their boost being over. */
+  putBack: string[];
   waiting: number;
 }
 
@@ -1295,6 +1299,8 @@ export interface SquadPlayer extends PlayerSummary {
   attributesFrozen: boolean;
   fitnessFrozen: boolean;
   positionsFrozen: boolean;
+  /** Whether his attributes are at their best until the game's day is over (see `boost_team`). */
+  boosted: boolean;
 }
 
 /** A team's two captaincies. */

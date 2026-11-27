@@ -147,6 +147,8 @@ const errors: ErrorTexts = {
   "team.noCohesion": () =>
     "Редактор не может прочитать сыгранность этой команды: эта версия игры не проверена для этого или ни у одного из " +
     "её игроков нет записи для клуба.",
+  "boost.noDate": () =>
+    "Редактор не может прочитать дату в игре и не знает, когда закончится день матча.",
   "team.noTactics": () =>
     "Редактор не может прочитать, насколько эта команда знает свою тактику: эта версия игры не проверена для этого, " +
     "или команда играет не ту тактику, которую выбираете вы.",
@@ -1533,6 +1535,9 @@ export const ru: Strings = {
       fitness: (names) => `Энергия и форма: ${names}`,
       positions: (names) => `Позиции: ${names}`,
       stadiums: (names) => `Названия стадионов: ${names}`,
+      boosted: (names) => `Усилены на матч: ${names}`,
+      putBack: (names) => `Усиление закончилось: ${names}`,
+      putBackTitle: "Атрибуты снова как были",
       more: (count) => `и ещё ${format(count)}`,
       waiting: (count) =>
         `Запомнено, но сейчас не заморожено: ${format(count)}. FMLibreEditor пока не может записывать в эту версию игры.`,
@@ -2488,6 +2493,11 @@ export const ru: Strings = {
     frozePositions: (count) =>
       count === 0 ? "Их позиции уже были заморожены" : `Заморожены позиции: ${playerCount(count)}`,
     unfrozePositions: (count) => `Разморожены позиции: ${playerCount(count)}`,
+    boost: "Усилить на матч",
+    boostTitle: "Все атрибуты на максимуме, пока в игре не сменится день, затем как было; не закрывайте приложение",
+    boostDone: (count) =>
+      count === 0 ? "Они уже усилены" : `Атрибуты усилены до смены дня: ${playerCount(count)}`,
+    boostPutBack: (count) => `Атрибуты снова как были: ${playerCount(count)}`,
 
     written: (count) => `Записано: ${changes(count)}`,
     refused: (name, reason) => `${name}: ${reason}`,
@@ -2549,6 +2559,8 @@ export const ru: Strings = {
     loaneeTitle: "Здесь в аренде из другого клуба",
     elsewhere: "В другой команде",
     elsewhereTitle: "Играет за другую команду клуба",
+    boostedTag: "Усилен",
+    boostedTagTitle: "Его атрибуты на максимуме, пока в игре не сменится день",
     frozen: "Заморожен",
     frozenTitle: (attributes, fitness, positions) => {
       const frozen = [

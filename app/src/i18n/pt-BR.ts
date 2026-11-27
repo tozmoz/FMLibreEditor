@@ -117,6 +117,8 @@ const errors: ErrorTexts = {
   "team.nobodyInjured": () => "Ninguém neste time está lesionado.",
   "team.noCohesion": () =>
     "O editor não consegue ler o entrosamento deste time: esta versão do jogo ainda não foi verificada para isso, ou nenhum jogador tem registro no clube.",
+  "boost.noDate": () =>
+    "O editor não consegue ler a data do jogo, então não sabe quando o dia da partida termina.",
   "team.noTactics": () =>
     "O editor não consegue ler o quanto este time conhece a tática: esta versão do jogo ainda não foi verificada para isso, ou o time não joga com uma tática que você escolhe.",
   "edit.unknownField": (p) => `Não existe um campo editável “${p.field}” aqui.`,
@@ -1663,6 +1665,9 @@ export const ptBR: Strings = {
       positions: (names: string) => `Posições: ${names}`,
       /** `names` are the stadiums' new names, given again. */
       stadiums: (names: string) => `Nomes de estádios: ${names}`,
+      boosted: (names: string) => `Reforço para a partida: ${names}`,
+      putBack: (names: string) => `Fim do reforço: ${names}`,
+      putBackTitle: "Atributos de volta ao que eram",
       /** After the first few names. */
       more: (count: number) => `e mais ${format(count)}`,
       /** What was left for later: an update of the game, say. */
@@ -2830,6 +2835,11 @@ export const ptBR: Strings = {
     frozePositions: (count: number) =>
       count === 0 ? "As posições deles já estavam congeladas" : `Posições congeladas: ${playerCount(count)}`,
     unfrozePositions: (count: number) => `Posições descongeladas: ${playerCount(count)}`,
+    boost: "Reforçar para a partida",
+    boostTitle: "Todo atributo no máximo até o dia mudar no jogo, depois volta ao que era; mantenha o app aberto",
+    boostDone: (count: number) =>
+      count === 0 ? "Eles já estavam reforçados" : `Atributos reforçados até o dia mudar: ${playerCount(count)}`,
+    boostPutBack: (count: number) => `Atributos de volta ao que eram: ${playerCount(count)}`,
 
     // What an action did, under the buttons
     written: (count: number) => `Gravado: ${changeCount(count)}`,
@@ -2897,6 +2907,8 @@ export const ptBR: Strings = {
     loaneeTitle: "Está aqui por empréstimo de outro clube",
     elsewhere: "Em outro time",
     elsewhereTitle: "Joga em outro time do clube",
+    boostedTag: "Reforçado",
+    boostedTagTitle: "Os atributos dele estão no máximo até o dia mudar no jogo",
     frozen: "Congelado",
     frozenTitle: (attributes: boolean, fitness: boolean, positions: boolean): string => {
       const frozen = [

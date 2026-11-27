@@ -4955,6 +4955,12 @@ button.destroy[aria-disabled="true"]:hover {
   color: var(--accent-text);
 }
 
+/* Boosted for the match of the day: in the colour of what is pending, as it goes back by itself. */
+.tag.boosted {
+  border-color: var(--pending);
+  color: var(--pending);
+}
+
 /* C and VC after a name: the captain's is filled in the accent colour, the vice-captain's outlined. */
 .role-badge {
   padding: 0 5px;

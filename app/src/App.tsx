@@ -12,7 +12,7 @@ import { recipeCommand, recipesOnShow } from "./RecipeMenu";
 import { CopyDiagnostics } from "./CopyDiagnostics";
 import { forgetFieldTables } from "./fieldTables";
 import { describeError, describeGame, formatDate } from "./format";
-import { FrozenNotice } from "./FrozenNotice";
+import { FrozenNotice, NOTHING_REFROZEN, useBoostsOver } from "./FrozenNotice";
 import { GraphicsStatus } from "./GraphicsStatus";
 import { SettingsMenu } from "./SettingsMenu";
 import {
@@ -252,6 +252,17 @@ function App() {
     setDataVersion((v) => v + 1);
     void reloadLog();
   }, [reloadLog]);
+
+  // A boost for the match that the app put back, the game having moved on from its day: the notice says whose, and the
+  // lists and the open profile read the game again.
+  const boostsOver = useCallback(
+    (names: string[]) => {
+      setRefrozen((shown) => ({ ...(shown ?? NOTHING_REFROZEN), putBack: [...(shown?.putBack ?? []), ...names] }));
+      edited();
+    },
+    [edited],
+  );
+  useBoostsOver(connection !== null, boostsOver);
 
   // A version of the game the editor has no profile for is read-only until editing it is allowed.
   const allowEditing = async () => {

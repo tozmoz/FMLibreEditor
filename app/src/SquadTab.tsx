@@ -11,6 +11,7 @@ import { CaptainMenu } from "./CaptainMenu";
 import { DestroyDialog } from "./DestroyDialog";
 import {
   batchTraitsTeam,
+  boostTeam,
   changeLog,
   clubSquads,
   freezeTeam,
@@ -183,6 +184,8 @@ export interface Result {
   problems: string[];
   /** Null for what there is nothing to take back, or what was taken back already. */
   undo: Undo | null;
+  /** Whether it says that the team is boosted: it goes once nobody in the team is, as the game's day is over. */
+  boost?: boolean;
 }
 
 /** Most refusals the line under the buttons lists. */
@@ -250,7 +253,10 @@ export function SquadTab({ clubUid, clubName, version, panel, label, overview }:
   const players = useMemo(() => (team ? sorted(team.players, order) : []), [team, order]);
   // What each of them was at the record the app compares with, where it keeps records of the career.
   const earlier = useEarlierAbilities(team?.players.map((player) => player.uid) ?? [], version);
-  const shownResult = result !== null && team && result.team === slot ? result : null;
+  const shownResult =
+    result !== null && team && result.team === slot && !(result.boost && !team.players.some((p) => p.boosted))
+      ? result
+      : null;
 
   useEffect(() => {
     alive.current = true;
@@ -396,6 +402,20 @@ export function SquadTab({ clubUid, clubName, version, panel, label, overview }:
       };
     });
 
+  // A boost writes the best values at once; the app puts back what was there once the game's day is over, or now.
+  const boost = (target: ClubTeam, on: boolean) =>
+    write(slot, async () => {
+      const done = await boostTeam(target.clubUid, target.index, on);
+      return {
+        team: slot,
+        message: (on ? text.boostDone : text.boostPutBack)(done.changed),
+        failed: false,
+        problems: refusalLines(done.failed),
+        undo: null,
+        boost: on,
+      };
+    });
+
   const undo = (forTeam: number, take: Undo) =>
     write(forTeam, async () => {
       const done = await take();
@@ -488,6 +508,7 @@ export function SquadTab({ clubUid, clubName, version, panel, label, overview }:
               editable={editable}
               busy={busy}
               onFreeze={(kind, on) => void freeze(team, kind, on)}
+              onBoost={(on) => void boost(team, on)}
             />
             <p className="note squad-hint">{text.freezeHint}</p>
           </div>
@@ -735,14 +756,17 @@ interface TeamFreezesProps {
   /** Whether a write is under way. */
   busy: boolean;
   onFreeze: (kind: FreezeKind, on: boolean) => void;
+  /** Boosts the team for the match of the day, or puts its boosted players back now. */
+  onBoost: (on: boolean) => void;
 }
 
 /**
  * The boxes that freeze the attributes, the energy and match sharpness, and the positions of every player in the shown
- * team. A box is ticked when all of them are frozen that way, and half ticked, with how many are, when some are;
- * ticking it then freezes the others too. They wait while the game cannot be written to, and say why.
+ * team, and after them the one that boosts it for the match of the day. A box is ticked when all of them are frozen,
+ * or boosted, and half ticked, with how many are, when some are; ticking it then covers the others too. They wait while
+ * the game cannot be written to, and say why.
  */
-function TeamFreezes({ team, editable, busy, onFreeze }: TeamFreezesProps) {
+function TeamFreezes({ team, editable, busy, onFreeze, onBoost }: TeamFreezesProps) {
   const { readOnlyNote } = useContext(EditorContext);
   const total = team.players.length;
   const boxes: { kind: FreezeKind; label: string; title: string; frozen: number }[] = [
@@ -781,6 +805,15 @@ function TeamFreezes({ team, editable, busy, onFreeze }: TeamFreezesProps) {
         />
       ))}
       <InfoTip label={appText.freezeInfo.label} note={appText.freezeInfo.note} />
+      <FreezeBox
+        label={text.boost}
+        title={!editable ? readOnlyNote : total === 0 ? text.empty : text.boostTitle}
+        frozen={team.players.filter((player) => player.boosted).length}
+        total={total}
+        waiting={!editable || total === 0}
+        busy={busy}
+        onChange={onBoost}
+      />
     </div>
   );
 }
@@ -1022,6 +1055,11 @@ function Tags({ player }: { player: SquadPlayer }) {
           title={text.frozenTitle(player.attributesFrozen, player.fitnessFrozen, player.positionsFrozen)}
         >
           {text.frozen}
+        </span>
+      )}
+      {player.boosted && (
+        <span className="tag boosted" title={text.boostedTagTitle}>
+          {text.boostedTag}
         </span>
       )}
     </>

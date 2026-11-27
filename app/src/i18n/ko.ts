@@ -255,6 +255,8 @@ const TRAIT_NAMES_KO: readonly string[] = [
 const errors: ErrorTexts = {
   "team.nobodyInjured": () => "이 팀에는 부상 선수가 없습니다.",
   "team.noCohesion": () => "이 팀의 결속력을 읽을 수 없습니다. 이 게임 버전에서 아직 확인되지 않았거나, 구단에 대한 결속력 항목이 있는 선수가 없습니다.",
+  "boost.noDate": () =>
+    "게임 날짜를 읽을 수 없어 경기일이 언제 끝나는지 알 수 없습니다.",
   "team.noTactics": () => "이 팀이 전술을 얼마나 익혔는지 읽을 수 없습니다. 이 게임 버전에서 아직 확인되지 않았거나, 팀이 직접 고른 전술을 쓰지 않습니다.",
   "guard.unknownBuild": () =>
     "FMLibreEditor는 이 게임 버전에서 아직 확인되지 않아 게임에 쓰지 않습니다. 위쪽 알림의 '그래도 편집'을 누르면 " +
@@ -1512,6 +1514,9 @@ export const ko: Strings = {
       fitness: (names) => `컨디션 및 경기력: ${names}`,
       positions: (names) => `포지션: ${names}`,
       stadiums: (names) => `경기장 이름: ${names}`,
+      boosted: (names) => `경기용 강화: ${names}`,
+      putBack: (names) => `강화 종료: ${names}`,
+      putBackTitle: "능력치가 원래대로 돌아왔습니다",
       more: (count) => `외 ${format(count)}개`,
       waiting: (count) =>
         `${format(count)}개 항목을 기억하고 있지만 지금은 고정하지 못했습니다. FMLibreEditor가 아직 이 게임 버전에 쓸 수 ` +
@@ -2480,6 +2485,11 @@ export const ko: Strings = {
     frozePositions: (count) =>
       count === 0 ? "포지션이 이미 고정되어 있습니다" : `${playerCount(count)}의 포지션을 고정했습니다`,
     unfrozePositions: (count) => `${playerCount(count)}의 포지션 고정을 해제했습니다`,
+    boost: "경기용 강화",
+    boostTitle: "게임 날짜가 바뀔 때까지 모든 능력치를 최고로 두고, 그 뒤 원래대로 되돌립니다. 앱을 켜 두세요",
+    boostDone: (count) =>
+      count === 0 ? "이미 강화되어 있습니다" : `${playerCount(count)}의 능력치를 날짜가 바뀔 때까지 강화했습니다`,
+    boostPutBack: (count) => `${playerCount(count)}의 능력치를 원래대로 되돌렸습니다`,
 
     // What an action did
     written: (count) => `${changeCount(count)} 기록됨`,
@@ -2545,6 +2555,8 @@ export const ko: Strings = {
     loaneeTitle: "다른 구단에서 임대로 와 있습니다",
     elsewhere: "다른 팀",
     elsewhereTitle: "구단의 다른 팀에서 뜁니다",
+    boostedTag: "강화됨",
+    boostedTagTitle: "게임 날짜가 바뀔 때까지 능력치가 최고입니다",
     frozen: "고정됨",
     frozenTitle: (attributes, fitness, positions): string => {
       const frozen = [

@@ -138,6 +138,8 @@ const STAFF_DEPARTMENTS: Partial<Record<string, string>> = {
 const errors: ErrorTexts = {
   "team.nobodyInjured": () => "这支球队没有受伤球员。",
   "team.noCohesion": () => "无法读取这支球队的凝聚力：此游戏版本尚未验证该功能，或球员都没有与俱乐部的凝聚力记录。",
+  "boost.noDate": () =>
+    "编辑器无法读取游戏日期，因此无法判断比赛日何时结束。",
   "team.noTactics": () => "无法读取这支球队对其战术的熟悉程度：此游戏版本尚未验证该功能，或这支球队使用的不是你选择的战术。",
   "edit.unknownField": (p) => `此处没有可编辑的字段“${p.field}”。`,
   "edit.outOfRange": (p) => `${p.value} 不是有效的${field(p.field)}；取值范围为 ${p.min}–${p.max}。`,
@@ -1622,6 +1624,9 @@ export const zhCN: Strings = {
       positions: (names: string) => `位置能力：${names}`,
       /** `names` are the stadiums' new names, given again. */
       stadiums: (names: string) => `球场名称：${names}`,
+      boosted: (names: string) => `为比赛强化：${names}`,
+      putBack: (names: string) => `强化结束：${names}`,
+      putBackTitle: "属性已恢复原样",
       /** After the first few names. */
       more: (count: number) => `以及另外 ${format(count)} 项`,
       /** What was left for later: an update of the game, say. */
@@ -2812,6 +2817,11 @@ export const zhCN: Strings = {
     frozePositions: (count: number) =>
       count === 0 ? "球员的位置能力已锁定" : `已锁定 ${playerCount(count)} 的位置能力`,
     unfrozePositions: (count: number) => `已解除 ${playerCount(count)} 的位置能力锁定`,
+    boost: "为比赛强化",
+    boostTitle: "所有属性保持最高，直到游戏内日期变化，之后恢复原样；请保持应用打开",
+    boostDone: (count: number) =>
+      count === 0 ? "他们已经强化过了" : `已强化 ${playerCount(count)} 的属性，直到日期变化`,
+    boostPutBack: (count: number) => `已将 ${playerCount(count)} 的属性恢复原样`,
 
     // What an action did, under the buttons
     /** `count` is how many values were written. */
@@ -2889,6 +2899,8 @@ export const zhCN: Strings = {
     loaneeTitle: "从其他俱乐部租借而来",
     elsewhere: "其他梯队",
     elsewhereTitle: "效力于本俱乐部的另一支球队",
+    boostedTag: "已强化",
+    boostedTagTitle: "在游戏内日期变化前，他的属性保持最高",
     frozen: "已锁定",
     /** Hover text of Frozen: what is frozen, one of them at least. */
     frozenTitle: (attributes: boolean, fitness: boolean, positions: boolean): string => {

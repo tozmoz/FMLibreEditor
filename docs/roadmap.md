@@ -274,6 +274,14 @@ before trusting them.
 - [ ] Destroy for a rival's tactic: the editor reads no familiarity where no human picks the tactic, and the game
   shows it nowhere, so whether the record alone counts there is not known.
 - [ ] A freeze that holds a team at its worst: Freeze energy and sharpness only keeps them from going down.
+- [x] Boost for the match ([#270](https://github.com/tozmoz/FMLibreEditor/issues/270)): a box after the squad tab's
+  freezes gives every attribute of the team's players its best until the game's day changes, then puts each back as
+  it was, where the game holds it better: not as Undo does, which leaves a value the game changed. The app holds the
+  boost through the day and remembers it in `frozen.json` with the day and the values before: started again on that
+  day it holds it again, on a later day it puts it back as it connects, on an earlier one (an older save) it writes
+  nothing, and a save made during the boost and loaded on its day brings it back. A value the user writes himself is
+  his, until the undo of his change writes the best back. No record of the career is taken while a boost holds. The
+  match day is told by the game's date only: ticked the day before, the boost is over before the match.
 
 ## Phase 7: what FMRTE, FM Live Editor and FM27€0 users reach for (in progress)
 

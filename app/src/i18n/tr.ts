@@ -124,6 +124,8 @@ const errors: ErrorTexts = {
   "team.noCohesion": () =>
     "Editör bu takımın uyumunu okuyamıyor: oyunun bu sürümü bunun için kontrol edilmedi ya da oyuncuların hiçbirinin " +
     "kulüple uyumu yok.",
+  "boost.noDate": () =>
+    "Editör oyunun tarihini okuyamıyor, bu yüzden maç gününün ne zaman bittiğini anlayamaz.",
   "team.noTactics": () =>
     "Editör bu takımın taktiğini ne kadar bildiğini okuyamıyor: oyunun bu sürümü bunun için kontrol edilmedi ya da " +
     "takım senin seçtiğin bir taktiği oynamıyor.",
@@ -1498,6 +1500,9 @@ export const tr: Strings = {
       fitness: (names) => `Enerji ve maç kondisyonu: ${names}`,
       positions: (names) => `Pozisyonlar: ${names}`,
       stadiums: (names) => `Stadyum adları: ${names}`,
+      boosted: (names) => `Maç için güçlendirme: ${names}`,
+      putBack: (names) => `Maç güçlendirmesi bitti: ${names}`,
+      putBackTitle: "Özellikler eski hâline döndü",
       more: (count) => `ve ${format(count)} tane daha`,
       waiting: (count) =>
         `${format(count)} tanesi hatırlanıyor ama şu an dondurulmadı: FMLibreEditor oyunun bu sürümüne henüz yazamıyor.`,
@@ -2520,6 +2525,13 @@ export const tr: Strings = {
     frozePositions: (count) =>
       count === 0 ? "Pozisyonları zaten donduruluydu" : `${format(count)} oyuncunun pozisyonları donduruldu`,
     unfrozePositions: (count) => `${format(count)} oyuncunun pozisyonlarındaki dondurma kaldırıldı`,
+    boost: "Maç için güçlendir",
+    boostTitle: "Oyunun günü değişene kadar her özellik en iyi değerinde, sonra eski hâline döner; uygulamayı açık tutun",
+    boostDone: (count) =>
+      count === 0
+        ? "Zaten güçlendirilmişlerdi"
+        : `${format(count)} oyuncunun özellikleri gün değişene kadar güçlendirildi`,
+    boostPutBack: (count) => `${format(count)} oyuncunun özellikleri eski hâline döndü`,
 
     // What an action did, under the buttons
     written: (count) => (count === 0 ? "Hiçbir değişiklik yazılmadı" : `${changes(count)} yazıldı`),
@@ -2588,6 +2600,8 @@ export const tr: Strings = {
     loaneeTitle: "Başka bir kulüpten kiralık geldi",
     elsewhere: "Başka takımda",
     elsewhereTitle: "Kulübün başka bir takımında oynuyor",
+    boostedTag: "Güçlendirildi",
+    boostedTagTitle: "Özellikleri oyunun günü değişene kadar en iyi değerinde",
     frozen: "Donduruldu",
     frozenTitle: (attributes, fitness, positions) => {
       const frozen = [

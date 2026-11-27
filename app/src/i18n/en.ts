@@ -124,6 +124,8 @@ const errors: ErrorTexts = {
   "team.nobodyInjured": () => "Nobody in this team is injured.",
   "team.noCohesion": () =>
     "The editor cannot read this team's cohesion: this version of the game has not been checked for it, or none of its players has an entry for the club.",
+  "boost.noDate": () =>
+    "The editor cannot read the game's date, so it cannot tell when the match day is over.",
   "team.noTactics": () =>
     "The editor cannot read how well this team knows its tactic: this version of the game has not been checked for it, or the team does not play a tactic you pick.",
   "edit.unknownField": (p) => `There is no editable field “${p.field}” here.`,
@@ -1671,6 +1673,12 @@ export const en = {
       positions: (names: string) => `Positions: ${names}`,
       /** `names` are the stadiums' new names, given again. */
       stadiums: (names: string) => `Stadium names: ${names}`,
+      /** The players whose boost for the match holds again, the game being on its day. */
+      boosted: (names: string) => `Match boost: ${names}`,
+      /** The players whose attributes went back as they were, the day of their boost being over. */
+      putBack: (names: string) => `Match boost over: ${names}`,
+      /** The title when nothing more than that is said. */
+      putBackTitle: "Attributes back as they were",
       /** After the first few names. */
       more: (count: number) => `and ${format(count)} more`,
       /** What was left for later: an update of the game, say. */
@@ -2972,6 +2980,13 @@ export const en = {
     frozePositions: (count: number) =>
       count === 0 ? "Their positions were frozen already" : `Froze the positions of ${playerCount(count)}`,
     unfrozePositions: (count: number) => `Unfroze the positions of ${playerCount(count)}`,
+    // Boosting the whole team for the match of the day, beside the boxes that freeze
+    boost: "Boost for the match",
+    boostTitle: "Every attribute at its best until the game's day changes, then back as it was; keep the app open",
+    /** What the box did, in the line under the buttons; `count` is how many players it boosted or put back now. */
+    boostDone: (count: number) =>
+      count === 0 ? "They were boosted already" : `Boosted the attributes of ${playerCount(count)} until the day changes`,
+    boostPutBack: (count: number) => `Put back the attributes of ${playerCount(count)}`,
 
     // What an action did, under the buttons
     /** `count` is how many values were written. */
@@ -3053,6 +3068,8 @@ export const en = {
     loaneeTitle: "Here on loan from another club",
     elsewhere: "Elsewhere",
     elsewhereTitle: "Plays for another team of the club",
+    boostedTag: "Boosted",
+    boostedTagTitle: "His attributes are at their best until the game's day changes",
     frozen: "Frozen",
     /** Hover text of Frozen: what is frozen, one of them at least. */
     frozenTitle: (attributes: boolean, fitness: boolean, positions: boolean): string => {
