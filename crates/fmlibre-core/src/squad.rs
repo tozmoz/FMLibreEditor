@@ -263,8 +263,8 @@ impl Session {
         self.undo_patches(&done.patches)
     }
 
-    /// The teams of `club`, each pointing back at it.
-    pub(crate) fn team_objects(&self, club: &ClubSummary) -> Result<Vec<u64>, MoveError> {
+    /// Where the teams of `club` are in the game's memory, in its order, each pointing back at it.
+    pub fn team_objects(&self, club: &ClubSummary) -> Result<Vec<u64>, MoveError> {
         let (c, t) = (&self.layout.club, &self.layout.team);
         let not_a_club = || MoveError::NotAClub { uid: club.uid };
         if self.process.read_u32(club.address + c.uid)? != club.uid {
@@ -285,7 +285,8 @@ impl Session {
         Ok(teams)
     }
 
-    pub(crate) fn team_object(&self, club: &ClubSummary, index: usize) -> Result<u64, MoveError> {
+    /// Where the team `index` of `club` is in the game's memory (see [`ClubTeam::index`]).
+    pub fn team_object(&self, club: &ClubSummary, index: usize) -> Result<u64, MoveError> {
         self.team_objects(club)?.get(index).copied().ok_or(MoveError::NoTeam { index })
     }
 

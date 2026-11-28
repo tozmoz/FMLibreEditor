@@ -117,6 +117,15 @@ const errors: ErrorTexts = {
   "team.nobodyInjured": () => "Ninguém neste time está lesionado.",
   "team.noCohesion": () =>
     "O editor não consegue ler o entrosamento deste time: esta versão do jogo ainda não foi verificada para isso, ou nenhum jogador tem registro no clube.",
+  "boost.noDate": () =>
+    "O editor não consegue ler a data do jogo, então não sabe quando o dia da partida termina.",
+  "boost.noMatch": (p) =>
+    p.next
+      ? "Este time não joga hoje: o reforço vale só para um dia de partida. " +
+        `A próxima partida dele é em ${dayText(p.next)}.`
+      : "Este time não joga hoje: o reforço vale só para um dia de partida.",
+  "boost.noFixtures": () =>
+    "O editor não consegue ler as partidas nesta versão do jogo, então não sabe quando é dia de partida.",
   "team.noTactics": () =>
     "O editor não consegue ler o quanto este time conhece a tática: esta versão do jogo ainda não foi verificada para isso, ou o time não joga com uma tática que você escolhe.",
   "edit.unknownField": (p) => `Não existe um campo editável “${p.field}” aqui.`,
@@ -1663,6 +1672,9 @@ export const ptBR: Strings = {
       positions: (names: string) => `Posições: ${names}`,
       /** `names` are the stadiums' new names, given again. */
       stadiums: (names: string) => `Nomes de estádios: ${names}`,
+      boosted: (names: string) => `Reforço para a partida: ${names}`,
+      putBack: (names: string) => `Fim do reforço: ${names}`,
+      putBackTitle: "Atributos de volta ao que eram",
       /** After the first few names. */
       more: (count: number) => `e mais ${format(count)}`,
       /** What was left for later: an update of the game, say. */
@@ -1670,6 +1682,13 @@ export const ptBR: Strings = {
         `${count === 1 ? "1 item está lembrado" : `${format(count)} itens estão lembrados`}, mas não ${count === 1 ? "congelado" : "congelados"} agora: o FMLibreEditor ainda não consegue gravar ` +
         "nesta versão do jogo.",
       dismiss: "Fechar",
+    },
+
+    boostInfo: {
+      label: "Como funciona o reforço para a partida?",
+      note:
+        "Para um dia de partida: marcado num dia em que o time joga, todo atributo fica no máximo até o dia mudar no " +
+        "jogo e depois volta ao que era. Mantenha o app aberto até lá.",
     },
 
     /** The (i) beside every box that freezes something: how freezing works, and that the app has to stay open. */
@@ -2830,6 +2849,16 @@ export const ptBR: Strings = {
     frozePositions: (count: number) =>
       count === 0 ? "As posições deles já estavam congeladas" : `Posições congeladas: ${playerCount(count)}`,
     unfrozePositions: (count: number) => `Posições descongeladas: ${playerCount(count)}`,
+    boost: "Reforçar para a partida",
+    boostTitle: "Todo atributo no máximo até o dia mudar no jogo, depois volta ao que era; mantenha o app aberto",
+    boostLooking: "Procurando a partida de hoje do time…",
+    boostNoMatch: (next: string | null) =>
+      next === null
+        ? "Só em dia de partida, e o jogo não marcou nenhuma partida para este time"
+        : `Só em dia de partida: a próxima partida deste time é em ${next}`,
+    boostDone: (count: number) =>
+      count === 0 ? "Eles já estavam reforçados" : `Atributos reforçados até o dia mudar: ${playerCount(count)}`,
+    boostPutBack: (count: number) => `Atributos de volta ao que eram: ${playerCount(count)}`,
 
     // What an action did, under the buttons
     written: (count: number) => `Gravado: ${changeCount(count)}`,
@@ -2897,6 +2926,8 @@ export const ptBR: Strings = {
     loaneeTitle: "Está aqui por empréstimo de outro clube",
     elsewhere: "Em outro time",
     elsewhereTitle: "Joga em outro time do clube",
+    boostedTag: "Reforçado",
+    boostedTagTitle: "Os atributos dele estão no máximo até o dia mudar no jogo",
     frozen: "Congelado",
     frozenTitle: (attributes: boolean, fitness: boolean, positions: boolean): string => {
       const frozen = [

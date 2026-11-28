@@ -279,6 +279,15 @@ const errors: ErrorTexts = {
   "team.noCohesion": () =>
     "L'éditeur ne peut pas lire la cohésion de cette équipe\u00a0: cette version du jeu n'a pas été vérifiée pour " +
     "cela, ou aucun de ses joueurs n'a d'entrée pour le club.",
+  "boost.noDate": () =>
+    "L'éditeur ne peut pas lire la date du jeu et ne sait donc pas quand la journée du match se termine.",
+  "boost.noMatch": (p) =>
+    p.next
+      ? "Cette équipe ne joue pas aujourd'hui\u00a0: le boost ne vaut que pour un jour de match. " +
+        `Son prochain match est le ${dayText(p.next)}.`
+      : "Cette équipe ne joue pas aujourd'hui\u00a0: le boost ne vaut que pour un jour de match.",
+  "boost.noFixtures": () =>
+    "L'éditeur ne peut pas lire les matchs dans cette version du jeu et ne sait donc pas quand il y a un jour de match.",
   "team.noTactics": () =>
     "L'éditeur ne peut pas lire à quel point cette équipe connaît sa tactique\u00a0: cette version du jeu n'a pas " +
     "été vérifiée pour cela, ou l'équipe ne joue pas une tactique que vous choisissez.",
@@ -1614,12 +1623,22 @@ export const fr: Strings = {
       fitness: (names) => `Énergie et forme physique\u00a0: ${names}`,
       positions: (names) => `Postes\u00a0: ${names}`,
       stadiums: (names) => `Noms de stade\u00a0: ${names}`,
+      boosted: (names) => `Boost pour le match\u00a0: ${names}`,
+      putBack: (names) => `Boost terminé\u00a0: ${names}`,
+      putBackTitle: "Attributs remis comme avant",
       more: (count) => `et ${counted(count, "autre", "autres")}`,
       waiting: (count) =>
         `${plural(count) ? `${format(count)} éléments sont mémorisés` : `${format(count)} élément est mémorisé`} ` +
         `mais pas bloqué${agree(count)} pour l'instant\u00a0: FMLibreEditor ne peut pas encore écrire dans cette ` +
         "version du jeu.",
       dismiss: "Fermer",
+    },
+
+    boostInfo: {
+      label: "Comment fonctionne le boost pour le match\u00a0?",
+      note:
+        "Pour un jour de match\u00a0: cochée un jour où l'équipe joue, la case met chaque attribut au maximum jusqu'au " +
+        "changement de jour dans le jeu, puis le remet comme avant. Gardez l'app ouverte jusque-là.",
     },
 
     freezeInfo: {
@@ -2664,6 +2683,18 @@ export const fr: Strings = {
     frozePositions: (count) =>
       count === 0 ? "Leurs postes étaient déjà bloqués" : `Postes de ${playerCount(count)} bloqués`,
     unfrozePositions: (count) => `Postes de ${playerCount(count)} débloqués`,
+    boost: "Booster pour le match",
+    boostTitle: "Chaque attribut au maximum jusqu'au changement de jour dans le jeu, puis comme avant. Gardez l'app ouverte",
+    boostLooking: "Recherche du match du jour de l'équipe…",
+    boostNoMatch: (next) =>
+      next === null
+        ? "Seulement un jour de match, et le jeu n'a prévu aucun match pour cette équipe"
+        : `Seulement un jour de match\u00a0: le prochain match de cette équipe est le ${next}`,
+    boostDone: (count) =>
+      count === 0
+        ? "Ils étaient déjà boostés"
+        : `Attributs de ${playerCount(count)} boostés jusqu'au changement de jour`,
+    boostPutBack: (count) => `Attributs de ${playerCount(count)} remis comme avant`,
 
     // Ce qu'a fait une action, sous les boutons
     written: (count) => (count === 0 ? "Aucune modification écrite" : `${changes(count)} écrite${agree(count)}`),
@@ -2731,6 +2762,8 @@ export const fr: Strings = {
     loaneeTitle: "Prêté ici par un autre club",
     elsewhere: "Ailleurs",
     elsewhereTitle: "Joue dans une autre équipe du club",
+    boostedTag: "Boosté",
+    boostedTagTitle: "Ses attributs sont au maximum jusqu'au changement de jour dans le jeu",
     frozen: "Bloqué",
     frozenTitle: (attributes, fitness, positions) => {
       const frozen = [

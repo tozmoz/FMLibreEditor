@@ -88,6 +88,24 @@ pub struct Layout {
     /// checked in.
     #[serde(default)]
     pub rules: Option<RulesLayout>,
+    /// The game's matches (see `fixtures.rs`); only in the layouts they have been checked in.
+    #[serde(default)]
+    pub fixture: Option<FixtureLayout>,
+}
+
+/// A match the game has arranged, a friendly or a cup tie too: an object of one class (`class`, found by its name: see
+/// [`crate::rtti`]) that points at its two teams and keeps the day it is played on (see `fixtures.rs` and
+/// docs/recon/fm27-fixtures.md).
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FixtureLayout {
+    /// The class, as written in C++.
+    pub class: String,
+    /// Pointers to the home team and to the away team (`db::TEAM`).
+    pub home: u64,
+    pub away: u64,
+    /// The day it is played on, as FM keeps a date: `[u16 day of the year][u16 year]`.
+    pub day: u64,
 }
 
 /// Where the game keeps the rules a competition's squads are registered under (see `rules.rs` and

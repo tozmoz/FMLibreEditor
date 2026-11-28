@@ -138,6 +138,14 @@ const STAFF_DEPARTMENTS: Partial<Record<string, string>> = {
 const errors: ErrorTexts = {
   "team.nobodyInjured": () => "这支球队没有受伤球员。",
   "team.noCohesion": () => "无法读取这支球队的凝聚力：此游戏版本尚未验证该功能，或球员都没有与俱乐部的凝聚力记录。",
+  "boost.noDate": () =>
+    "编辑器无法读取游戏日期，因此无法判断比赛日何时结束。",
+  "boost.noMatch": (p) =>
+    p.next
+      ? `该球队今天没有比赛：强化只用于比赛日。下一场比赛在${dayText(p.next)}。`
+      : "该球队今天没有比赛：强化只用于比赛日。",
+  "boost.noFixtures": () =>
+    "编辑器无法读取此游戏版本的比赛，因此无法判断比赛日。",
   "team.noTactics": () => "无法读取这支球队对其战术的熟悉程度：此游戏版本尚未验证该功能，或这支球队使用的不是你选择的战术。",
   "edit.unknownField": (p) => `此处没有可编辑的字段“${p.field}”。`,
   "edit.outOfRange": (p) => `${p.value} 不是有效的${field(p.field)}；取值范围为 ${p.min}–${p.max}。`,
@@ -1622,12 +1630,22 @@ export const zhCN: Strings = {
       positions: (names: string) => `位置能力：${names}`,
       /** `names` are the stadiums' new names, given again. */
       stadiums: (names: string) => `球场名称：${names}`,
+      boosted: (names: string) => `为比赛强化：${names}`,
+      putBack: (names: string) => `强化结束：${names}`,
+      putBackTitle: "属性已恢复原样",
       /** After the first few names. */
       more: (count: number) => `以及另外 ${format(count)} 项`,
       /** What was left for later: an update of the game, say. */
       waiting: (count: number) =>
         `已记住 ${format(count)} 项，但暂未锁定：FMLibreEditor 尚未验证此游戏版本，无法写入。`,
       dismiss: "关闭",
+    },
+
+    boostInfo: {
+      label: "比赛强化如何运作？",
+      note:
+        "只用于一个比赛日：在球队有比赛的那天勾选后，所有属性保持最高，直到游戏内日期变化，然后恢复原样。" +
+        "在此之前请保持应用打开。",
     },
 
     /** The (i) beside every box that freezes something: how freezing works, and that the app has to stay open. */
@@ -2812,6 +2830,16 @@ export const zhCN: Strings = {
     frozePositions: (count: number) =>
       count === 0 ? "球员的位置能力已锁定" : `已锁定 ${playerCount(count)} 的位置能力`,
     unfrozePositions: (count: number) => `已解除 ${playerCount(count)} 的位置能力锁定`,
+    boost: "为比赛强化",
+    boostTitle: "所有属性保持最高，直到游戏内日期变化，之后恢复原样；请保持应用打开",
+    boostLooking: "正在查找该球队今天的比赛…",
+    boostNoMatch: (next: string | null) =>
+      next === null
+        ? "仅限比赛日，而游戏没有为该球队安排比赛"
+        : `仅限比赛日：该球队的下一场比赛在${next}`,
+    boostDone: (count: number) =>
+      count === 0 ? "他们已经强化过了" : `已强化 ${playerCount(count)} 的属性，直到日期变化`,
+    boostPutBack: (count: number) => `已将 ${playerCount(count)} 的属性恢复原样`,
 
     // What an action did, under the buttons
     /** `count` is how many values were written. */
@@ -2889,6 +2917,8 @@ export const zhCN: Strings = {
     loaneeTitle: "从其他俱乐部租借而来",
     elsewhere: "其他梯队",
     elsewhereTitle: "效力于本俱乐部的另一支球队",
+    boostedTag: "已强化",
+    boostedTagTitle: "在游戏内日期变化前，他的属性保持最高",
     frozen: "已锁定",
     /** Hover text of Frozen: what is frozen, one of them at least. */
     frozenTitle: (attributes: boolean, fitness: boolean, positions: boolean): string => {

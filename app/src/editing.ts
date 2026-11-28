@@ -29,6 +29,7 @@ import type {
   MassOperation,
   MassPreview,
   MassReport,
+  MatchDay,
   RecipeInfo,
   RecipePreview,
   MovePreview,
@@ -115,6 +116,19 @@ export const frozenPositions = () => call<number[]>("frozen_positions");
  */
 export const freezeTeam = (club: number, team: number, kind: FreezeKind, frozen: boolean) =>
   call<TeamFreeze>("freeze_team", { club, team, kind, frozen });
+
+/**
+ * Gives every attribute of every player of the team its best until the game's day is over, when the app puts each back
+ * as it was; with `on` false, puts back those of its boosted players now.
+ */
+export const boostTeam = (club: number, team: number, on: boolean) =>
+  call<TeamFreeze>("boost_team", { club, team, on });
+
+/**
+ * Whether the team plays a match on the game's day, which a boost waits for, and the next day it plays one. The first
+ * question on a day of the game reads all of the game's memory once, a second or two.
+ */
+export const matchDay = (club: number, team: number) => call<MatchDay>("match_day", { club, team });
 
 /**
  * Sets every attribute of the player `uid` to its best: 20, and 1 for injury proneness and dirtiness. The changes are

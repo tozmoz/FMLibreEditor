@@ -53,6 +53,13 @@ Freeze a player's attributes, energy and match sharpness, a whole team's from it
 or a club's money. While the app runs, they do not go down, and the app freezes them again
 when you connect to that save another time.
 
+Boost for the match, the box after them in a squad tab, gives every attribute of every player
+its best (20, and 1 for injury proneness and dirtiness) until the game's day changes, then puts
+each back as it was, one the game changed meanwhile too. It is for one match day: the box can be
+ticked only on a day the team plays a match (the editor reads the game's fixtures), and its hover
+says when the team plays next. Keep the app open: closed, it leaves the boost in the game until
+it connects again and puts it back. A value you write yourself during the boost stays yours.
+
 ## Transfers and staff moves
 
 - Transfer, swap or release players, and sign free agents.

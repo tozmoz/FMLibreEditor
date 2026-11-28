@@ -725,3 +725,14 @@ rule_compare = 0x1E
 container_rules = 0x578       # 0x570 on Windows
 container_files = 0x590       # 0x588 on Windows
 kind_anchor = "all_foreign_players_in_squad"
+
+# The game's matches (see docs/recon/fm27-fixtures.md): every match it has arranged, the league's, the cups' and the
+# friendlies, is an object of this class. Read on the Arsenal save (Steam build 26797085, Apple silicon, 18 July 2027):
+# 16,295 of them, in one block; Arsenal's 48 were its friendlies of 22, 26 and 31 July, two more matches on 8 and 11
+# August and its 38 league matches, on Saturdays from 14 August 2027 to 21 May 2028 with the midweek rounds between.
+# Another date, at +0x48, is not known: the league's last day for every league match.
+[fixture]
+class = "sicomps::FIXTURE"
+home = 0x08                   # pointer to the home team (db::TEAM)
+away = 0x10                   # pointer to the away team
+day = 0x4C                    # the day it is played on: [u16 day of the year, flags above its 9 bits][u16 year]

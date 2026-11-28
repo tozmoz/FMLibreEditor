@@ -1,3 +1,4 @@
+mod boost;
 mod bridge;
 mod self_update;
 
@@ -13,13 +14,13 @@ use fmlibre_core::{
     Arranged, ArrangedPlan, ArraySource, Buyer, COHESION_RANGE, CaptainRole, CaptainSet, Change, ChangeRow, Check,
     Clause, ClauseSet, ClubDetails, ClubFilter, ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet,
     CompetitionPrizes, CompetitionRules, DIRECTOR_OF_FOOTBALL, Earlier, EditError, Entity, EntityArrays, ExportFormat,
-    ExportHeader, Exported, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsCounts, GraphicsIndex,
-    HOMEGROWN_RULES, Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted, Listed, Loan, LoanDeal, Lock,
-    MANAGER, MoveError, MovePlan, MoveTerms, NameChange, NameKind, Nation, NationalIndex, NationalSide,
-    NationalTeamSummary, NationalUnavailable, NewContract, NewStaffContract, Operation, Paid, People, PersonNames,
-    Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, PrizeAmount, PrizeChange,
-    PrizeError, PrizeMoney, PrizeReadError, PrizeUnavailable, Progress, RECIPES, ROLES, Recipe, RecipeError,
-    RecipePlan, RelationSet, RetirementSet, Role, RuleChange, RuleError, RuleReadError, RuleUnavailable,
+    ExportHeader, Exported, FeePlan, Field, FixtureError, Fixtures, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo,
+    GraphicsCounts, GraphicsIndex, HOMEGROWN_RULES, Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted,
+    Listed, Loan, LoanDeal, Lock, MANAGER, MoveError, MovePlan, MoveTerms, NameChange, NameKind, Nation, NationalIndex,
+    NationalSide, NationalTeamSummary, NationalUnavailable, NewContract, NewStaffContract, Operation, Paid, People,
+    PersonNames, Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, PrizeAmount,
+    PrizeChange, PrizeError, PrizeMoney, PrizeReadError, PrizeUnavailable, Progress, RECIPES, ROLES, Recipe,
+    RecipeError, RecipePlan, RelationSet, RetirementSet, Role, RuleChange, RuleError, RuleReadError, RuleUnavailable,
     SCOUT_POSITIONS, SENIOR_KIND, ScoutError, ScoutPosition, ScoutRequest, Scouted, SearchIndex, Season, Session,
     SessionError, Skipped, Sponsorship, SponsorshipReadError, SponsorshipUnavailable, SquadMember, SquadReport,
     SquadRule, StadiumName, StadiumRename, StaffChange, StaffDetails, StaffFilter, StaffIndex, StaffOrder, StaffPlan,
@@ -29,6 +30,8 @@ use fmlibre_core::{
 use fmlibre_mem::{Process, find_processes, is_current_process_elevated, list_modules};
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, State};
+
+use crate::boost::{Boost, Seen, Settle};
 
 /// The environment variable that names the graphics folder to read packs from, instead of
 /// `Documents\Sports Interactive\Football Manager 27\graphics` on Windows and
@@ -92,6 +95,12 @@ struct Connection {
     /// The squad rules of every competition the game is playing, read the first time the Competitions tab shows them
     /// (see `competition_rules`), and kept up to date as the editor changes them.
     rules: Option<Vec<CompetitionRules>>,
+    /// The players whose boost the hold put back since the window last asked (see `boosts_over`), by name.
+    boosts_over: Vec<String>,
+    /// The game's matches, read the first time a team's match day is asked for on a day of the game (see `match_day`),
+    /// with that day: none where they cannot be read. Read again on another day, as the game arranges matches as it
+    /// goes on.
+    fixtures: Option<(FmDate, Option<Fixtures>)>,
 }
 
 /// How often the balances of frozen clubs, the attributes, energy and sharpness of frozen players, the attributes of
@@ -132,6 +141,16 @@ impl ClubsSeen {
 /// The attributes of a player that are at their best at 1, not at 20.
 const LOWER_IS_BETTER: [&str; 2] = ["attribute.injury_proneness", "attribute.dirtiness"];
 
+/// Whether the attribute `key` is at its best at 1, not at 20.
+fn lower_is_better(key: &str) -> bool {
+    LOWER_IS_BETTER.contains(&key)
+}
+
+/// The best value of the attribute `field`, as stored: 20, or 1 where lower is better.
+fn best_value(field: &Field) -> i64 {
+    field.scale.stored(if lower_is_better(&field.key) { 1 } else { 20 })
+}
+
 /// The fields of a player that freezing his fitness holds: his energy and his match sharpness.
 const FITNESS: [&str; 2] = ["condition", "match_sharpness"];
 
@@ -158,6 +177,15 @@ struct Frozen {
     /// The squad rules the editor holds: of competitions whose rules the game keeps in no record and makes again
     /// itself whenever it loads a save (UEFA's), which the app then gives the count the editor gave them again.
     rules: Vec<HeldRule>,
+    /// The players whose attributes were given their best for a day of the game, a match day, by UID: those it holds
+    /// now, and the last of each that is over (see `Boost`).
+    boosts: BTreeMap<u32, Boost>,
+    /// Whether the boosts changed since the file last remembered them, outside what remembers them at once: the user
+    /// wrote a boosted attribute himself (see `let_go`).
+    boosts_changed: bool,
+    /// Whether the boosts wait to be settled, as the lists were read while nothing could be written (see
+    /// `Connection::settle_boosts`): the hold settles them first, once it can, and holds or puts back nothing before.
+    boosts_unsettled: bool,
 }
 
 /// Which squad rule: of which competition (the one of the lowest UID among those played under the same lists, as the
@@ -222,6 +250,7 @@ impl HeldName {
 }
 
 impl Frozen {
+    /// Whether the hold has nothing to do: a boost that is over is only kept.
     fn is_empty(&self) -> bool {
         self.money.is_empty()
             && self.attributes.is_empty()
@@ -230,6 +259,24 @@ impl Frozen {
             && self.positions.is_empty()
             && self.stadiums.is_empty()
             && self.rules.is_empty()
+            && !self.boosts.values().any(|boost| boost.active)
+            && !self.boosts_changed
+    }
+
+    /// Whether the player `uid`'s boost holds now.
+    fn boosted(&self, uid: u32) -> bool {
+        self.boosts.get(&uid).is_some_and(|boost| boost.active)
+    }
+
+    /// The user wrote `value` himself, by an edit or an undo, to the attribute `change` names, whose best is `best`: a
+    /// boost that holds lets go of it, as it is his, or takes it back once an undo writes its best again (see
+    /// `Boost::written`).
+    fn let_go(&mut self, change: &Change, value: i64, best: i64) {
+        if let Some(boost) = self.boosts.get_mut(&change.uid).filter(|boost| boost.active)
+            && boost.written(&change.field, value, best)
+        {
+            self.boosts_changed = true;
+        }
     }
 
     /// The players frozen in the way `kind` names, with what they are held at.
@@ -292,6 +339,9 @@ struct RememberedSave {
     /// The squad rules the editor holds (see `Frozen::rules`); not in the files of versions before it.
     #[serde(default)]
     rules: Vec<HeldRule>,
+    /// The players boosted for a day of the game (see `Frozen::boosts`); not in the files of versions before it.
+    #[serde(default)]
+    boosts: BTreeMap<u32, Boost>,
 }
 
 impl RememberedSave {
@@ -303,6 +353,7 @@ impl RememberedSave {
             && self.positions.is_empty()
             && self.stadiums.is_empty()
             && self.rules.is_empty()
+            && self.boosts.is_empty()
     }
 
     /// The players frozen in the way `kind` names.
@@ -662,6 +713,10 @@ struct Refrozen {
     positions: Vec<String>,
     /// The stadiums given the names the editor gave them again, by their new names.
     stadiums: Vec<String>,
+    /// The players whose boost holds again, as the game is on its day (see `Connection::settle_boosts`), by name.
+    boosted: Vec<String>,
+    /// The players whose attributes were put back as they were before their boost, its day being over, by name.
+    put_back: Vec<String>,
     /// How many are left for later, still remembered: the editor has no profile for this version of the game, or a
     /// check did not pass.
     waiting: usize,
@@ -675,6 +730,8 @@ impl Refrozen {
             && self.fitness.is_empty()
             && self.positions.is_empty()
             && self.stadiums.is_empty()
+            && self.boosted.is_empty()
+            && self.put_back.is_empty()
             && self.waiting == 0
     }
 }
@@ -769,7 +826,7 @@ impl Connection {
     /// Reads every list. The change log is the one `kept` by a reload while the game has the same career, or else the
     /// one the history of the career in `folder` lists (see `History`), checked against the game (see
     /// `check_earlier`). A mass edit previewed before is dropped, since its people may have moved. Nothing is frozen
-    /// yet. A record of the players is taken when one is due (see `take_record`).
+    /// yet, and no record of the players taken: the caller takes one (see `take_record`) once the boosts are settled.
     fn load(session: Session, folders: &DataFolders, kept: Option<Kept>) -> Result<Self, Failure> {
         // The game may have loaded a save or moved on since the checks last ran; the date the lists' ages are worked
         // out from is one of them.
@@ -819,9 +876,10 @@ impl Connection {
             people,
             prizes: None,
             rules: None,
+            boosts_over: Vec::new(),
+            fixtures: None,
         };
         connection.check_earlier();
-        connection.take_record();
         Ok(connection)
     }
 
@@ -836,8 +894,12 @@ impl Connection {
             && health.passed(Check::Attributes)
     }
 
-    /// Takes the record of the players for the game's date, when one is due (see `Records::take`).
+    /// Takes the record of the players for the game's date, when one is due (see `Records::take`). Not while a boost
+    /// holds: the record would take its values for the players' own.
     fn take_record(&mut self) {
+        if self.frozen.boosts.values().any(|boost| boost.active) {
+            return;
+        }
         if let Some(date) = self.session.game_date().filter(|_| self.records_players()) {
             self.records.take(date, self.players.iter().map(|player| (player.uid, timeline_values(player))));
         }
@@ -996,6 +1058,7 @@ impl Connection {
         let (clubs, fitness, positions) = (entry.clubs.clone(), entry.fitness.clone(), entry.positions.clone());
         let stadiums = entry.stadiums.clone();
         let rules = entry.rules.clone();
+        self.frozen.boosts = entry.boosts.clone();
         if players.len() + staff.len() + clubs.len() + fitness.len() + positions.len() + stadiums.len() < count {
             remembered.saves.retain(|_, save| !save.is_empty());
             let _ = remembered.write(path);
@@ -1046,7 +1109,271 @@ impl Connection {
         } else {
             refrozen.waiting += rules.len();
         }
+        self.settle_boosts(Some(path), &mut refrozen, true);
         refrozen
+    }
+
+    /// Settles the boosts of this save once the lists were read, on connecting or a reload: the game may have loaded
+    /// another save of the career since, of the boost's day or of another (see `boost::settle`). Adds to `refrozen` the
+    /// players whose boost holds again and those whose attributes went back, and counts as waiting the boosts that hold
+    /// while nothing can be written: a version of the game the editor has no profile for, or a check that did not pass.
+    /// With `told` false, a boost that held before and holds still is not named: a reload of the same career went on
+    /// holding it. A player no longer in the lists is let go of. The file at `path` remembers what changed.
+    fn settle_boosts(&mut self, path: Option<&Path>, refrozen: &mut Refrozen, told: bool) {
+        if self.frozen.boosts.is_empty() {
+            return;
+        }
+        let before = self.frozen.boosts.clone();
+        let players = &self.players;
+        self.frozen.boosts.retain(|&uid, _| players.get(uid).is_some());
+        let fields = self.attribute_fields(Entity::Player);
+        let writable = self.session.known_build()
+            && self.session.process.can_write()
+            && fields.first().is_some_and(|field| self.session.field_lock(field).is_none());
+        let today = self.session.game_date().map(FmDate::to_number).filter(|_| writable);
+        if let Some(today) = today {
+            for (uid, boost) in self.frozen.boosts.clone() {
+                let Some(seen) = self.boost_seen(uid, &boost, &fields) else {
+                    continue;
+                };
+                match boost::settle(&boost, today, seen) {
+                    Settle::Hold => {
+                        self.set_boost(uid, true);
+                        if told || !boost.active {
+                            refrozen.boosted.push(self.player_name(uid));
+                        }
+                    }
+                    Settle::PutBack => match self.put_back(uid, &boost, &fields) {
+                        Ok(written) => {
+                            self.set_boost(uid, false);
+                            if written > 0 {
+                                refrozen.put_back.push(self.player_name(uid));
+                            }
+                        }
+                        // Tried again by the hold once its day is over, or at the next reload.
+                        Err(_) => refrozen.waiting += usize::from(boost.active),
+                    },
+                    Settle::End => self.set_boost(uid, false),
+                    Settle::Keep => {}
+                }
+            }
+        } else {
+            refrozen.waiting += self.frozen.boosts.values().filter(|boost| boost.active).count();
+        }
+        self.frozen.boosts_unsettled = today.is_none();
+        if self.frozen.boosts != before {
+            self.remember_boosts(path);
+        }
+    }
+
+    /// Holds the attributes of each player boosted today at their best, and puts back those of each player whose day
+    /// is over: the game has moved on from the match day (see `boost::tick`). Not while the game may have loaded
+    /// another save since the lists were read: reading them again settles the boosts (see `settle_boosts`). The names
+    /// of those put back wait for the window to ask (see `boosts_over`), and the file at `path` remembers what changed.
+    /// Boosts read while nothing could be written are settled first, as reading them would have (see `settle_boosts`):
+    /// once the editor may write, as after Edit anyway.
+    fn hold_boosts(&mut self, path: Option<&Path>) {
+        if self.frozen.boosts_unsettled && !self.session.save_changed() {
+            let mut settled = Refrozen::default();
+            self.settle_boosts(path, &mut settled, false);
+            self.boosts_over.extend(settled.put_back);
+            if self.frozen.boosts_unsettled {
+                return;
+            }
+        }
+        let mut changed = std::mem::take(&mut self.frozen.boosts_changed);
+        let held: Vec<(u32, Boost)> =
+            self.frozen.boosts.iter().filter(|(_, boost)| boost.active).map(|(&uid, b)| (uid, b.clone())).collect();
+        let today = self.session.game_date().map(FmDate::to_number);
+        if let Some(today) = today.filter(|_| !held.is_empty() && !self.session.save_changed()) {
+            let fields = self.attribute_fields(Entity::Player);
+            for (uid, boost) in held {
+                match boost::tick(&boost, today) {
+                    Settle::Hold => self.hold_at_best(uid, &boost, &fields),
+                    Settle::PutBack => {
+                        if let Ok(written) = self.put_back(uid, &boost, &fields) {
+                            self.set_boost(uid, false);
+                            changed = true;
+                            if written > 0 {
+                                let name = self.player_name(uid);
+                                self.boosts_over.push(name);
+                            }
+                        }
+                    }
+                    Settle::End | Settle::Keep => {}
+                }
+            }
+        }
+        if changed {
+            self.remember_boosts(path);
+        }
+    }
+
+    /// Keeps each attribute of the player `uid` that `boost` holds at its best: what the game took is put back, while
+    /// it still holds what was read. Not logged, as a freeze's writes are not.
+    fn hold_at_best(&self, uid: u32, boost: &Boost, fields: &[Field]) {
+        let Some(target) = self.players.get(uid).map(|player| player.target()) else {
+            return;
+        };
+        let Ok(values) = self.session.read_fields(&target, fields) else {
+            return;
+        };
+        for (field, now) in fields.iter().zip(values) {
+            let best = best_value(field);
+            if let Some(now) = now
+                && now != best
+                && boost.originals.contains_key(&field.key)
+            {
+                let _ = self.session.write_field_if(&target, field, now, best);
+            }
+        }
+    }
+
+    /// Gives every attribute of the player `uid` its best until the game's day `day` is over, having noted what each
+    /// was (see `Boost`). All or nothing: when the game refuses a write, what was written goes back. The writes are not
+    /// logged, as the boost goes back by itself; the lists show them.
+    fn boost_player(&mut self, uid: u32, day: i64, fields: &[Field]) -> Result<(), Failure> {
+        let target = self.players.get(uid).ok_or_else(|| not_found(Entity::Player, uid))?.target();
+        let values = self.session.read_fields(&target, fields)?;
+        let originals = fields.iter().zip(&values).filter_map(|(field, value)| Some((field.key.clone(), (*value)?)));
+        let boost = Boost { day, originals: originals.collect(), released: BTreeMap::new(), active: true };
+        let mut refused = None;
+        for (field, now) in fields.iter().zip(values) {
+            let best = best_value(field);
+            let Some(now) = now.filter(|&now| now != best) else {
+                continue;
+            };
+            match self.session.write_field_if(&target, field, now, best) {
+                Ok(change) => self.note_value(&change, best),
+                Err(err) => {
+                    refused = Some(err);
+                    break;
+                }
+            }
+        }
+        if let Some(err) = refused {
+            let _ = self.put_back(uid, &boost, fields);
+            return Err(err.into());
+        }
+        self.frozen.boosts.insert(uid, boost);
+        Ok(())
+    }
+
+    /// Puts back each attribute of the player `uid` as it was before `boost`, where the game holds it better than that:
+    /// one the game made worse meanwhile is left as it is. Written only while the game still holds what was read, and
+    /// not logged. How many were written; none for a player no longer in the lists. A refused write is said once the
+    /// others are written.
+    fn put_back(&mut self, uid: u32, boost: &Boost, fields: &[Field]) -> Result<usize, Failure> {
+        let Some(target) = self.players.get(uid).map(|player| player.target()) else {
+            return Ok(0);
+        };
+        let values = self.session.read_fields(&target, fields)?;
+        let mut written = 0;
+        let mut refused = None;
+        for (field, now) in fields.iter().zip(values) {
+            let (Some(now), Some(&before)) = (now, boost.originals.get(&field.key)) else {
+                continue;
+            };
+            if !boost::better(lower_is_better(&field.key), now, before) {
+                continue;
+            }
+            match self.session.write_field_if(&target, field, now, before) {
+                Ok(change) => {
+                    self.note_value(&change, before);
+                    written += 1;
+                }
+                Err(err) => {
+                    refused.get_or_insert(err);
+                }
+            }
+        }
+        refused.map_or(Ok(written), |err| Err(err.into()))
+    }
+
+    /// How much of `boost` the game holds now (see `Seen`); none when the player `uid` cannot be read.
+    fn boost_seen(&self, uid: u32, boost: &Boost, fields: &[Field]) -> Option<Seen> {
+        let target = self.players.get(uid)?.target();
+        let values = self.session.read_fields(&target, fields).ok()?;
+        Some(Seen::of(
+            fields
+                .iter()
+                .zip(values)
+                .filter_map(|(field, now)| Some((*boost.originals.get(&field.key)?, now?, best_value(field)))),
+        ))
+    }
+
+    /// Has the boost of the player `uid` hold, or end.
+    fn set_boost(&mut self, uid: u32, active: bool) {
+        if let Some(boost) = self.frozen.boosts.get_mut(&uid) {
+            boost.active = active;
+        }
+    }
+
+    /// Has the file at `path` remember the boosts of this save as they are.
+    fn remember_boosts(&self, path: Option<&Path>) {
+        let boosts = self.frozen.boosts.clone();
+        self.remember(path, |save| save.boosts = boosts);
+    }
+
+    /// Boosts the players `uids` for the game's day, or with `on` false puts back those whose boost holds now, and has
+    /// the file at `path` remember it. One boosted already keeps his boost, and what it noted. Refused at once while
+    /// the attributes may not be written, or, to boost, the game's date cannot be read; a player who cannot be boosted
+    /// or put back otherwise is said, and the others are all the same.
+    fn boost_players(&mut self, path: Option<&Path>, uids: &[u32], on: bool) -> Result<TeamFreeze, Failure> {
+        let fields = self.attribute_fields(Entity::Player);
+        if let Some(field) = fields.first()
+            && let Some(lock) = self.session.field_lock(field)
+        {
+            return Err(EditError::Locked { field: field.key.clone(), lock }.into());
+        }
+        let today = self.session.game_date().map(FmDate::to_number);
+        if on && today.is_none() {
+            return Err(no_game_date());
+        }
+        let mut changed = 0;
+        let mut failed = Vec::new();
+        for &uid in uids {
+            if self.frozen.boosted(uid) == on {
+                continue;
+            }
+            let done = match (on, today, self.frozen.boosts.get(&uid).cloned()) {
+                (true, Some(today), _) => self.boost_player(uid, today, &fields),
+                (false, _, Some(boost)) => self.put_back(uid, &boost, &fields).map(|_| self.set_boost(uid, false)),
+                _ => continue,
+            };
+            match done {
+                Ok(()) => changed += 1,
+                Err(error) => {
+                    failed.push(MassFailure { uid, name: self.player_name(uid), field: "boost".to_owned(), error })
+                }
+            }
+        }
+        self.remember_boosts(path);
+        Ok(TeamFreeze { changed, failed })
+    }
+
+    /// Whether the team `team` of the club `club` plays a match on the game's day, and its next match day after it,
+    /// from the game's matches: read the first time a day of the game asks, which takes a second or two. Refused when
+    /// the game's date or its matches cannot be read.
+    fn match_day(&mut self, club: u32, team: usize) -> Result<MatchDay, Failure> {
+        let today = self.session.game_date().ok_or_else(no_game_date)?;
+        let summary = self.clubs.get(club).ok_or_else(|| not_found(Entity::Club, club))?;
+        let address = self.session.team_object(summary, team)?;
+        if self.fixtures.as_ref().is_none_or(|(day, _)| *day != today) {
+            let read = match self.session.fixtures() {
+                Ok(fixtures) => Some(fixtures),
+                Err(FixtureError::Memory(err)) => return Err(err.into()),
+                Err(FixtureError::Unknown | FixtureError::Unread) => None,
+            };
+            self.fixtures = Some((today, read));
+        }
+        let Some((_, Some(fixtures))) = &self.fixtures else {
+            return Err(Failure::new(
+                "boost.noFixtures",
+                "the editor cannot read the game's matches, so it cannot tell a match day",
+            ));
+        };
+        Ok(MatchDay { today: fixtures.plays_on(address, today), next: fixtures.next_after(address, today) })
     }
 
     /// Gives each squad rule the editor holds its count again where the game has made the rule's list anew with its
@@ -2490,8 +2817,7 @@ impl Connection {
         self.attribute_fields(entity)
             .into_iter()
             .map(|field| {
-                let best = if LOWER_IS_BETTER.contains(&field.key.as_str()) { 1 } else { 20 };
-                let value = field.scale.stored(best);
+                let value = best_value(&field);
                 (field, Operation::Set { value })
             })
             .collect()
@@ -2504,8 +2830,20 @@ impl Connection {
         nations(players.chain(staff))
     }
 
-    /// Keeps the list rows in step with `value`, just written to the field `change` names.
+    /// Keeps the list rows in step with `value`, just written by the user to the field `change` names: by an edit or an
+    /// undo, which a boost then lets go of (see `Frozen::let_go`).
     fn note_change(&mut self, change: &Change, value: i64) {
+        if change.entity == Entity::Player
+            && change.field.starts_with("attribute.")
+            && let Ok(field) = self.session.field(change.entity, &change.field)
+        {
+            self.frozen.let_go(change, value, best_value(&field));
+        }
+        self.note_value(change, value);
+    }
+
+    /// Keeps the list rows, and what is frozen, in step with `value`, just written to the field `change` names.
+    fn note_value(&mut self, change: &Change, value: i64) {
         self.frozen.note(change, value);
         // A new nation: its name and flag, as the rows of its other people have them.
         let nation = (change.field == "nation")
@@ -2828,6 +3166,8 @@ struct SquadRow {
     attributes_frozen: bool,
     fitness_frozen: bool,
     positions_frozen: bool,
+    /// Whether his attributes are at their best until the game's day is over (see `boost_team`).
+    boosted: bool,
 }
 
 /// A player a move can release to make room: his list row, and what makes him a worse choice.
@@ -3432,6 +3772,7 @@ async fn connect(
         let session = Session::connect(process, ArraySource::ProfileFirst)?;
         let mut connection = Connection::load(session, &folders, None)?;
         let refrozen = connection.restore_frozen(path.as_deref());
+        connection.take_record();
         Ok((connection, refrozen))
     })
     .await??;
@@ -3491,12 +3832,17 @@ async fn reload(
         if connection.save == save {
             connection.frozen = frozen;
             // A save loaded again has its stadiums' own names back: the ones the editor gave are given again now. So
-            // are the counts of the squad rules it holds, which the game makes anew whenever it loads a save.
+            // are the counts of the squad rules it holds, which the game makes anew whenever it loads a save. The save
+            // may be of another day than the boosts', or made before them.
             connection.give_stadium_names();
             connection.give_held_rules();
-            return Ok((connection, None));
+            let mut settled = Refrozen::default();
+            connection.settle_boosts(path.as_deref(), &mut settled, false);
+            connection.take_record();
+            return Ok((connection, (!settled.is_empty()).then_some(settled)));
         }
         let refrozen = connection.restore_frozen(path.as_deref());
+        connection.take_record();
         Ok((connection, (!refrozen.is_empty()).then_some(refrozen)))
     })
     .await??;
@@ -4117,6 +4463,7 @@ fn national_squad(state: State<'_, AppState>, uid: u32, kind: Option<u8>) -> Res
                     attributes_frozen: connection.frozen.attributes.contains_key(&member.uid),
                     fitness_frozen: connection.frozen.fitness.contains_key(&member.uid),
                     positions_frozen: connection.frozen.positions.contains_key(&member.uid),
+                    boosted: connection.frozen.boosted(member.uid),
                 })
             })
             .collect(),
@@ -4389,6 +4736,21 @@ impl FreezeKind {
     }
 }
 
+/// Whether a team plays a match on the game's day, and the next day it plays one: a boost for the match is given only
+/// on a match day (see `boost_team`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct MatchDay {
+    today: bool,
+    /// The first day after the game's day that it plays a match on; none when the game has arranged it none.
+    next: Option<FmDate>,
+}
+
+/// The game's date cannot be read: nothing could tell when a day of the game is over.
+fn no_game_date() -> Failure {
+    Failure::new("boost.noDate", "the editor cannot read the game's date, so it cannot tell the day is over")
+}
+
 /// What freezing or unfreezing a team came to.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -4425,6 +4787,67 @@ fn freeze_team(
         .map(|member| member.uid)
         .collect();
     connection.set_frozen(file.0.as_deref(), kind, &members, frozen)
+}
+
+/// Gives every attribute of every player of the team `team` of the club `club`, read now, those out on loan too, its
+/// best (20, and 1 for injury proneness and dirtiness) until the game's day is over: a boost for the match of the day.
+/// Then the app puts each back as it was, where the game still holds it better (see `Connection::hold_boosts`). With
+/// `on` false, puts back those of its boosted players now. Refused at once while the attributes may not be written, or
+/// the game's date cannot be read, and to boost, on a day the team plays no match, or when the game's matches cannot be
+/// read (see `match_day`). The app remembers it for this save. Off the window's thread, as the first question on a day
+/// of the game reads all of its memory once.
+#[tauri::command]
+async fn boost_team(app: tauri::AppHandle, club: u32, team: usize, on: bool) -> Result<TeamFreeze, Failure> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<TeamFreeze, Failure> {
+        let (state, file) = (app.state::<AppState>(), app.state::<FrozenFile>());
+        let mut guard = state.0.lock()?;
+        let connection = guard.as_mut().ok_or_else(not_connected)?;
+        if on {
+            let day = connection.match_day(club, team)?;
+            if !day.today {
+                let refusal =
+                    Failure::new("boost.noMatch", "this team plays no match today, and a boost lasts a match day");
+                return Err(match day.next {
+                    Some(next) => refusal.with("next", next.to_number()),
+                    None => refusal,
+                });
+            }
+        }
+        let summary = connection.clubs.get(club).ok_or_else(|| not_found(Entity::Club, club))?;
+        let members: Vec<u32> = connection
+            .session
+            .club_teams(summary, &connection.players)?
+            .into_iter()
+            .find(|found| found.index == team)
+            .ok_or(MoveError::NoTeam { index: team })?
+            .players
+            .iter()
+            .map(|member| member.uid)
+            .collect();
+        connection.boost_players(file.0.as_deref(), &members, on)
+    })
+    .await?
+}
+
+/// Whether the team `team` of the club `club` plays a match on the game's day, and the next day it plays one: the box
+/// that boosts it waits for a match day. Refused when the game's date or its matches cannot be read. Off the window's
+/// thread, as the first question on a day of the game reads all of its memory once. Only reads.
+#[tauri::command]
+async fn match_day(app: tauri::AppHandle, club: u32, team: usize) -> Result<MatchDay, Failure> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<MatchDay, Failure> {
+        let state = app.state::<AppState>();
+        let mut guard = state.0.lock()?;
+        let connection = guard.as_mut().ok_or_else(not_connected)?;
+        connection.match_day(club, team)
+    })
+    .await?
+}
+
+/// The players whose boost the app put back as the game moved on from its day, since the window last asked, by name.
+#[tauri::command]
+fn boosts_over(state: State<'_, AppState>) -> Result<Vec<String>, Failure> {
+    let mut guard = state.0.lock()?;
+    Ok(guard.as_mut().map(|connection| std::mem::take(&mut connection.boosts_over)).unwrap_or_default())
 }
 
 /// The fields of players or of staff that the editor can change.
@@ -5552,6 +5975,7 @@ fn club_squads(state: State<'_, AppState>, uid: u32) -> Result<Vec<TeamView>, Fa
                             attributes_frozen: connection.frozen.attributes.contains_key(&member.uid),
                             fitness_frozen: connection.frozen.fitness.contains_key(&member.uid),
                             positions_frozen: connection.frozen.positions.contains_key(&member.uid),
+                            boosted: connection.frozen.boosted(member.uid),
                         })
                     })
                     .collect(),
@@ -6198,17 +6622,20 @@ pub fn run() {
             app.manage(ExportsFolder(exports));
             // macOS: after an update, the game is to load the bridge that came with this version.
             bridge::refresh(app.handle());
-            // Frozen money, attributes, energy and sharpness: every little while, what the game took is put back.
+            // Frozen money, attributes, energy and sharpness: every little while, what the game took is put back. So are
+            // boosted attributes, until the day is over and they go back as they were.
             let handle = app.handle().clone();
             std::thread::spawn(move || {
                 loop {
                     std::thread::sleep(FREEZE_EVERY);
                     let state = handle.state::<AppState>();
+                    let file = handle.state::<FrozenFile>();
                     if let Ok(mut guard) = state.0.lock()
                         && let Some(connection) = guard.as_mut()
                         && !connection.frozen.is_empty()
                     {
                         connection.hold_frozen();
+                        connection.hold_boosts(file.0.as_deref());
                     }
                 }
             });
@@ -6269,6 +6696,9 @@ pub fn run() {
             freeze_positions,
             frozen_positions,
             freeze_team,
+            boost_team,
+            match_day,
+            boosts_over,
             edit_fields,
             read_values,
             apply_edits,
@@ -6450,6 +6880,65 @@ mod tests {
         let written = serde_json::to_string(&save).expect("written");
         let read: RememberedSave = serde_json::from_str(&written).expect("read back");
         assert!(read.players.contains(&8) && read.fitness.contains(&7) && read.positions.contains(&9));
+    }
+
+    /// A boost of the player 7 on 19 October 2026: finishing was 12 and injury proneness 14, as stored.
+    fn boost(active: bool) -> Boost {
+        let originals = [("attribute.finishing", 60), ("attribute.injury_proneness", 70)];
+        let originals = originals.map(|(key, value)| (key.to_owned(), value)).into();
+        Boost { day: 20_261_019, originals, released: BTreeMap::new(), active }
+    }
+
+    #[test]
+    fn boosts_are_remembered_and_earlier_files_read_without_them() {
+        // As 0.5.5 wrote it, before a team could be boosted.
+        let file = r#"{ "saves": { "Steam:1000": { "players": [1], "clubs": [], "fitness": [], "staff": [] } } }"#;
+        let remembered: Remembered = serde_json::from_str(file).expect("an earlier file");
+        assert!(remembered.saves["Steam:1000"].boosts.is_empty());
+        let mut save = RememberedSave::default();
+        save.boosts.insert(7, boost(true));
+        assert!(!save.is_empty());
+        let read: RememberedSave = serde_json::from_str(&serde_json::to_string(&save).expect("written")).expect("read");
+        assert_eq!(read.boosts[&7], boost(true));
+        // One that is over is kept, for a save made during it: it still keeps the save in the file.
+        save.boosts.insert(7, boost(false));
+        assert!(!save.is_empty());
+    }
+
+    #[test]
+    fn only_a_boost_that_holds_gives_the_hold_work() {
+        let mut frozen = Frozen::default();
+        frozen.boosts.insert(7, boost(false));
+        assert!(frozen.is_empty() && !frozen.boosted(7));
+        frozen.boosts.insert(7, boost(true));
+        assert!(!frozen.is_empty() && frozen.boosted(7));
+    }
+
+    #[test]
+    fn a_boost_lets_go_of_what_the_user_writes_himself() {
+        let mut frozen = Frozen::default();
+        frozen.boosts.insert(7, boost(true));
+        frozen.boosts.insert(9, boost(false));
+        let change = |uid: u32| Change {
+            entity: Entity::Player,
+            uid,
+            field: "attribute.finishing".to_owned(),
+            old: 100,
+            new: 75,
+        };
+        // Another player's, or a boost that is over, is none of its business.
+        frozen.let_go(&change(8), 75, 100);
+        frozen.let_go(&change(9), 75, 100);
+        assert!(!frozen.boosts_changed && frozen.boosts[&9].originals.len() == 2);
+        frozen.let_go(&change(7), 75, 100);
+        let boost = &frozen.boosts[&7];
+        assert!(
+            frozen.boosts_changed && boost.released.contains_key("attribute.finishing") && boost.originals.len() == 1
+        );
+        // The file is to learn of it, even once nothing holds.
+        frozen.boosts.insert(7, Boost { active: false, ..boost.clone() });
+        frozen.boosts.remove(&9);
+        assert!(!frozen.is_empty());
     }
 
     /// A change of a player of this connection, as the log keeps it.

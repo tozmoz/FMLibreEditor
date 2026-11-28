@@ -27,6 +27,7 @@ import type {
   SimilarRequest,
   SquadPlayer,
   TeamAction,
+  MatchDay,
   TeamFreeze,
   TeamReport,
   FreezeKind,
@@ -3011,6 +3012,7 @@ function ownSquads(clubUid: number): ClubTeam[] {
         attributesFrozen: frozenAttributes.has(uid),
         fitnessFrozen: frozenFitness.has(uid),
         positionsFrozen: frozenPositions.has(uid),
+        boosted: boostedPlayers.has(uid),
       };
     }),
   }));
@@ -3037,6 +3039,64 @@ function freezeTeam(clubUid: number, index: number, kind: FreezeKind, frozen: bo
         held.add(player.uid);
       } else {
         held.delete(player.uid);
+      }
+      changed += 1;
+    }
+  }
+  return { changed, failed: [] };
+}
+
+/** How many days `mockNextDay()` has moved the game on from the fixture's date. */
+let daysOn = 0;
+
+/** The days after the fixture's date that the team at `index` plays on: the first team on it and three days on. */
+const matchDaysOf = (index: number) => (index === 0 ? [0, 3] : [7]);
+
+/**
+ * `match_day`: whether the team at `index` of the fixture club plays on the game's day (see `matchDaysOf`), and its
+ * next match day after it. Without the game's date (`?nodate`, `?failedchecks`) it is refused, as the real command
+ * refuses it.
+ */
+function matchDay(clubUid: number, index: number): MatchDay {
+  fixtureTeam(clubUid, index);
+  if (gameDate === null || failedChecks) {
+    throw failure("boost.noDate", "the editor cannot read the game's date, so it cannot tell the day is over");
+  }
+  const days = matchDaysOf(index);
+  const next = days.find((day) => day > daysOn);
+  const dayAfter = (count: number) => {
+    const date = new Date(Date.UTC(gameDate.year, gameDate.month - 1, gameDate.day + count));
+    return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate() };
+  };
+  return { today: days.includes(daysOn), next: next === undefined ? null : dayAfter(next) };
+}
+
+/**
+ * `boost_team`: every player of the fixture team boosted, or put back. Under `?failedchecks` the attributes do not
+ * check out, so it is refused at once, as the real command refuses it; so it is without the game's date, and to boost,
+ * on a day the team plays no match.
+ */
+function boostTeam(clubUid: number, index: number, on: boolean): TeamFreeze {
+  const team = fixtureTeam(clubUid, index);
+  if (failedChecks) {
+    throw failure(
+      "guard.failed",
+      "attribute.corners is left unchanged: attributes did not check out in this version of the game",
+      { field: "attribute.corners", check: "attributes" },
+    );
+  }
+  const day = on ? matchDay(clubUid, index) : null;
+  if (day && !day.today) {
+    const next: Record<string, number> = day.next ? { next: numberFromDate(day.next) } : {};
+    throw failure("boost.noMatch", "this team plays no match today, and a boost lasts a match day", next);
+  }
+  let changed = 0;
+  for (const player of team.players) {
+    if (boostedPlayers.has(player.uid) !== on) {
+      if (on) {
+        boostedPlayers.add(player.uid);
+      } else {
+        boostedPlayers.delete(player.uid);
       }
       changed += 1;
     }
@@ -3859,6 +3919,7 @@ function nationalProfile(uid: number, kind: number | null): NationalProfile {
       attributesFrozen: false,
       fitnessFrozen: false,
       positionsFrozen: false,
+      boosted: false,
     };
   });
   const teams: NationalSide[] = [
@@ -4451,6 +4512,22 @@ const frozenFitness = new Set<number>();
 /** The players whose positions are frozen in this page, likewise. */
 const frozenPositions = new Set<number>();
 
+/** The players boosted for the match of the day in this page, likewise. */
+const boostedPlayers = new Set<number>();
+
+/** The players whose boost went back since the window last asked (see `boosts_over`). */
+let boostsOverNames: string[] = [];
+
+/**
+ * In the browser console, `mockNextDay()` stands in for the game moving on from the match day: every boost goes back,
+ * as the app puts them back, and the window hears of it the next time it asks.
+ */
+(window as unknown as { mockNextDay?: () => void }).mockNextDay = () => {
+  boostsOverNames = [...boostsOverNames, ...players.filter((p) => boostedPlayers.has(p.uid)).map((p) => p.name)];
+  boostedPlayers.clear();
+  daysOn += 1;
+};
+
 /** The fixture connection, once `connect` has been called in this page. */
 let mockConnection: ConnectionInfo | null = null;
 
@@ -4699,6 +4776,8 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
         frozenStaff.add(member.uid);
       }
       stadiumNames.set(clubs[0].uid, `${clubs[0].shortName} Arena`);
+      // The game on the day of a boost: the third player's holds again; two others had theirs put back.
+      boostedPlayers.add(players[2].uid);
       const again: Refrozen = {
         players: players.slice(0, 2).map((p) => p.name),
         staff: staff.slice(0, 2).map((s) => s.name),
@@ -4706,6 +4785,8 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
         fitness: players.slice(0, 7).map((p) => p.name),
         positions: [],
         stadiums: [stadiumNameOf(clubs[0])],
+        boosted: [players[2].name],
+        putBack: players.slice(3, 5).map((p) => p.name),
         waiting: 1,
       };
       return { ...info, refrozen: again } as T;
@@ -4909,6 +4990,15 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       return [...frozenPositions] as T;
     case "freeze_team":
       return freezeTeam(Number(args?.club), Number(args?.team), args?.kind as FreezeKind, Boolean(args?.frozen)) as T;
+    case "boost_team":
+      return boostTeam(Number(args?.club), Number(args?.team), Boolean(args?.on)) as T;
+    case "match_day":
+      return matchDay(Number(args?.club), Number(args?.team)) as T;
+    case "boosts_over": {
+      const over = boostsOverNames;
+      boostsOverNames = [];
+      return over as T;
+    }
     case "export_players":
     case "export_staff":
     case "export_clubs": {

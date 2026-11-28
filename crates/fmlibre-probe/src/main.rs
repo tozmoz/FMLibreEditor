@@ -736,6 +736,12 @@ enum Command {
         /// The club's UID.
         club: u32,
     },
+    /// List the matches the game has arranged, as the app reads them to tell a team's match day: those of the club
+    /// with this UID, team by team, or without one those of the game's day. Only reads memory.
+    Matches {
+        /// The club's UID.
+        club: Option<u32>,
+    },
     /// Show the teams of other clubs a club runs beside its own (its B team, which the game keeps as a club of its
     /// own), as the editor reads them from the club's list of linked teams. Without a club, check that list over every
     /// club: how many hold how many teams, what the entries are, and which the editor leaves out. Only reads memory.
@@ -1611,6 +1617,7 @@ fn run(cli: Cli) -> Result<()> {
             scout(&session, club, request, squad, tactics)
         }
         Command::Teams { club } => teams(&connect(process, ArraySource::ProfileFirst)?, club),
+        Command::Matches { club } => matches(&connect(process, ArraySource::ProfileFirst)?, club),
         Command::LinkedTeams { club, offset, show } => {
             let mut session = connect(process, ArraySource::ProfileFirst)?;
             if let Some(offset) = offset.as_deref().map(parse_hex).transpose()? {
@@ -7010,6 +7017,49 @@ fn teams(session: &Session, uid: u32) -> Result<()> {
                 member.morale,
                 tags.join(", ")
             );
+        }
+    }
+    Ok(())
+}
+
+/// `matches`: the matches the game has arranged, read as the app reads them to tell a team's match day. With a club,
+/// each of its teams' matches by day; without one, the matches of the game's day, each team as "Club (UID) team N", N
+/// its place in the club's list. A team of no club, a national team's, is named by where it is.
+fn matches(session: &Session, uid: Option<u32>) -> Result<()> {
+    let started = Instant::now();
+    let fixtures = session.fixtures()?;
+    let clubs = ClubIndex::new(session.clubs()?);
+    let by_address: HashMap<u64, &fmlibre_core::ClubSummary> = clubs.iter().map(|club| (club.address, club)).collect();
+    let team_name = |team: u64| -> String {
+        let club = session.process.read_u64(team + session.layout.team.club).ok().and_then(|at| by_address.get(&at));
+        match club {
+            Some(club) => {
+                let index = session.team_objects(club).ok().and_then(|teams| teams.iter().position(|&at| at == team));
+                format!("{} ({}) team {}", club.name, club.uid, index.map_or_else(|| "?".to_owned(), |i| i.to_string()))
+            }
+            None => format!("the team at {team:#x}"),
+        }
+    };
+    println!("Read {} matches in {:.1} s.", fixtures.matches().len(), started.elapsed().as_secs_f64());
+    match uid {
+        Some(uid) => {
+            let club = clubs.get(uid).with_context(|| format!("no club with UID {uid}"))?;
+            for (index, team) in session.team_objects(club)?.into_iter().enumerate() {
+                let own: Vec<_> = fixtures.matches().iter().filter(|m| m.home == team || m.away == team).collect();
+                println!("{} team {index}: {} matches", club.name, own.len());
+                for found in own {
+                    let (place, other) = if found.home == team { ("home", found.away) } else { ("away", found.home) };
+                    println!("  {}  {place}  {}", iso_date(Some(found.day)), team_name(other));
+                }
+            }
+        }
+        None => {
+            let today = session.game_date().context("the game's date cannot be read")?;
+            let own: Vec<_> = fixtures.matches().iter().filter(|m| m.day == today).collect();
+            println!("{} on the game's day, {}:", own.len(), iso_date(Some(today)));
+            for found in own {
+                println!("  {}  v  {}", team_name(found.home), team_name(found.away));
+            }
         }
     }
     Ok(())

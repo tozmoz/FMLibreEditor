@@ -256,6 +256,15 @@ const errors: ErrorTexts = {
   "team.nobodyInjured": () => "Nessuno in questa squadra è infortunato.",
   "team.noCohesion": () =>
     "L'editor non riesce a leggere l'affiatamento di questa squadra: questa versione del gioco non è stata verificata, oppure nessuno dei suoi giocatori ha affiatamento con la società.",
+  "boost.noDate": () =>
+    "L'editor non riesce a leggere la data del gioco, quindi non sa quando finisce il giorno della partita.",
+  "boost.noMatch": (p) =>
+    p.next
+      ? "Questa squadra oggi non gioca: il potenziamento vale solo per un giorno di partita. " +
+        `La sua prossima partita è il ${dayText(p.next)}.`
+      : "Questa squadra oggi non gioca: il potenziamento vale solo per un giorno di partita.",
+  "boost.noFixtures": () =>
+    "L'editor non riesce a leggere le partite in questa versione del gioco, quindi non sa quando c'è un giorno di partita.",
   "team.noTactics": () =>
     "L'editor non riesce a leggere quanto questa squadra conosce la sua tattica: questa versione del gioco non è stata verificata, oppure la squadra non gioca una tattica scelta da te.",
   "guard.unknownBuild": () =>
@@ -1563,11 +1572,21 @@ export const it: Strings = {
       fitness: (names) => `Energia e forma: ${names}`,
       positions: (names) => `Ruoli: ${names}`,
       stadiums: (names) => `Nomi degli stadi: ${names}`,
+      boosted: (names) => `Potenziati per la partita: ${names}`,
+      putBack: (names) => `Potenziamento finito: ${names}`,
+      putBackTitle: "Attributi tornati com'erano",
       more: (count) => `e altri ${format(count)}`,
       waiting: (count) =>
         `${count === 1 ? "1 elemento è ricordato" : `${format(count)} elementi sono ricordati`} ma ora non ` +
         `${count === 1 ? "congelato" : "congelati"}: FMLibreEditor non può ancora scrivere in questa versione del gioco.`,
       dismiss: "Chiudi",
+    },
+
+    boostInfo: {
+      label: "Come funziona il potenziamento per la partita?",
+      note:
+        "Per un giorno di partita: spuntata in un giorno in cui la squadra gioca, ogni attributo resta al massimo finché " +
+        "il giorno nel gioco non cambia, poi torna com'era. Tieni l'app aperta fino ad allora.",
     },
 
     freezeInfo: {
@@ -2597,6 +2616,16 @@ export const it: Strings = {
     frozePositions: (count) =>
       count === 0 ? "I loro ruoli erano già congelati" : `Congelati i ruoli di ${playerCount(count)}`,
     unfrozePositions: (count) => `Scongelati i ruoli di ${playerCount(count)}`,
+    boost: "Potenzia per la partita",
+    boostTitle: "Ogni attributo al massimo finché il giorno nel gioco non cambia, poi torna com'era; tieni l'app aperta",
+    boostLooking: "Cerco la partita di oggi della squadra…",
+    boostNoMatch: (next) =>
+      next === null
+        ? "Solo nel giorno di una partita, e il gioco non ha programmato partite per questa squadra"
+        : `Solo nel giorno di una partita: la prossima di questa squadra è il ${next}`,
+    boostDone: (count) =>
+      count === 0 ? "Erano già potenziati" : `Potenziati gli attributi di ${playerCount(count)} fino al cambio di giorno`,
+    boostPutBack: (count) => `Attributi di ${playerCount(count)} tornati com'erano`,
 
     // Cosa ha fatto un'azione, sotto i pulsanti
     written: (count) => `${changes(count)} scritt${feminine(count)}`,
@@ -2664,6 +2693,8 @@ export const it: Strings = {
     loaneeTitle: "Qui in prestito da un'altra società",
     elsewhere: "Altrove",
     elsewhereTitle: "Gioca in un'altra squadra della società",
+    boostedTag: "Potenziato",
+    boostedTagTitle: "I suoi attributi sono al massimo finché il giorno nel gioco non cambia",
     frozen: "Congelato",
     frozenTitle: (attributes, fitness, positions) => {
       const frozen = [

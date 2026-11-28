@@ -113,6 +113,14 @@ const STAFF_DEPARTMENTS: Partial<Record<string, string>> = {
 const errors: ErrorTexts = {
   "team.nobodyInjured": () => "このチームに負傷者はいません。",
   "team.noCohesion": () => "エディターはこのチームの連携を読み取れません：このバージョンのゲームで未確認か、どの選手にもクラブとの連携の記録がありません。",
+  "boost.noDate": () =>
+    "ゲーム内の日付を読み取れないため、試合日がいつ終わるか判断できません。",
+  "boost.noMatch": (p) =>
+    p.next
+      ? `このチームは今日試合がありません。強化は試合日だけのものです。次の試合は${dayText(p.next)}です。`
+      : "このチームは今日試合がありません。強化は試合日だけのものです。",
+  "boost.noFixtures": () =>
+    "このバージョンのゲームでは試合を読み取れないため、試合日を判断できません。",
   "team.noTactics": () => "このチームが戦術をどれだけ理解しているか読み取れません：このバージョンのゲームではまだ確認されていないか、チームがあなたの選んだ戦術を使っていません。",
   "guard.unknownBuild": () =>
     "このバージョンのゲームは FMLibreEditor で未確認のため、ゲームへの書き込みは行いません。上部のお知らせの" +
@@ -1484,11 +1492,21 @@ export const ja: Strings = {
       fitness: (names: string) => `コンディションと試合勘：${names}`,
       positions: (names: string) => `ポジション：${names}`,
       stadiums: (names: string) => `スタジアム名：${names}`,
+      boosted: (names: string) => `試合用の強化：${names}`,
+      putBack: (names: string) => `強化終了：${names}`,
+      putBackTitle: "能力値を元に戻しました",
       more: (count: number) => `ほか${format(count)}件`,
       waiting: (count: number) =>
         `${format(count)}件は記憶されていますが、現在は固定されていません：FMLibreEditor はこのバージョンのゲームにまだ` +
         "書き込めません。",
       dismiss: "閉じる",
+    },
+
+    boostInfo: {
+      label: "試合用強化の仕組みは？",
+      note:
+        "1試合日だけの機能です。チームの試合がある日にチェックすると、ゲーム内の日付が変わるまで全能力値が最高になり、" +
+        "その後元に戻ります。それまでアプリは開いたままにしてください。",
     },
 
     freezeInfo: {
@@ -2449,6 +2467,16 @@ export const ja: Strings = {
     frozePositions: (count: number) =>
       count === 0 ? "ポジションはすでに固定されていました" : `${playerCount(count)}のポジションを固定しました`,
     unfrozePositions: (count: number) => `${playerCount(count)}のポジションの固定を解除しました`,
+    boost: "試合用に強化",
+    boostTitle: "ゲーム内の日付が変わるまで全能力値を最高にし、その後元に戻します。アプリは開いたままにしてください",
+    boostLooking: "このチームの今日の試合を確認しています…",
+    boostNoMatch: (next: string | null) =>
+      next === null
+        ? "試合日のみ使えます。このチームには試合が組まれていません"
+        : `試合日のみ使えます。このチームの次の試合は${next}です`,
+    boostDone: (count: number) =>
+      count === 0 ? "すでに強化されています" : `${playerCount(count)}の能力値を日付が変わるまで強化しました`,
+    boostPutBack: (count: number) => `${playerCount(count)}の能力値を元に戻しました`,
 
     // What an action did, under the buttons
     written: (count: number) => `${changeCount(count)}を書き込みました`,
@@ -2514,6 +2542,8 @@ export const ja: Strings = {
     loaneeTitle: "他のクラブからローンで加入中",
     elsewhere: "他チーム",
     elsewhereTitle: "クラブの別のチームでプレー中",
+    boostedTag: "強化中",
+    boostedTagTitle: "ゲーム内の日付が変わるまで能力値が最高になっています",
     frozen: "固定中",
     frozenTitle: (attributes: boolean, fitness: boolean, positions: boolean): string => {
       const frozen = [

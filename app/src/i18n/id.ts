@@ -112,6 +112,14 @@ const errors: ErrorTexts = {
   "team.noCohesion": () =>
     "Editor tidak dapat membaca kekompakan tim ini: versi game ini belum diperiksa untuk itu, atau tidak ada " +
     "pemainnya yang memiliki kekompakan dengan klub.",
+  "boost.noDate": () =>
+    "Editor tidak bisa membaca tanggal game, jadi tidak tahu kapan hari pertandingan berakhir.",
+  "boost.noMatch": (p) =>
+    p.next
+      ? `Tim ini tidak bertanding hari ini: penguatan hanya untuk hari laga. Laga berikutnya pada ${dayText(p.next)}.`
+      : "Tim ini tidak bertanding hari ini: penguatan hanya untuk hari laga.",
+  "boost.noFixtures": () =>
+    "Editor tidak bisa membaca jadwal laga di versi game ini, jadi tidak tahu kapan hari laga.",
   "team.noTactics": () =>
     "Editor tidak dapat membaca seberapa baik tim ini memahami taktiknya: versi game ini belum diperiksa untuk itu, " +
     "atau tim tidak memainkan taktik yang Anda pilih.",
@@ -1466,10 +1474,20 @@ export const id: Strings = {
       fitness: (names: string) => `Energi dan ketajaman: ${names}`,
       positions: (names: string) => `Posisi: ${names}`,
       stadiums: (names: string) => `Nama stadion: ${names}`,
+      boosted: (names: string) => `Diperkuat untuk laga: ${names}`,
+      putBack: (names: string) => `Penguatan selesai: ${names}`,
+      putBackTitle: "Atribut kembali seperti semula",
       more: (count: number) => `dan ${format(count)} lainnya`,
       waiting: (count: number) =>
         `${format(count)} diingat tetapi tidak dibekukan sekarang: FMLibreEditor belum bisa menulis ke versi game ini.`,
       dismiss: "Tutup",
+    },
+
+    boostInfo: {
+      label: "Bagaimana penguatan untuk laga bekerja?",
+      note:
+        "Untuk satu hari laga: jika dicentang pada hari tim bertanding, semua atribut maksimal sampai hari di game " +
+        "berganti, lalu kembali seperti semula. Biarkan aplikasi terbuka sampai saat itu.",
     },
 
     freezeInfo: {
@@ -2440,6 +2458,16 @@ export const id: Strings = {
     frozePositions: (count: number) =>
       count === 0 ? "Posisi mereka sudah dibekukan" : `Posisi ${playerCount(count)} dibekukan`,
     unfrozePositions: (count: number) => `Pembekuan posisi ${playerCount(count)} dilepas`,
+    boost: "Perkuat untuk laga",
+    boostTitle: "Semua atribut maksimal sampai hari di game berganti, lalu kembali seperti semula; biarkan aplikasi terbuka",
+    boostLooking: "Mencari laga tim hari ini…",
+    boostNoMatch: (next: string | null) =>
+      next === null
+        ? "Hanya pada hari laga, dan game belum menjadwalkan laga untuk tim ini"
+        : `Hanya pada hari laga: laga berikutnya tim ini pada ${next}`,
+    boostDone: (count: number) =>
+      count === 0 ? "Mereka sudah diperkuat" : `Atribut ${playerCount(count)} diperkuat sampai hari berganti`,
+    boostPutBack: (count: number) => `Atribut ${playerCount(count)} kembali seperti semula`,
 
     written: (count: number) => `${changeCount(count)} ditulis`,
     refused: (name: string, reason: string) => `${name}: ${reason}`,
@@ -2501,6 +2529,8 @@ export const id: Strings = {
     loaneeTitle: "Di sini sebagai pinjaman dari klub lain",
     elsewhere: "Di tim lain",
     elsewhereTitle: "Bermain untuk tim lain di klub ini",
+    boostedTag: "Diperkuat",
+    boostedTagTitle: "Atributnya maksimal sampai hari di game berganti",
     frozen: "Dibekukan",
     frozenTitle: (attributes: boolean, fitness: boolean, positions: boolean): string => {
       const frozen = [
