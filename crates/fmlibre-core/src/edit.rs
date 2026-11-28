@@ -213,7 +213,8 @@ pub struct Field {
     /// Whether the field is in the object's person block and moves with its shift.
     #[serde(skip)]
     shifted: bool,
-    /// Offset in its record of a second copy the game keeps of the value, written with it.
+    /// Offset in its record of a second copy the game keeps of the value, written with it, even where the game has
+    /// moved it a point away from the first; an undo puts the first copy's old value into both.
     #[serde(skip)]
     copy: Option<u64>,
     /// The stored values a correct layout can produce; anything else means the layout
@@ -1070,13 +1071,15 @@ impl Session {
         if old == value {
             return Ok(change);
         }
-        // The game's second copy is written along, and only while it holds what the first does.
+        // The game's second copy is written along. A new save holds there what the first does, but the game moves some
+        // second copies a point away as the save goes on (France's youth rating 155 and 156 a year on), so the copy
+        // only has to hold a value the field can.
         let copy = match field.copy {
             Some(offset) => {
                 let at = record + offset;
                 let bytes = self.process.read_bytes(at, field.kind.size())?;
                 let held = field.decode(&bytes);
-                if held != old {
+                if !field.is_plausible(held) {
                     return Err(EditError::Implausible { field: field.key.clone(), value: held });
                 }
                 Some((at, bytes))
@@ -1588,10 +1591,11 @@ mod tests {
     }
 
     /// A national team's nation is the one its container points at that points back at it, the men's through
-    /// `nation_men` and the women's through `nation_women`; and a setting the game keeps twice takes a change only while
-    /// the two copies agree, while the value it already holds is put back without a write. The change is made as its
-    /// undo, which writes as a new one does; a new one asks the game's checks, which a test's memory cannot pass. Only
-    /// where a process can open itself (Windows).
+    /// `nation_men` and the women's through `nation_women`; and a setting the game keeps twice takes a change in both
+    /// copies while the second holds a value the field can, though a point away from the first, while the value the
+    /// first already holds is put back without a write. The change is made as its undo, which writes as a new one
+    /// does; a new one asks the game's checks, which a test's memory cannot pass. Only where a process can open itself
+    /// (Windows).
     #[cfg(windows)]
     #[test]
     fn a_national_team_finds_its_nation_and_changes_a_setting_twice() {
@@ -1654,17 +1658,22 @@ mod tests {
         no_nation(&women_target);
         session.put_pointer(women_nation + women_back, women_team);
         assert_eq!(session.read_field(&women_target, &nation_field).expect("the women's nation"), 12);
-        // The game keeps game importance twice: its undo is a write like any other, refused while the copies differ.
+        // The game keeps game importance twice, and moves some second copies a point away as a save goes on: its undo,
+        // a write like any other, writes both while the second holds a value the field can, and is refused otherwise.
         let at = men + importance;
-        session.put(at, &[2]);
-        session.put(men + copy, &[3]);
         let change = |old, new| Change { entity: Entity::NationalTeam, uid: 792, field: setting.key.clone(), old, new };
-        let refused = session.revert(&men_target, &change(4, 2)).expect_err("the copies differ");
-        assert!(matches!(refused, EditError::Implausible { value: 3, .. }), "{refused}");
-        assert_eq!(session.process.read_bytes(at, 2).expect("both copies"), [2, 3]);
+        session.put(at, &[2]);
+        session.put(men + copy, &[9]);
+        let refused = session.revert(&men_target, &change(4, 2)).expect_err("a copy the field cannot hold");
+        assert!(matches!(refused, EditError::Implausible { value: 9, .. }), "{refused}");
+        assert_eq!(session.process.read_bytes(at, 2).expect("both copies"), [2, 9]);
+        session.put(men + copy, &[3]);
+        session.revert(&men_target, &change(4, 2)).expect("copies a point apart");
+        assert_eq!(session.process.read_bytes(at, 2).expect("both copies"), [4, 4]);
         // The value the first copy already holds is put back without a write, though the copies differ.
-        session.revert(&men_target, &change(2, 2)).expect("the same value");
-        assert_eq!(session.process.read_bytes(at, 2).expect("both copies"), [2, 3]);
+        session.put(men + copy, &[3]);
+        session.revert(&men_target, &change(4, 4)).expect("the same value");
+        assert_eq!(session.process.read_bytes(at, 2).expect("both copies"), [4, 3]);
         std::hint::black_box(&memory);
     }
 
