@@ -84,7 +84,7 @@
 
 /* The night edition: the page turns dark and what was ink is now paper. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #15161a;
     --panel: #15161a;
     --raised: #1e2024;
@@ -131,6 +131,55 @@
     color-scheme: dark;
   }
 }
+
+/* User-selected night edition, independent of system settings. */
+:root[data-theme="dark"] {
+    --bg: #15161a;
+    --panel: #15161a;
+    --raised: #1e2024;
+    --hover: #24262b;
+    --field: #0f1013;
+    --border: #2c2f35;
+    --border-strong: #4b4f58;
+    --text: #ecede8;
+    --muted: #a3a7af;
+
+    --accent: #ecede8;
+    --accent-hover: #ffffff;
+    --accent-soft: rgb(236 237 232 / 0.1);
+    --accent-faint: rgb(236 237 232 / 0.06);
+    --on-accent: #15161a;
+    --strip: #0a0b0d;
+    --accent-text: #8fb1ff;
+
+    --pending: #e8c547;
+    --pending-soft: #e8c547;
+
+    --danger: #f0705f;
+    --danger-soft: rgb(240 112 95 / 0.14);
+    --danger-hover: #f48d7f;
+    --on-danger: #15161a;
+    --ok: #57b784;
+    --scrim: rgb(0 0 0 / 0.6);
+
+    --tier-1: #e8775f;
+    --tier-2: #dca244;
+    --tier-3: #a8c45e;
+    --tier-4: #57b784;
+    --on-tier: #15161a;
+
+    --mix-1: #d4765f;
+    --mix-2: #d6a24a;
+    --mix-3: #a3bd5c;
+    --mix-4: #5bb383;
+    --mix-5: #8d9aab;
+    --mix-6: #b87fa8;
+
+    --scroll: #3d4047;
+
+    color-scheme: dark;
+}
+
 
 * {
   box-sizing: border-box;
