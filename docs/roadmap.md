@@ -100,8 +100,14 @@ before trusting them.
   when it was undone, and whether it is from an earlier session and in the game. That file is for people and
   spreadsheets: it is not the edit package below, which has to be read back.
 - [x] How a career's players develop: a record of every player's abilities, transfer value and attributes, added
-  to a file per career whenever the app reads the game and a week of the game's time has passed since the last
-  (only what changed; the lists already hold it, so the game is read no more for it). A player's profile has a
+  to a file per career every week of the game's time while the app is connected (only what changed): when it reads
+  the game, from the lists, and as the game moves on, from the players read again for it every week, which brings
+  the lists' abilities, values and attributes up to date too. At first a record was taken only when the app read
+  the game (connecting, Reload data), so a career played on with the app left open had one. Records more than a
+  year older than the last are thinned to about one every four weeks (what one left out holds counts from the next
+  kept), values that repeat are dropped (most of a whole record of an older save), a value takes 8 bytes in memory,
+  and a file whose reading leaves out at least a quarter of its values is written anew (beside it, then renamed). A
+  player's profile has a
   Development tab beside the profile itself: his abilities and value over time, a period to look back over, and the
   attributes that changed. Under his abilities a note says how far the current ability moved over the last year,
   the attributes that moved have an arrow, and a squad's table has the change before each current ability. No new

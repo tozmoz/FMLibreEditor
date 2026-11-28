@@ -3121,7 +3121,7 @@ export const id: Strings = {
     noAttributeChanges: (date: string) => `Tidak ada atribut yang berubah sejak ${date}.`,
     emptyTitle: "Belum ada yang bisa dibandingkan",
     emptyText:
-      "Aplikasi mencatat kemampuan, nilai, dan atribut semua pemain kira-kira sekali seminggu waktu permainan, setiap kali membaca data permainan. Lanjutkan bermain, baca ulang datanya, dan perkembangan pemain ini akan tampil di sini.",
+      "Selama aplikasi terbuka, aplikasi mencatat kemampuan, nilai, dan atribut semua pemain sekali seminggu waktu permainan. Lanjutkan bermain dengan aplikasi tetap terbuka, dan perkembangan pemain ini akan tampil di sini.",
     offTitle: "Tidak ada catatan untuk simpanan ini",
     offText:
       "Aplikasi menyimpan catatan untuk simpanan yang memiliki manajer Anda, pada versi permainan yang datanya lolos pemeriksaan aplikasi.",

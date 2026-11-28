@@ -3343,7 +3343,7 @@ export const de: Strings = {
     noAttributeChanges: (date: string) => `Seit ${date} hat sich kein Attribut geändert.`,
     emptyTitle: "Noch nichts zum Vergleichen",
     emptyText:
-      "Die App hält etwa einmal pro Woche der Spielzeit Fähigkeiten, Wert und Attribute aller Spieler fest, immer wenn sie die Spieldaten liest. Spielen Sie weiter und lesen Sie die Daten erneut: Dann zeigt sich hier, wie sich dieser Spieler entwickelt.",
+      "Solange die App geöffnet ist, hält sie einmal pro Woche der Spielzeit Fähigkeiten, Wert und Attribute aller Spieler fest. Spielen Sie mit geöffneter App weiter: Dann zeigt sich hier, wie sich dieser Spieler entwickelt.",
     offTitle: "Keine Aufzeichnungen für diesen Spielstand",
     offText:
       "Die App zeichnet bei Spielständen auf, in denen Sie einen Trainer steuern, und bei Spielversionen, deren Daten ihre Prüfungen bestehen.",

@@ -3556,7 +3556,7 @@ export const ptBR: Strings = {
     noAttributeChanges: (date: string) => `Nenhum atributo mudou desde ${date}.`,
     emptyTitle: "Nada para comparar ainda",
     emptyText:
-      "O app anota as habilidades, o valor e os atributos de cada jogador cerca de uma vez por semana do tempo do jogo, sempre que lê os dados do jogo. Continue jogando, leia os dados de novo e a evolução deste jogador aparece aqui.",
+      "Enquanto o app está aberto, ele anota as habilidades, o valor e os atributos de cada jogador uma vez por semana do tempo do jogo. Continue jogando com o app aberto e a evolução deste jogador aparece aqui.",
     offTitle: "Sem registros para este save",
     offText:
       "O app guarda registros de um save com um treinador seu, em uma versão do jogo cujos dados passam nas verificações dele.",

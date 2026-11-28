@@ -71,7 +71,7 @@ struct Connection {
     log: Vec<LoggedChange>,
     /// Where the log is kept for the next connection to this career.
     history: History,
-    /// How the career's players developed, as recorded each week or so of the game's time the app read them.
+    /// How the career's players developed, as recorded every week of the game's time the app was connected.
     records: Records,
     /// The mass edit last previewed, until it is applied or replaced.
     mass: Option<PendingMass>,
@@ -103,6 +103,10 @@ const FREEZE_EVERY: Duration = Duration::from_secs(2);
 const SAVE_SETTLES: Duration = Duration::from_secs(180);
 const SAVE_RECHECK: Duration = Duration::from_secs(5);
 const SAVE_RECHECK_LATER: Duration = Duration::from_secs(60);
+
+/// How often the app looks whether a record of the players is due while it stays connected (see
+/// `Connection::record_as_game_moves_on`): a week of the game's time can pass in less than a minute.
+const RECORD_CHECK_EVERY: Duration = Duration::from_secs(30);
 
 /// What the hold last found of the game's clubs (see `Connection::hold_stadiums`): a save loaded again, this one or
 /// another, gives them a new array, of new objects.
@@ -558,8 +562,9 @@ impl StoredChange {
 }
 
 /// The records of how the players of one career develop (see `fmlibre_core::Timeline`), in a file of its own, named
-/// as the career's history is. A record is added to its end when one is due, as the lists are read: the file is never
-/// written whole.
+/// as the career's history is. A record is added to its end when one is due, as the lists are read and as the game
+/// moves on while the app stays connected (see `Connection::record_as_game_moves_on`). The file is written whole only
+/// once enough of it is thinned away (see `Timeline::rewrite_due`).
 struct Records {
     /// The file; none without a data folder or a known career, and then nothing is recorded.
     path: Option<PathBuf>,
@@ -567,15 +572,18 @@ struct Records {
 }
 
 impl Records {
-    /// The records of the career `save` in `folder`. A record cut short at the end of the file, by a crash say, is
-    /// cut off, so that the next one follows the last whole one.
+    /// The records of the career `save` in `folder`, thinned (see `Timeline::thin`). A file with enough lines thinned
+    /// away is written anew from what was kept; else a record cut short at its end, by a crash say, is cut off, so that
+    /// the next one follows the last whole one.
     fn open(folder: Option<&Path>, save: Option<&str>) -> Self {
         let path = folder.zip(save).map(|(folder, save)| folder.join(timeline_file_name(save)));
         let Some(bytes) = path.as_deref().and_then(|path| std::fs::read(path).ok()) else {
             return Self { path, timeline: Timeline::new() };
         };
         let (timeline, taken) = Timeline::read(&bytes);
-        if taken < bytes.len()
+        let rewritten = timeline.rewrite_due() && path.as_deref().is_some_and(|path| rewrite_records(path, &timeline));
+        if !rewritten
+            && taken < bytes.len()
             && let Some(file) = path.as_deref().and_then(|path| OpenOptions::new().write(true).open(path).ok())
         {
             let _ = file.set_len(taken as u64);
@@ -585,7 +593,8 @@ impl Records {
 
     /// Takes the record of `date`, the game's date, when one is due (see `Timeline::record`), from `players` as the
     /// lists have them (their UIDs and `timeline_values`), and adds it to the file. A file that cannot be written only
-    /// means that it lacks the record.
+    /// means that it lacks the record. A record that makes another a year old has the records thinned in memory, and
+    /// in the file the next time it is read.
     fn take(&mut self, date: FmDate, players: impl IntoIterator<Item = (u32, Vec<Option<i32>>)>) {
         let Some(path) = &self.path else {
             return;
@@ -600,7 +609,24 @@ impl Records {
         if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
             let _ = file.write_all(&record);
         }
+        if self.timeline.thinning_due() {
+            self.timeline.thin();
+        }
     }
+}
+
+/// Writes the file of a career's records at `path` anew from `timeline` (see `Timeline::to_bytes`): beside it first,
+/// then in its place, so that a crash leaves either the old file or the new one whole. Whether it did.
+fn rewrite_records(path: &Path, timeline: &Timeline) -> bool {
+    let Some(bytes) = timeline.to_bytes() else {
+        return false;
+    };
+    let beside = path.with_extension("gz.new");
+    let written = std::fs::write(&beside, bytes).and_then(|()| std::fs::rename(&beside, path));
+    if written.is_err() {
+        let _ = std::fs::remove_file(&beside);
+    }
+    written.is_ok()
 }
 
 /// The name of the file of the records of the career `save`, such as `Steam-12345.jsonl.gz`: the name of its history
@@ -1197,6 +1223,27 @@ impl Connection {
         let mut humans: Vec<u32> = staff.iter().filter(|member| member.is_human).map(|member| member.uid).collect();
         humans.sort_unstable();
         self.save.is_some() && save_of(&self.session, &humans) == self.save
+    }
+
+    /// Takes the record of the players that falls due as the game moves on while the app stays connected (see
+    /// `Timeline::due_later`), from the players read again for it, and gives the lists their abilities, values and
+    /// attributes as read then, which a profile's development ends with. Not while the game may have loaded a save
+    /// since the lists were read, nor where its human managers are not this career's: reading the lists again takes the
+    /// record then.
+    fn record_as_game_moves_on(&mut self) {
+        let Some(date) = self.session.game_date().filter(|_| self.records_players()) else {
+            return;
+        };
+        if !self.records.timeline.due_later(date) || self.session.save_changed() || !self.same_save() {
+            return;
+        }
+        let Ok(players) = self.session.players() else {
+            return;
+        };
+        self.records.take(date, players.iter().map(|player| (player.uid, timeline_values(player))));
+        for now in &players {
+            self.players.update(now.uid, |listed| listed.take_values(now));
+        }
     }
 
     /// Holds and remembers `name`, the name the editor just gave the stadium of the club `uid`, by a rename or an undo
@@ -6219,6 +6266,20 @@ pub fn run() {
                     *slot = Some(Arc::new(index));
                 }
             });
+            // How the players develop: a record every week of the game's time while the app stays connected, not only
+            // when it reads the lists.
+            let handle = app.handle().clone();
+            std::thread::spawn(move || {
+                loop {
+                    std::thread::sleep(RECORD_CHECK_EVERY);
+                    let state = handle.state::<AppState>();
+                    if let Ok(mut guard) = state.0.lock()
+                        && let Some(connection) = guard.as_mut()
+                    {
+                        connection.record_as_game_moves_on();
+                    }
+                }
+            });
             Ok(())
         })
         .register_uri_scheme_protocol("fmgfx", |ctx, request| {
@@ -6530,6 +6591,35 @@ mod tests {
         let mut nowhere = Records::open(None, career);
         nowhere.take(date(1), player(100));
         assert!(nowhere.timeline.is_empty());
+        let _ = std::fs::remove_dir_all(&folder);
+    }
+
+    #[test]
+    fn a_long_career_is_thinned_and_its_file_written_anew() {
+        let folder = test_folder("timeline-thinned");
+        let career = Some("Steam:1");
+        let path = folder.join("Steam-1.jsonl.gz");
+        let start = FmDate { year: 2025, month: 1, day: 1 };
+        let week = |n: i64| start.plus_days(7 * n);
+        let player = |ability: i64| [(7, vec![Some(100 + ability as i32), Some(160)])];
+        let mut records = Records::open(Some(&folder), career);
+        for n in 0..105 {
+            records.take(week(n), player(n));
+        }
+        // Two years of weekly records: in memory, those over a year old are thinned as they come of age (weeks 0, 4,
+        // ..., 48 kept, and the last year's 53), while the file holds every one.
+        assert_eq!(records.timeline.len(), 66);
+        let whole = std::fs::metadata(&path).expect("the file").len();
+
+        // Read again, the file is written anew from what was kept: smaller, and read back the same.
+        let mut again = Records::open(Some(&folder), career);
+        assert_eq!(again.timeline.len(), 66);
+        assert!(std::fs::metadata(&path).expect("the file").len() < whole);
+        assert!(!folder.join("Steam-1.jsonl.gz.new").exists());
+        assert_eq!(Records::open(Some(&folder), career).timeline.len(), 66);
+        // Records follow it as before.
+        again.take(week(105), player(105));
+        assert_eq!(Records::open(Some(&folder), career).timeline.last_date(), Some(week(105)));
         let _ = std::fs::remove_dir_all(&folder);
     }
 

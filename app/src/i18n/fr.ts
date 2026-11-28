@@ -3379,7 +3379,7 @@ export const fr: Strings = {
     noAttributeChanges: (date: string) => `Aucun attribut n'a changé depuis le ${date}.`,
     emptyTitle: "Rien à comparer pour l'instant",
     emptyText:
-      "L'application note le niveau, la valeur et les attributs de tous les joueurs environ une fois par semaine du jeu, chaque fois qu'elle lit les données du jeu. Continuez à jouer, relisez les données, et la progression de ce joueur s'affichera ici.",
+      "Tant que l'application est ouverte, elle note le niveau, la valeur et les attributs de tous les joueurs une fois par semaine du jeu. Continuez à jouer avec l'application ouverte, et la progression de ce joueur s'affichera ici.",
     offTitle: "Aucun relevé pour cette sauvegarde",
     offText:
       "L'application tient des relevés pour une sauvegarde où vous dirigez un entraîneur, sur une version du jeu dont les données passent ses contrôles.",

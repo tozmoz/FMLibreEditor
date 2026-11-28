@@ -84,6 +84,20 @@ impl Listed for PlayerSummary {
     }
 }
 
+impl PlayerSummary {
+    /// Takes what changes as the game moves on and the records of a career follow (his abilities, transfer value and
+    /// attributes) from `now`, the same player read again from the same object; nothing from another.
+    pub fn take_values(&mut self, now: &PlayerSummary) {
+        if now.uid != self.uid || now.address != self.address {
+            return;
+        }
+        self.current_ability = now.current_ability;
+        self.potential_ability = now.potential_ability;
+        self.transfer_value = now.transfer_value;
+        self.attributes.clone_from(&now.attributes);
+    }
+}
+
 /// Players with a search index over their names.
 pub type PlayerIndex = SearchIndex<PlayerSummary>;
 
@@ -291,6 +305,52 @@ pub(crate) fn name_score(process: &Process, p: &PlayerLayout, object: u64, shift
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn summary(uid: u32, address: u64, ability: u16, attribute: u8) -> PlayerSummary {
+        PlayerSummary {
+            uid,
+            name: "A".to_owned(),
+            full_name: None,
+            date_of_birth: None,
+            age: Some(20),
+            nation: None,
+            nation_uid: None,
+            club: Some("Club".to_owned()),
+            club_uid: Some(9),
+            positions: vec!["st"],
+            contract_expires: None,
+            current_ability: ability,
+            potential_ability: 150,
+            position_ratings: [1; POSITIONS.len()],
+            nation_address: 0,
+            attributes: vec![attribute; ATTRIBUTE_GROUPS.iter().map(|(_, keys)| keys.len()).sum()],
+            transfer_listed: false,
+            loan_listed: false,
+            transfer_value: Some(1_000),
+            woman: None,
+            address,
+            shift: 0,
+        }
+    }
+
+    #[test]
+    fn a_list_row_takes_the_values_read_again() {
+        let mut listed = summary(7, 0x1000, 120, 10);
+        let mut now = summary(7, 0x1000, 126, 12);
+        now.potential_ability = 155;
+        now.transfer_value = Some(2_000);
+        now.club = Some("Another".to_owned());
+        listed.take_values(&now);
+        assert_eq!((listed.current_ability, listed.potential_ability, listed.transfer_value), (126, 155, Some(2_000)));
+        assert_eq!(listed.attributes, now.attributes);
+        // Only the values the records follow: the club stays as the lists read it.
+        assert_eq!(listed.club.as_deref(), Some("Club"));
+        // Another object, or another player, gives nothing.
+        let mut other = summary(7, 0x1000, 120, 10);
+        other.take_values(&summary(7, 0x2000, 140, 15));
+        other.take_values(&summary(8, 0x1000, 140, 15));
+        assert_eq!((other.current_ability, other.attributes[0]), (120, 10));
+    }
 
     #[test]
     fn nations_are_listed_once_by_name() {
