@@ -3278,7 +3278,7 @@ export const es: Strings = {
     noAttributeChanges: (date: string) => `Ningún atributo ha cambiado desde el ${date}.`,
     emptyTitle: "Todavía no hay con qué comparar",
     emptyText:
-      "La aplicación anota las habilidades, el valor y los atributos de todos los jugadores más o menos una vez por semana del juego, cada vez que lee los datos del juego. Sigue jugando, vuelve a leer los datos y aquí verás cómo progresa este jugador.",
+      "Mientras la aplicación está abierta, anota las habilidades, el valor y los atributos de todos los jugadores una vez por semana del juego. Sigue jugando con la aplicación abierta y aquí verás cómo progresa este jugador.",
     offTitle: "No hay registros para esta partida",
     offText:
       "La aplicación guarda registros en las partidas en las que controlas a un entrenador y en las versiones del juego cuyos datos superan sus comprobaciones.",

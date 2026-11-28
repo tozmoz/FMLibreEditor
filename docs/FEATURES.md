@@ -87,8 +87,8 @@ when you connect to that save another time.
 
 ## Follow a career
 
-The app notes every player's abilities, value and attributes about once a week of the game's
-time, whenever it reads the game. A profile's **Development** tab draws them over time and
+While the app is open, it notes every player's abilities, value and attributes once a week of
+the game's time. A profile's **Development** tab draws them over time and
 lists the attributes that changed. A note under his abilities, arrows beside the attributes
 and a club's squad say who gained and who lost over the last year.
 

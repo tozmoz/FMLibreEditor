@@ -3774,7 +3774,7 @@ export const en = {
     /** With no record before today's: how the records come about. */
     emptyTitle: "Nothing to compare with yet",
     emptyText:
-      "The app notes every player's abilities, value and attributes about once a week of the game's time, whenever it reads the game's data. Play on, read the data again, and how this player develops shows here.",
+      "While the app is open, it notes every player's abilities, value and attributes once a week of the game's time. Play on with it open, and how this player develops shows here.",
     /** Where the app keeps no records: a save without a manager of the user's, or data that fails the checks. */
     offTitle: "No records for this save",
     offText:
