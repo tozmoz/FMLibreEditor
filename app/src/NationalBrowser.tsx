@@ -205,8 +205,8 @@ function NationalProfileView({ team, version, onClose }: NationalProfileViewProp
     >
       {loaded?.details && teams && (
         <div className="squad-tab">
-          {loaded.details.nation && <NationDetailsBlock nation={loaded.details.nation} />}
-          {settings && <NationSettingsBlock settings={settings} />}
+          {settings && <NationSettingsBlock settings={settings} nation={loaded.details.nation} />}
+          {loaded.details.nation && <NationDetailsBlock nation={loaded.details.nation} facts={!settings} />}
           {teams.length === 0 || !shown ? (
             <p className="empty">{text.noTeams}</p>
           ) : (
@@ -237,19 +237,22 @@ function NationalProfileView({ team, version, onClose }: NationalProfileViewProp
 /**
  * What the game shows of the nation and its federation, read only: the year the federation was founded, the continent,
  * and the federation's staff as the game's staff list of the nation's team shows them, team by team, each with his job
- * in the national team (not the one at his club, if he has one).
+ * in the national team (not the one at his club, if he has one). Where the profile also shows the nation's settings,
+ * the year and the continent stand among them instead (`facts` false), above this long list.
  */
-function NationDetailsBlock({ nation }: { nation: NationDetails }) {
+function NationDetailsBlock({ nation, facts }: { nation: NationDetails; facts: boolean }) {
   const none = <span className="muted">{profileText.none}</span>;
   return (
     <div className="nation-details">
-      <section className="profile-group">
-        <h3>{text.details.nation}</h3>
-        <dl className="stats">
-          <Fact label={text.details.founded}>{nation.founded ?? none}</Fact>
-          <Fact label={text.details.continent}>{nation.continent ?? none}</Fact>
-        </dl>
-      </section>
+      {facts && (
+        <section className="profile-group">
+          <h3>{text.details.nation}</h3>
+          <dl className="stats">
+            <Fact label={text.details.founded}>{nation.founded ?? none}</Fact>
+            <Fact label={text.details.continent}>{nation.continent ?? none}</Fact>
+          </dl>
+        </section>
+      )}
       <section className="profile-group">
         <h3>{text.details.staff(nation.staff.length)}</h3>
         {nation.staff.length === 0 ? (
@@ -286,9 +289,11 @@ function NationDetailsBlock({ nation }: { nation: NationDetails }) {
  * A nation's settings as the pre-game editor shows them, read from the game: the game importance and the federation's
  * financial power and patience, the attendance of its matches, and the economic factor and state of development of the
  * nation. Each value is an input while the profile is edited; the two codes are shown by their names. The rows stand in
- * two columns, as a club's facts do, so that the squad under them keeps room on a window of ordinary height.
+ * two columns, as a club's facts do, so that the squad under them keeps room on a window of ordinary height. Where the
+ * profile has the nation's details (`nation`), their year and continent lead the rows, and the federation's staff come
+ * after the block: what can be changed is not under a list of thirty.
  */
-function NationSettingsBlock({ settings }: { settings: NationSettings }) {
+function NationSettingsBlock({ settings, nation }: { settings: NationSettings; nation: NationDetails | null }) {
   const none = <span className="muted">{profileText.none}</span>;
   const rows: { field: string; value: number | null }[] = [
     { field: "game_importance", value: settings.gameImportance },
@@ -311,12 +316,22 @@ function NationSettingsBlock({ settings }: { settings: NationSettings }) {
       )}
     </Fact>
   );
+  const facts = [
+    ...(nation
+      ? [
+          <Fact key="founded" label={text.details.founded}>{nation.founded ?? none}</Fact>,
+          <Fact key="continent" label={text.details.continent}>{nation.continent ?? none}</Fact>,
+        ]
+      : []),
+    ...rows.map(fact),
+  ];
+  const half = Math.ceil(facts.length / 2);
   return (
     <section className="profile-group">
       <h3>{text.settings.heading}</h3>
       <div className="profile-split">
-        <dl className="stats">{rows.slice(0, rows.length / 2).map(fact)}</dl>
-        <dl className="stats">{rows.slice(rows.length / 2).map(fact)}</dl>
+        <dl className="stats">{facts.slice(0, half)}</dl>
+        <dl className="stats">{facts.slice(half)}</dl>
       </div>
       <p className="note">{text.settings.note}</p>
     </section>
