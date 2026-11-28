@@ -235,6 +235,13 @@ const errors: ErrorTexts = {
     "sus jugadores tiene cohesión con el club.",
   "boost.noDate": () =>
     "El editor no puede leer la fecha del juego, así que no sabe cuándo termina el día del partido.",
+  "boost.noMatch": (p) =>
+    p.next
+      ? "Este equipo no juega hoy: potenciar es solo para un día de partido. " +
+        `Su próximo partido es el ${dayText(p.next)}.`
+      : "Este equipo no juega hoy: potenciar es solo para un día de partido.",
+  "boost.noFixtures": () =>
+    "El editor no puede leer los partidos en esta versión del juego, así que no puede saber cuándo hay día de partido.",
   "team.noTactics": () =>
     "El editor no puede leer cuánto conoce este equipo su táctica: esta versión del juego no se ha comprobado, o el " +
     "equipo no juega una táctica que elijas tú.",
@@ -1532,6 +1539,13 @@ export const es: Strings = {
       dismiss: "Cerrar",
     },
 
+    boostInfo: {
+      label: "¿Cómo funciona potenciar para el partido?",
+      note:
+        "Para un día de partido: marcado un día en que juega el equipo, cada atributo queda al máximo hasta que cambie el " +
+        "día en el juego y luego vuelve a ser como era. Deje la app abierta hasta entonces.",
+    },
+
     freezeInfo: {
       label: "¿Cómo funciona congelar?",
       note:
@@ -2582,6 +2596,11 @@ export const es: Strings = {
     unfrozePositions: (count) => `Se descongelaron las posiciones de ${entityCount("player", count)}`,
     boost: "Potenciar para el partido",
     boostTitle: "Cada atributo al máximo hasta que cambie el día en el juego, luego como era; deje la app abierta",
+    boostLooking: "Buscando el partido de hoy del equipo…",
+    boostNoMatch: (next) =>
+      next === null
+        ? "Solo en día de partido, y el juego no ha programado ningún partido a este equipo"
+        : `Solo en día de partido: el próximo partido de este equipo es el ${next}`,
     boostDone: (count) =>
       count === 0
         ? "Ya estaban potenciados"

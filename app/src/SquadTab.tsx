@@ -15,12 +15,13 @@ import {
   changeLog,
   clubSquads,
   freezeTeam,
+  matchDay,
   setCaptain,
   teamAction,
   undoBatch,
   undoChange,
 } from "./editing";
-import { describeError, formatNumber } from "./format";
+import { describeError, formatDate, formatNumber } from "./format";
 import { intlLocale } from "./i18n";
 import { InfoTip } from "./InfoTip";
 import {
@@ -48,6 +49,7 @@ import type {
   FreezeKind,
   LoggedChange,
   MassReport,
+  MatchDay,
   SquadPlayer,
   SquadSort,
   TeamAction,
@@ -509,6 +511,7 @@ export function SquadTab({ clubUid, clubName, version, panel, label, overview }:
               busy={busy}
               onFreeze={(kind, on) => void freeze(team, kind, on)}
               onBoost={(on) => void boost(team, on)}
+              version={version}
             />
             <p className="note squad-hint">{text.freezeHint}</p>
           </div>
@@ -758,17 +761,69 @@ interface TeamFreezesProps {
   onFreeze: (kind: FreezeKind, on: boolean) => void;
   /** Boosts the team for the match of the day, or puts its boosted players back now. */
   onBoost: (on: boolean) => void;
+  /** Read again when it changes: after a write, or once the game was read again. */
+  version: number;
+}
+
+/** Whether the shown team plays a match on the game's day: unknown while asked, or why it cannot be told. */
+type MatchState = { asked: false } | { asked: true; day: MatchDay } | { asked: true; error: string };
+
+/**
+ * Whether the team plays a match on the game's day, which its boost waits for: asked again whenever the team, the
+ * version or the window's focus changes, as the game may have moved on a day while the window was behind it.
+ */
+function useMatchDay(clubUid: number, index: number, version: number, ask: boolean): MatchState {
+  // With the team it is about: another team's answer tells nothing of this one.
+  const team = `${clubUid}:${index}`;
+  const [state, setState] = useState<{ team: string; match: MatchState }>({ team, match: { asked: false } });
+  const [focus, setFocus] = useState(0);
+
+  useEffect(() => {
+    const focused = () => setFocus((count) => count + 1);
+    window.addEventListener("focus", focused);
+    return () => window.removeEventListener("focus", focused);
+  }, []);
+
+  useEffect(() => {
+    if (!ask) {
+      return;
+    }
+    let cancelled = false;
+    const asked = `${clubUid}:${index}`;
+    matchDay(clubUid, index).then(
+      (day) => !cancelled && setState({ team: asked, match: { asked: true, day } }),
+      (e: unknown) => !cancelled && setState({ team: asked, match: { asked: true, error: describeError(e) } }),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [clubUid, index, version, focus, ask]);
+
+  return state.team === team ? state.match : { asked: false };
 }
 
 /**
  * The boxes that freeze the attributes, the energy and match sharpness, and the positions of every player in the shown
  * team, and after them the one that boosts it for the match of the day. A box is ticked when all of them are frozen,
  * or boosted, and half ticked, with how many are, when some are; ticking it then covers the others too. They wait while
- * the game cannot be written to, and say why.
+ * the game cannot be written to, and say why; the one that boosts also waits for a day the team plays a match, and says
+ * when it plays next, while none of its players is boosted. An (i) after it says that a boost lasts one match day.
  */
-function TeamFreezes({ team, editable, busy, onFreeze, onBoost }: TeamFreezesProps) {
+function TeamFreezes({ team, editable, busy, onFreeze, onBoost, version }: TeamFreezesProps) {
   const { readOnlyNote } = useContext(EditorContext);
   const total = team.players.length;
+  const boosted = team.players.filter((player) => player.boosted).length;
+  // A boost is given only on a day the team plays a match; one that holds can always be put back.
+  const match = useMatchDay(team.clubUid, team.index, version, editable && total > 0);
+  const matchToday = match.asked && "day" in match && match.day.today;
+  const boostTitle =
+    boosted > 0 || matchToday
+      ? text.boostTitle
+      : !match.asked
+        ? text.boostLooking
+        : "error" in match
+          ? match.error
+          : text.boostNoMatch(match.day.next ? formatDate(match.day.next) : null);
   const boxes: { kind: FreezeKind; label: string; title: string; frozen: number }[] = [
     {
       kind: "attributes",
@@ -807,13 +862,14 @@ function TeamFreezes({ team, editable, busy, onFreeze, onBoost }: TeamFreezesPro
       <InfoTip label={appText.freezeInfo.label} note={appText.freezeInfo.note} />
       <FreezeBox
         label={text.boost}
-        title={!editable ? readOnlyNote : total === 0 ? text.empty : text.boostTitle}
-        frozen={team.players.filter((player) => player.boosted).length}
+        title={!editable ? readOnlyNote : total === 0 ? text.empty : boostTitle}
+        frozen={boosted}
         total={total}
-        waiting={!editable || total === 0}
+        waiting={!editable || total === 0 || (boosted === 0 && !matchToday)}
         busy={busy}
         onChange={onBoost}
       />
+      <InfoTip label={appText.boostInfo.label} note={appText.boostInfo.note} />
     </div>
   );
 }

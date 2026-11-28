@@ -5,32 +5,28 @@ import { converts, toPounds, toShown } from "./currency";
 import type {
   ApplyReport,
   ArrangedPreview,
-  LoanPreview,
-  LoanRequest,
   BatchUndo,
   CaptainRole,
-  Scouted,
-  ScoutingOverview,
-  ScoutRequest,
   ClubName,
   ClubStaffRow,
   ClubTeam,
   CompetitionRulesRead,
   CompetitionRulesSet,
-  EditField,
   EditEntity,
+  EditField,
   Entity,
   FieldEdit,
   FieldValues,
   FmDate,
   FreezeKind,
+  LoanPreview,
+  LoanRequest,
   LoggedChange,
   MassFilters,
   MassOperation,
   MassPreview,
   MassReport,
-  RecipeInfo,
-  RecipePreview,
+  MatchDay,
   MovePreview,
   MoveTerms,
   NameKind,
@@ -39,8 +35,13 @@ import type {
   NationalStatus,
   NationalTeamAction,
   PersonNames,
+  RecipeInfo,
+  RecipePreview,
   RoomMaker,
   RuleInput,
+  Scouted,
+  ScoutingOverview,
+  ScoutRequest,
   StadiumName,
   TeamAction,
   TeamFreeze,
@@ -122,6 +123,12 @@ export const freezeTeam = (club: number, team: number, kind: FreezeKind, frozen:
  */
 export const boostTeam = (club: number, team: number, on: boolean) =>
   call<TeamFreeze>("boost_team", { club, team, on });
+
+/**
+ * Whether the team plays a match on the game's day, which a boost waits for, and the next day it plays one. The first
+ * question on a day of the game reads all of the game's memory once, a second or two.
+ */
+export const matchDay = (club: number, team: number) => call<MatchDay>("match_day", { club, team });
 
 /**
  * Sets every attribute of the player `uid` to its best: 20, and 1 for injury proneness and dirtiness. The changes are

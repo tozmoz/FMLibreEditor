@@ -114,6 +114,12 @@ const errors: ErrorTexts = {
     "pemainnya yang memiliki kekompakan dengan klub.",
   "boost.noDate": () =>
     "Editor tidak bisa membaca tanggal game, jadi tidak tahu kapan hari pertandingan berakhir.",
+  "boost.noMatch": (p) =>
+    p.next
+      ? `Tim ini tidak bertanding hari ini: penguatan hanya untuk hari laga. Laga berikutnya pada ${dayText(p.next)}.`
+      : "Tim ini tidak bertanding hari ini: penguatan hanya untuk hari laga.",
+  "boost.noFixtures": () =>
+    "Editor tidak bisa membaca jadwal laga di versi game ini, jadi tidak tahu kapan hari laga.",
   "team.noTactics": () =>
     "Editor tidak dapat membaca seberapa baik tim ini memahami taktiknya: versi game ini belum diperiksa untuk itu, " +
     "atau tim tidak memainkan taktik yang Anda pilih.",
@@ -1477,6 +1483,13 @@ export const id: Strings = {
       dismiss: "Tutup",
     },
 
+    boostInfo: {
+      label: "Bagaimana penguatan untuk laga bekerja?",
+      note:
+        "Untuk satu hari laga: jika dicentang pada hari tim bertanding, semua atribut maksimal sampai hari di game " +
+        "berganti, lalu kembali seperti semula. Biarkan aplikasi terbuka sampai saat itu.",
+    },
+
     freezeInfo: {
       label: "Bagaimana pembekuan bekerja?",
       note:
@@ -2447,6 +2460,11 @@ export const id: Strings = {
     unfrozePositions: (count: number) => `Pembekuan posisi ${playerCount(count)} dilepas`,
     boost: "Perkuat untuk laga",
     boostTitle: "Semua atribut maksimal sampai hari di game berganti, lalu kembali seperti semula; biarkan aplikasi terbuka",
+    boostLooking: "Mencari laga tim hari ini…",
+    boostNoMatch: (next: string | null) =>
+      next === null
+        ? "Hanya pada hari laga, dan game belum menjadwalkan laga untuk tim ini"
+        : `Hanya pada hari laga: laga berikutnya tim ini pada ${next}`,
     boostDone: (count: number) =>
       count === 0 ? "Mereka sudah diperkuat" : `Atribut ${playerCount(count)} diperkuat sampai hari berganti`,
     boostPutBack: (count: number) => `Atribut ${playerCount(count)} kembali seperti semula`,

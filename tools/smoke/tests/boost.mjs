@@ -1,12 +1,14 @@
-// Boosting a team for the match of the day (#270): every attribute of every player of the first team of a well known
-// club no human manages at its best until the game's day is over, then put back as it was (see `boost_team`). With the
-// game on one day throughout: the boost read back by the probe and remembered in frozen.json with the day and what each
-// attribute was; an attribute the probe lowers as the game would put back at its best by the hold; one the user writes
-// himself left as his, until the undo of his change writes the best back; unticked, every attribute as it was. The day
-// being over is played by the file, with copies of the app on a data folder of their own: one boosts the team and is
-// closed with the boost in the game; one started on the boost's day holds it again and says so; one started with the
-// boost's day set to the day before puts every attribute back as it connects, and says so. Then the Squad tab: the box
-// after the freezing ones, its note, the rows' tags and the line under the buttons, ticked and unticked.
+// Boosting a team for the match of the day (#270): every attribute of every player of a team that plays a match on the
+// game's day, of the best known club no human manages that has one (the probe lists the day's matches), at its best
+// until the game's day is over, then put back as it was (see `boost_team`). A team that plays no match that day is
+// refused, and nothing written. With the game on one day throughout: the boost read back by the probe and remembered in
+// frozen.json with the day and what each attribute was; an attribute the probe lowers as the game would put back at its
+// best by the hold; one the user writes himself left as his, until the undo of his change writes the best back;
+// unticked, every attribute as it was. The day being over is played by the file, with copies of the app on a data
+// folder of their own: one boosts the team and is closed with the boost in the game; one started on the boost's day
+// holds it again and says so; one started with the boost's day set to the day before puts every attribute back as it
+// connects, and says so. Then the Squad tab: the box after the freezing ones, its note and its (i), the rows' tags and
+// the line under the buttons, ticked and unticked, and the box of a team of the club with no match that day waiting.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { App, SHOWN, VIS, sleep } from "../lib/app.mjs";
@@ -43,14 +45,35 @@ function setBoostDay(file, day) {
   writeFileSync(file, JSON.stringify(remembered, null, 2));
 }
 
+/** The team `index` of the club `uid` as the copy of the app `from` lists its squads, with its players. */
+const squadOf = async (from, uid, index) =>
+  (await from.must("club_squads", { uid })).find((team) => team.clubUid === uid && team.index === index);
+
 export async function run({ app, report, probe }) {
-  const [club] = (await topClubs(app, 5)).slice(-1);
-  const team = (await app.must("club_squads", { uid: club.uid }))[0];
-  const players = team?.players ?? [];
-  if (players.length < 2) {
-    report.skip("boosts a team for the match", `${club.name}'s first team lists ${players.length} players`);
+  // The best known club with a team that plays on the game's day, and one whose first team does not.
+  const playing = probe.matchesToday();
+  const plays = (uid, index) => playing.some((t) => t.club === uid && t.team === index);
+  const clubs = await topClubs(app, 200);
+  let club = null;
+  let team = null;
+  for (const candidate of clubs.filter((c) => playing.some((t) => t.club === c.uid))) {
+    for (const { team: index } of playing.filter((t) => t.club === candidate.uid)) {
+      const found = await squadOf(app, candidate.uid, index);
+      if ((found?.players.length ?? 0) >= 2) {
+        [club, team] = [candidate, found];
+        break;
+      }
+    }
+    if (team) break;
+  }
+  if (!team) {
+    report.skip("boosts a team for the match", `none of the ${clubs.length} best known clubs plays a match on the game's day`);
     return;
   }
+  const players = team.players;
+  await refusedWithoutAMatch({ app, report, probe, idle: clubs.find((c) => !plays(c.uid, 0)) });
+  const day = await app.must("match_day", { club: club.uid, team: team.index });
+  report.check("the app says the team plays today", day.today, JSON.stringify(day));
   const keys = (await app.must("edit_fields", { entity: "player" })).map((f) => f.key).filter((k) => k.startsWith("attribute."));
   /** A player's attributes as stored, as the copy of the app `from` reads them. */
   const read = async (from, uid) =>
@@ -74,7 +97,7 @@ export async function run({ app, report, probe }) {
   const today = dayOf((await app.must("current_connection")).gameDate);
   const file = join(app.folder, "data", "frozen.json");
   const boost = (on, from = app) => from.must("boost_team", { club: team.clubUid, team: team.index, on });
-  report.note(`witness: ${club.name} (${club.uid}), ${players.length} players, day ${today}`);
+  report.note(`witness: ${club.name} (${club.uid}) team ${team.index}, ${players.length} players, day ${today}`);
 
   try {
     const done = await boost(true);
@@ -83,7 +106,7 @@ export async function run({ app, report, probe }) {
       done.changed === players.length && done.failed.length === 0,
       `${done.changed} of ${players.length}, ${done.failed.length} refused`,
     );
-    report.check("their squad rows say so", (await app.must("club_squads", { uid: club.uid }))[0].players.every((p) => p.boosted));
+    report.check("their squad rows say so", (await squadOf(app, club.uid, team.index)).players.every((p) => p.boosted));
     const short = await differing(app, atBest);
     report.check("every attribute at its best", short.length === 0, short.slice(0, 3).join("; "));
     const probed = probe.get("player", first.uid, keys);
@@ -121,12 +144,12 @@ export async function run({ app, report, probe }) {
     report.check("every attribute as it was, his passing too", left.length === 0, left.slice(0, 3).join("; "));
     const back = probe.get("player", first.uid, keys);
     report.check("as the probe reads them", keys.every((k) => back[k] === before.get(first.uid)[k]));
-    report.check("the rows no longer boosted", (await app.must("club_squads", { uid: club.uid }))[0].players.every((p) => !p.boosted));
+    report.check("the rows no longer boosted", (await squadOf(app, club.uid, team.index)).players.every((p) => !p.boosted));
     report.check("frozen.json keeps them as over", players.every((p) => boostsIn(file)[p.uid]?.active === false));
     report.check("a second press puts nobody back", (await boost(false)).changed === 0);
 
-    await dayOver({ app, report, club, players, boost, differing, atBest, asBefore, today });
-    await throughTheSquad({ app, report, club, players, differing, atBest, asBefore });
+    await dayOver({ app, report, club, team, players, boost, differing, atBest, asBefore, today });
+    await throughTheSquad({ app, report, club, team, plays, players, differing, atBest, asBefore });
   } finally {
     await app.invoke("boost_team", { club: team.clubUid, team: team.index, on: false });
     // Whatever a step left, written back as it was.
@@ -146,11 +169,39 @@ export async function run({ app, report, probe }) {
 }
 
 /**
+ * A team that plays no match on the game's day, the first team of `idle`: the app says so, with its next match day,
+ * and refuses to boost it, writing nothing.
+ */
+async function refusedWithoutAMatch({ app, report, probe, idle }) {
+  if (!idle) {
+    report.skip("refuses a team with no match today", "every one of the best known clubs' first teams plays today");
+    return;
+  }
+  const team = await squadOf(app, idle.uid, 0);
+  const [first] = team?.players ?? [];
+  if (!first) {
+    report.skip("refuses a team with no match today", `${idle.name}'s first team lists nobody`);
+    return;
+  }
+  const day = await app.must("match_day", { club: idle.uid, team: 0 });
+  report.check("the app says a team with no match today plays none", day.today === false, `${idle.name}: ${JSON.stringify(day)}`);
+  const finishing = () => probe.get("player", first.uid, ["attribute.finishing"])["attribute.finishing"];
+  const before = finishing();
+  const refused = await app.invoke("boost_team", { club: idle.uid, team: 0, on: true });
+  report.check(
+    "refuses to boost it",
+    !refused.ok && refused.error?.code === "boost.noMatch" && (day.next === null || refused.error.params?.next !== undefined),
+    JSON.stringify(refused.error ?? refused.value),
+  );
+  report.check("and writes nothing", finishing() === before && !(await squadOf(app, idle.uid, 0)).players.some((p) => p.boosted));
+}
+
+/**
  * The game's day over while the app was closed, played by the file of copies of the app on a data folder of their own:
  * the first boosts the team and is closed; the second, on the boost's day, holds it again and says so; the third, with
  * the boost's day set to the day before, puts every attribute back as it connects, and says so.
  */
-async function dayOver({ app, report, club, players, boost, differing, atBest, asBefore, today }) {
+async function dayOver({ app, report, club, team, players, boost, differing, atBest, asBefore, today }) {
   const data = join(app.folder, "boost-day", "data");
   const file = join(data, "frozen.json");
   const copy = (port, label) =>
@@ -174,7 +225,7 @@ async function dayOver({ app, report, club, players, boost, differing, atBest, a
     await second.connect();
     const notice = await noticeOf(second);
     report.check("started again on the boost's day, it holds it again and says so", notice.includes(`Match boost: ${players[0].name}`), notice);
-    const rows = (await second.must("club_squads", { uid: club.uid }))[0]?.players ?? [];
+    const rows = (await squadOf(second, club.uid, team.index))?.players ?? [];
     report.check("its rows say they are boosted", rows.length > 0 && rows.every((p) => p.boosted));
     report.check("no errors in its console", second.consoleProblems.length === 0, second.consoleProblems.slice(0, 3).join(" || "));
   } finally {
@@ -202,16 +253,26 @@ async function dayOver({ app, report, club, players, boost, differing, atBest, a
 }
 
 /**
- * The Squad tab of the club: Boost for the match after the boxes that freeze, its note, ticked (every row tagged, the
- * line under the buttons counting the players) and unticked (every attribute as it was).
+ * The Squad tab of the club, on the boosted team: Boost for the match after the boxes that freeze, its note and its
+ * (i), ticked (every row tagged, the line under the buttons counting the players) and unticked (every attribute as it
+ * was); on a team of the club with no match today, the box waits and its note says when the team plays next.
  */
-async function throughTheSquad({ app, report, club, players, differing, atBest, asBefore }) {
+async function throughTheSquad({ app, report, club, team, plays, players, differing, atBest, asBefore }) {
   await app.openClub(club.name, club.uid);
   await app.click(
     `[...document.querySelectorAll(".profile-tabs [role=tab]")].filter(${SHOWN}).find((t) => t.textContent.trim() === "Squad")`,
     "the Squad tab",
   );
   const tab = `${VIS}(".squad-tab")`;
+  const squads = await app.must("club_squads", { uid: club.uid });
+  const slotOf = (found) => squads.findIndex((t) => t.clubUid === found.clubUid && t.index === found.index);
+  const showTeam = async (slot, what) => {
+    const button = `${tab}?.querySelectorAll(".squad-teams button")[${slot}]`;
+    await app.waitFor(button, what, 30000);
+    if (!(await app.js(`${button}.getAttribute("aria-pressed") === "true"`))) await app.click(button, what);
+    await app.waitFor(`${button}.getAttribute("aria-pressed") === "true"`, what, 10000);
+  };
+  await showTeam(slotOf(team), "the boosted team");
   const labels = `[...(${tab}?.querySelectorAll(".squad-freezes label.freeze-toggle") ?? [])]`;
   const label = `${labels}.find((l) => l.textContent === "Boost for the match")`;
   const box = `${label}?.querySelector("input")`;
@@ -219,6 +280,15 @@ async function throughTheSquad({ app, report, club, players, differing, atBest, 
   report.check("the Squad tab has Boost for the match after the boxes that freeze", await app.js(`${labels}.at(-1) === ${label}`));
   const note = await app.note(label, "Boost for the match");
   report.check("its note says it goes back once the day changes", note.includes("until the game's day changes"), note);
+  const info = await app.js(`(() => {
+    const tip = ${label}?.nextElementSibling;
+    return tip?.matches(".info-tip") ? [tip.querySelector("button").getAttribute("aria-label"), tip.querySelector(".info-tip-note").textContent] : null;
+  })()`);
+  report.check(
+    "an (i) after it says it lasts one match day",
+    info?.[0] === "How does the match boost work?" && info[1].startsWith("For one match day"),
+    JSON.stringify(info),
+  );
 
   const result = `${tab}.querySelector(".squad-result p")`;
   await app.click(box, "Boost for the match");
@@ -239,4 +309,16 @@ async function throughTheSquad({ app, report, club, players, differing, atBest, 
   report.check("unticked, the line says they are put back", after === `Put back the attributes of ${players.length} players`, after);
   const left = await differing(app, asBefore);
   report.check("and every attribute as it was", left.length === 0, left.slice(0, 3).join("; "));
+
+  // A team of the club with no match today: the box waits, and says when the team plays next.
+  const idle = squads.findIndex((t) => t.clubUid === club.uid && !plays(t.clubUid, t.index) && t.players.length > 0);
+  if (idle < 0) {
+    report.skip("the box of a team with no match today waits", `every team of ${club.name} plays today`);
+    return;
+  }
+  await showTeam(idle, "a team with no match today");
+  await app.waitFor(`${box} && ${box}.disabled`, "the box waiting", 30000).catch(() => {});
+  report.check("the box of a team with no match today waits", await app.js(`Boolean(${box}?.disabled)`));
+  const waiting = await app.note(label, "Boost for the match");
+  report.check("its note says the boost is for a match day only", waiting.startsWith("Only on a match day"), waiting);
 }

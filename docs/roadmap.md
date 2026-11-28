@@ -281,7 +281,10 @@ before trusting them.
   day it holds it again, on a later day it puts it back as it connects, on an earlier one (an older save) it writes
   nothing, and a save made during the boost and loaded on its day brings it back. A value the user writes himself is
   his, until the undo of his change writes the best back. No record of the career is taken while a boost holds. The
-  match day is told by the game's date only: ticked the day before, the boost is over before the match.
+  box can be ticked only on a day the team plays a match: the editor reads the game's matches (`sicomps::FIXTURE`,
+  found by its class, see [the recon](recon/fm27-fixtures.md)), and on another day the box waits and says when the
+  team plays next. Placed on Windows as on the Mac, where they were read; the app checks the first matches it reads
+  point at teams.
 
 ## Phase 7: what FMRTE, FM Live Editor and FM27€0 users reach for (in progress)
 

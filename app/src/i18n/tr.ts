@@ -126,6 +126,12 @@ const errors: ErrorTexts = {
     "kulüple uyumu yok.",
   "boost.noDate": () =>
     "Editör oyunun tarihini okuyamıyor, bu yüzden maç gününün ne zaman bittiğini anlayamaz.",
+  "boost.noMatch": (p) =>
+    p.next
+      ? `Bu takımın bugün maçı yok: güçlendirme yalnızca maç günü içindir. Sıradaki maçı ${dayText(p.next)}.`
+      : "Bu takımın bugün maçı yok: güçlendirme yalnızca maç günü içindir.",
+  "boost.noFixtures": () =>
+    "Editör oyunun bu sürümünde maçları okuyamıyor, bu yüzden maç gününü anlayamaz.",
   "team.noTactics": () =>
     "Editör bu takımın taktiğini ne kadar bildiğini okuyamıyor: oyunun bu sürümü bunun için kontrol edilmedi ya da " +
     "takım senin seçtiğin bir taktiği oynamıyor.",
@@ -1509,6 +1515,13 @@ export const tr: Strings = {
       dismiss: "Kapat",
     },
 
+    boostInfo: {
+      label: "Maç için güçlendirme nasıl çalışır?",
+      note:
+        "Yalnızca bir maç günü için: takımın maçı olan gün işaretlenirse her özellik oyunun günü değişene kadar en iyi " +
+        "değerinde kalır, sonra eski hâline döner. O zamana kadar uygulamayı açık tutun.",
+    },
+
     freezeInfo: {
       label: "Dondurma nasıl çalışır?",
       note:
@@ -2527,6 +2540,11 @@ export const tr: Strings = {
     unfrozePositions: (count) => `${format(count)} oyuncunun pozisyonlarındaki dondurma kaldırıldı`,
     boost: "Maç için güçlendir",
     boostTitle: "Oyunun günü değişene kadar her özellik en iyi değerinde, sonra eski hâline döner; uygulamayı açık tutun",
+    boostLooking: "Takımın bugünkü maçına bakılıyor…",
+    boostNoMatch: (next) =>
+      next === null
+        ? "Yalnızca maç günü; oyun bu takıma hiç maç ayarlamamış"
+        : `Yalnızca maç günü: bu takımın sıradaki maçı ${next}`,
     boostDone: (count) =>
       count === 0
         ? "Zaten güçlendirilmişlerdi"

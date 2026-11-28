@@ -27,6 +27,7 @@ import type {
   SimilarRequest,
   SquadPlayer,
   TeamAction,
+  MatchDay,
   TeamFreeze,
   TeamReport,
   FreezeKind,
@@ -3045,9 +3046,35 @@ function freezeTeam(clubUid: number, index: number, kind: FreezeKind, frozen: bo
   return { changed, failed: [] };
 }
 
+/** How many days `mockNextDay()` has moved the game on from the fixture's date. */
+let daysOn = 0;
+
+/** The days after the fixture's date that the team at `index` plays on: the first team on it and three days on. */
+const matchDaysOf = (index: number) => (index === 0 ? [0, 3] : [7]);
+
+/**
+ * `match_day`: whether the team at `index` of the fixture club plays on the game's day (see `matchDaysOf`), and its
+ * next match day after it. Without the game's date (`?nodate`, `?failedchecks`) it is refused, as the real command
+ * refuses it.
+ */
+function matchDay(clubUid: number, index: number): MatchDay {
+  fixtureTeam(clubUid, index);
+  if (gameDate === null || failedChecks) {
+    throw failure("boost.noDate", "the editor cannot read the game's date, so it cannot tell the day is over");
+  }
+  const days = matchDaysOf(index);
+  const next = days.find((day) => day > daysOn);
+  const dayAfter = (count: number) => {
+    const date = new Date(Date.UTC(gameDate.year, gameDate.month - 1, gameDate.day + count));
+    return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate() };
+  };
+  return { today: days.includes(daysOn), next: next === undefined ? null : dayAfter(next) };
+}
+
 /**
  * `boost_team`: every player of the fixture team boosted, or put back. Under `?failedchecks` the attributes do not
- * check out, so it is refused at once, as the real command refuses it; so it is without the game's date.
+ * check out, so it is refused at once, as the real command refuses it; so it is without the game's date, and to boost,
+ * on a day the team plays no match.
  */
 function boostTeam(clubUid: number, index: number, on: boolean): TeamFreeze {
   const team = fixtureTeam(clubUid, index);
@@ -3057,6 +3084,11 @@ function boostTeam(clubUid: number, index: number, on: boolean): TeamFreeze {
       "attribute.corners is left unchanged: attributes did not check out in this version of the game",
       { field: "attribute.corners", check: "attributes" },
     );
+  }
+  const day = on ? matchDay(clubUid, index) : null;
+  if (day && !day.today) {
+    const next: Record<string, number> = day.next ? { next: numberFromDate(day.next) } : {};
+    throw failure("boost.noMatch", "this team plays no match today, and a boost lasts a match day", next);
   }
   let changed = 0;
   for (const player of team.players) {
@@ -4493,6 +4525,7 @@ let boostsOverNames: string[] = [];
 (window as unknown as { mockNextDay?: () => void }).mockNextDay = () => {
   boostsOverNames = [...boostsOverNames, ...players.filter((p) => boostedPlayers.has(p.uid)).map((p) => p.name)];
   boostedPlayers.clear();
+  daysOn += 1;
 };
 
 /** The fixture connection, once `connect` has been called in this page. */
@@ -4959,6 +4992,8 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       return freezeTeam(Number(args?.club), Number(args?.team), args?.kind as FreezeKind, Boolean(args?.frozen)) as T;
     case "boost_team":
       return boostTeam(Number(args?.club), Number(args?.team), Boolean(args?.on)) as T;
+    case "match_day":
+      return matchDay(Number(args?.club), Number(args?.team)) as T;
     case "boosts_over": {
       const over = boostsOverNames;
       boostsOverNames = [];

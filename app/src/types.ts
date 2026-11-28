@@ -192,6 +192,13 @@ export interface Refrozen {
 export type FreezeKind = "attributes" | "fitness" | "positions";
 
 /** From `freeze_team`: what freezing or unfreezing a team came to. */
+/** Whether a team plays a match on the game's day, and the next day it plays one (see `matchDay`). */
+export interface MatchDay {
+  today: boolean;
+  /** The first day after the game's day that it plays a match on; null when the game has arranged it none. */
+  next: FmDate | null;
+}
+
 export interface TeamFreeze {
   /** How many of its players were frozen, or unfrozen, now: not those that already were. */
   changed: number;

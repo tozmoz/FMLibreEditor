@@ -126,6 +126,12 @@ const errors: ErrorTexts = {
     "The editor cannot read this team's cohesion: this version of the game has not been checked for it, or none of its players has an entry for the club.",
   "boost.noDate": () =>
     "The editor cannot read the game's date, so it cannot tell when the match day is over.",
+  "boost.noMatch": (p) =>
+    p.next
+      ? `This team plays no match today: the boost is for a match day only. Its next match is on ${dayText(p.next)}.`
+      : "This team plays no match today: the boost is for a match day only.",
+  "boost.noFixtures": () =>
+    "The editor cannot read the game's matches in this version of the game, so it cannot tell a match day.",
   "team.noTactics": () =>
     "The editor cannot read how well this team knows its tactic: this version of the game has not been checked for it, or the team does not play a tactic you pick.",
   "edit.unknownField": (p) => `There is no editable field “${p.field}” here.`,
@@ -1688,6 +1694,14 @@ export const en = {
       dismiss: "Dismiss",
     },
 
+    /** The (i) beside the box that boosts a team for the match: that it lasts one match day. */
+    boostInfo: {
+      label: "How does the match boost work?",
+      note:
+        "For one match day: ticked on a day the team plays, it keeps every attribute at its best until the game's day " +
+        "changes, then puts each back as it was. Keep the app open until then.",
+    },
+
     /** The (i) beside every box that freezes something: how freezing works, and that the app has to stay open. */
     freezeInfo: {
       label: "How does freezing work?",
@@ -2983,6 +2997,13 @@ export const en = {
     // Boosting the whole team for the match of the day, beside the boxes that freeze
     boost: "Boost for the match",
     boostTitle: "Every attribute at its best until the game's day changes, then back as it was; keep the app open",
+    /** Hover text of the box while it asks whether the team plays today. */
+    boostLooking: "Looking for the team's match today…",
+    /** Hover text of the box on a day the team plays no match; `next` is its next match day, written out. */
+    boostNoMatch: (next: string | null) =>
+      next === null
+        ? "Only on a match day, and the game has arranged this team no match"
+        : `Only on a match day: this team plays next on ${next}`,
     /** What the box did, in the line under the buttons; `count` is how many players it boosted or put back now. */
     boostDone: (count: number) =>
       count === 0 ? "They were boosted already" : `Boosted the attributes of ${playerCount(count)} until the day changes`,

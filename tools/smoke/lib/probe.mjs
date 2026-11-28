@@ -37,6 +37,18 @@ export class Probe {
     this.run(["set", entity, uid, field, value]);
   }
 
+  /**
+   * The teams of clubs that play a match on the game's day, as `fmlibre-probe matches` reads the game's matches: each
+   * by its club's UID and its place in the club's list of teams. A national team's is left out.
+   */
+  matchesToday() {
+    const teams = [];
+    for (const line of this.run(["matches"]).split(/\r?\n/)) {
+      for (const [, club, team] of line.matchAll(/\((\d+)\) team (\d+)/g)) teams.push({ club: Number(club), team: Number(team) });
+    }
+    return teams;
+  }
+
   /** The build line, profile, date and arrays, as `calibrate` prints them. */
   calibrate() {
     return this.run(["calibrate"]).trim();

@@ -281,6 +281,13 @@ const errors: ErrorTexts = {
     "cela, ou aucun de ses joueurs n'a d'entrée pour le club.",
   "boost.noDate": () =>
     "L'éditeur ne peut pas lire la date du jeu et ne sait donc pas quand la journée du match se termine.",
+  "boost.noMatch": (p) =>
+    p.next
+      ? "Cette équipe ne joue pas aujourd'hui\u00a0: le boost ne vaut que pour un jour de match. " +
+        `Son prochain match est le ${dayText(p.next)}.`
+      : "Cette équipe ne joue pas aujourd'hui\u00a0: le boost ne vaut que pour un jour de match.",
+  "boost.noFixtures": () =>
+    "L'éditeur ne peut pas lire les matchs dans cette version du jeu et ne sait donc pas quand il y a un jour de match.",
   "team.noTactics": () =>
     "L'éditeur ne peut pas lire à quel point cette équipe connaît sa tactique\u00a0: cette version du jeu n'a pas " +
     "été vérifiée pour cela, ou l'équipe ne joue pas une tactique que vous choisissez.",
@@ -1627,6 +1634,13 @@ export const fr: Strings = {
       dismiss: "Fermer",
     },
 
+    boostInfo: {
+      label: "Comment fonctionne le boost pour le match\u00a0?",
+      note:
+        "Pour un jour de match\u00a0: cochée un jour où l'équipe joue, la case met chaque attribut au maximum jusqu'au " +
+        "changement de jour dans le jeu, puis le remet comme avant. Gardez l'app ouverte jusque-là.",
+    },
+
     freezeInfo: {
       label: "Comment fonctionne le blocage\u00a0?",
       note:
@@ -2671,6 +2685,11 @@ export const fr: Strings = {
     unfrozePositions: (count) => `Postes de ${playerCount(count)} débloqués`,
     boost: "Booster pour le match",
     boostTitle: "Chaque attribut au maximum jusqu'au changement de jour dans le jeu, puis comme avant. Gardez l'app ouverte",
+    boostLooking: "Recherche du match du jour de l'équipe…",
+    boostNoMatch: (next) =>
+      next === null
+        ? "Seulement un jour de match, et le jeu n'a prévu aucun match pour cette équipe"
+        : `Seulement un jour de match\u00a0: le prochain match de cette équipe est le ${next}`,
     boostDone: (count) =>
       count === 0
         ? "Ils étaient déjà boostés"

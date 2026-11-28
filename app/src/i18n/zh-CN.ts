@@ -140,6 +140,12 @@ const errors: ErrorTexts = {
   "team.noCohesion": () => "无法读取这支球队的凝聚力：此游戏版本尚未验证该功能，或球员都没有与俱乐部的凝聚力记录。",
   "boost.noDate": () =>
     "编辑器无法读取游戏日期，因此无法判断比赛日何时结束。",
+  "boost.noMatch": (p) =>
+    p.next
+      ? `该球队今天没有比赛：强化只用于比赛日。下一场比赛在${dayText(p.next)}。`
+      : "该球队今天没有比赛：强化只用于比赛日。",
+  "boost.noFixtures": () =>
+    "编辑器无法读取此游戏版本的比赛，因此无法判断比赛日。",
   "team.noTactics": () => "无法读取这支球队对其战术的熟悉程度：此游戏版本尚未验证该功能，或这支球队使用的不是你选择的战术。",
   "edit.unknownField": (p) => `此处没有可编辑的字段“${p.field}”。`,
   "edit.outOfRange": (p) => `${p.value} 不是有效的${field(p.field)}；取值范围为 ${p.min}–${p.max}。`,
@@ -1635,6 +1641,13 @@ export const zhCN: Strings = {
       dismiss: "关闭",
     },
 
+    boostInfo: {
+      label: "比赛强化如何运作？",
+      note:
+        "只用于一个比赛日：在球队有比赛的那天勾选后，所有属性保持最高，直到游戏内日期变化，然后恢复原样。" +
+        "在此之前请保持应用打开。",
+    },
+
     /** The (i) beside every box that freezes something: how freezing works, and that the app has to stay open. */
     freezeInfo: {
       label: "锁定如何运作？",
@@ -2819,6 +2832,11 @@ export const zhCN: Strings = {
     unfrozePositions: (count: number) => `已解除 ${playerCount(count)} 的位置能力锁定`,
     boost: "为比赛强化",
     boostTitle: "所有属性保持最高，直到游戏内日期变化，之后恢复原样；请保持应用打开",
+    boostLooking: "正在查找该球队今天的比赛…",
+    boostNoMatch: (next: string | null) =>
+      next === null
+        ? "仅限比赛日，而游戏没有为该球队安排比赛"
+        : `仅限比赛日：该球队的下一场比赛在${next}`,
     boostDone: (count: number) =>
       count === 0 ? "他们已经强化过了" : `已强化 ${playerCount(count)} 的属性，直到日期变化`,
     boostPutBack: (count: number) => `已将 ${playerCount(count)} 的属性恢复原样`,

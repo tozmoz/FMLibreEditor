@@ -14,13 +14,13 @@ use fmlibre_core::{
     Arranged, ArrangedPlan, ArraySource, Buyer, COHESION_RANGE, CaptainRole, CaptainSet, Change, ChangeRow, Check,
     Clause, ClauseSet, ClubDetails, ClubFilter, ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet,
     CompetitionPrizes, CompetitionRules, DIRECTOR_OF_FOOTBALL, Earlier, EditError, Entity, EntityArrays, ExportFormat,
-    ExportHeader, Exported, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsCounts, GraphicsIndex,
-    HOMEGROWN_RULES, Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted, Listed, Loan, LoanDeal, Lock,
-    MANAGER, MoveError, MovePlan, MoveTerms, NameChange, NameKind, Nation, NationalIndex, NationalSide,
-    NationalTeamSummary, NationalUnavailable, NewContract, NewStaffContract, Operation, Paid, People, PersonNames,
-    Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, PrizeAmount, PrizeChange,
-    PrizeError, PrizeMoney, PrizeReadError, PrizeUnavailable, Progress, RECIPES, ROLES, Recipe, RecipeError,
-    RecipePlan, RelationSet, RetirementSet, Role, RuleChange, RuleError, RuleReadError, RuleUnavailable,
+    ExportHeader, Exported, FeePlan, Field, FixtureError, Fixtures, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo,
+    GraphicsCounts, GraphicsIndex, HOMEGROWN_RULES, Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted,
+    Listed, Loan, LoanDeal, Lock, MANAGER, MoveError, MovePlan, MoveTerms, NameChange, NameKind, Nation, NationalIndex,
+    NationalSide, NationalTeamSummary, NationalUnavailable, NewContract, NewStaffContract, Operation, Paid, People,
+    PersonNames, Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, PrizeAmount,
+    PrizeChange, PrizeError, PrizeMoney, PrizeReadError, PrizeUnavailable, Progress, RECIPES, ROLES, Recipe,
+    RecipeError, RecipePlan, RelationSet, RetirementSet, Role, RuleChange, RuleError, RuleReadError, RuleUnavailable,
     SCOUT_POSITIONS, SENIOR_KIND, ScoutError, ScoutPosition, ScoutRequest, Scouted, SearchIndex, Season, Session,
     SessionError, Skipped, Sponsorship, SponsorshipReadError, SponsorshipUnavailable, SquadMember, SquadReport,
     SquadRule, StadiumName, StadiumRename, StaffChange, StaffDetails, StaffFilter, StaffIndex, StaffOrder, StaffPlan,
@@ -97,6 +97,10 @@ struct Connection {
     rules: Option<Vec<CompetitionRules>>,
     /// The players whose boost the hold put back since the window last asked (see `boosts_over`), by name.
     boosts_over: Vec<String>,
+    /// The game's matches, read the first time a team's match day is asked for on a day of the game (see `match_day`),
+    /// with that day: none where they cannot be read. Read again on another day, as the game arranges matches as it
+    /// goes on.
+    fixtures: Option<(FmDate, Option<Fixtures>)>,
 }
 
 /// How often the balances of frozen clubs, the attributes, energy and sharpness of frozen players, the attributes of
@@ -873,6 +877,7 @@ impl Connection {
             prizes: None,
             rules: None,
             boosts_over: Vec::new(),
+            fixtures: None,
         };
         connection.check_earlier();
         Ok(connection)
@@ -1323,10 +1328,7 @@ impl Connection {
         }
         let today = self.session.game_date().map(FmDate::to_number);
         if on && today.is_none() {
-            return Err(Failure::new(
-                "boost.noDate",
-                "the editor cannot read the game's date, so it cannot tell the day is over",
-            ));
+            return Err(no_game_date());
         }
         let mut changed = 0;
         let mut failed = Vec::new();
@@ -1348,6 +1350,30 @@ impl Connection {
         }
         self.remember_boosts(path);
         Ok(TeamFreeze { changed, failed })
+    }
+
+    /// Whether the team `team` of the club `club` plays a match on the game's day, and its next match day after it,
+    /// from the game's matches: read the first time a day of the game asks, which takes a second or two. Refused when
+    /// the game's date or its matches cannot be read.
+    fn match_day(&mut self, club: u32, team: usize) -> Result<MatchDay, Failure> {
+        let today = self.session.game_date().ok_or_else(no_game_date)?;
+        let summary = self.clubs.get(club).ok_or_else(|| not_found(Entity::Club, club))?;
+        let address = self.session.team_object(summary, team)?;
+        if self.fixtures.as_ref().is_none_or(|(day, _)| *day != today) {
+            let read = match self.session.fixtures() {
+                Ok(fixtures) => Some(fixtures),
+                Err(FixtureError::Memory(err)) => return Err(err.into()),
+                Err(FixtureError::Unknown | FixtureError::Unread) => None,
+            };
+            self.fixtures = Some((today, read));
+        }
+        let Some((_, Some(fixtures))) = &self.fixtures else {
+            return Err(Failure::new(
+                "boost.noFixtures",
+                "the editor cannot read the game's matches, so it cannot tell a match day",
+            ));
+        };
+        Ok(MatchDay { today: fixtures.plays_on(address, today), next: fixtures.next_after(address, today) })
     }
 
     /// Gives each squad rule the editor holds its count again where the game has made the rule's list anew with its
@@ -4710,6 +4736,21 @@ impl FreezeKind {
     }
 }
 
+/// Whether a team plays a match on the game's day, and the next day it plays one: a boost for the match is given only
+/// on a match day (see `boost_team`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct MatchDay {
+    today: bool,
+    /// The first day after the game's day that it plays a match on; none when the game has arranged it none.
+    next: Option<FmDate>,
+}
+
+/// The game's date cannot be read: nothing could tell when a day of the game is over.
+fn no_game_date() -> Failure {
+    Failure::new("boost.noDate", "the editor cannot read the game's date, so it cannot tell the day is over")
+}
+
 /// What freezing or unfreezing a team came to.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -4752,29 +4793,54 @@ fn freeze_team(
 /// best (20, and 1 for injury proneness and dirtiness) until the game's day is over: a boost for the match of the day.
 /// Then the app puts each back as it was, where the game still holds it better (see `Connection::hold_boosts`). With
 /// `on` false, puts back those of its boosted players now. Refused at once while the attributes may not be written, or
-/// the game's date cannot be read. The app remembers it for this save.
+/// the game's date cannot be read, and to boost, on a day the team plays no match, or when the game's matches cannot be
+/// read (see `match_day`). The app remembers it for this save. Off the window's thread, as the first question on a day
+/// of the game reads all of its memory once.
 #[tauri::command]
-fn boost_team(
-    state: State<'_, AppState>,
-    file: State<'_, FrozenFile>,
-    club: u32,
-    team: usize,
-    on: bool,
-) -> Result<TeamFreeze, Failure> {
-    let mut guard = state.0.lock()?;
-    let connection = guard.as_mut().ok_or_else(not_connected)?;
-    let summary = connection.clubs.get(club).ok_or_else(|| not_found(Entity::Club, club))?;
-    let members: Vec<u32> = connection
-        .session
-        .club_teams(summary, &connection.players)?
-        .into_iter()
-        .find(|found| found.index == team)
-        .ok_or(MoveError::NoTeam { index: team })?
-        .players
-        .iter()
-        .map(|member| member.uid)
-        .collect();
-    connection.boost_players(file.0.as_deref(), &members, on)
+async fn boost_team(app: tauri::AppHandle, club: u32, team: usize, on: bool) -> Result<TeamFreeze, Failure> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<TeamFreeze, Failure> {
+        let (state, file) = (app.state::<AppState>(), app.state::<FrozenFile>());
+        let mut guard = state.0.lock()?;
+        let connection = guard.as_mut().ok_or_else(not_connected)?;
+        if on {
+            let day = connection.match_day(club, team)?;
+            if !day.today {
+                let refusal =
+                    Failure::new("boost.noMatch", "this team plays no match today, and a boost lasts a match day");
+                return Err(match day.next {
+                    Some(next) => refusal.with("next", next.to_number()),
+                    None => refusal,
+                });
+            }
+        }
+        let summary = connection.clubs.get(club).ok_or_else(|| not_found(Entity::Club, club))?;
+        let members: Vec<u32> = connection
+            .session
+            .club_teams(summary, &connection.players)?
+            .into_iter()
+            .find(|found| found.index == team)
+            .ok_or(MoveError::NoTeam { index: team })?
+            .players
+            .iter()
+            .map(|member| member.uid)
+            .collect();
+        connection.boost_players(file.0.as_deref(), &members, on)
+    })
+    .await?
+}
+
+/// Whether the team `team` of the club `club` plays a match on the game's day, and the next day it plays one: the box
+/// that boosts it waits for a match day. Refused when the game's date or its matches cannot be read. Off the window's
+/// thread, as the first question on a day of the game reads all of its memory once. Only reads.
+#[tauri::command]
+async fn match_day(app: tauri::AppHandle, club: u32, team: usize) -> Result<MatchDay, Failure> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<MatchDay, Failure> {
+        let state = app.state::<AppState>();
+        let mut guard = state.0.lock()?;
+        let connection = guard.as_mut().ok_or_else(not_connected)?;
+        connection.match_day(club, team)
+    })
+    .await?
 }
 
 /// The players whose boost the app put back as the game moved on from its day, since the window last asked, by name.
@@ -6631,6 +6697,7 @@ pub fn run() {
             frozen_positions,
             freeze_team,
             boost_team,
+            match_day,
             boosts_over,
             edit_fields,
             read_values,

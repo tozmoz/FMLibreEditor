@@ -257,6 +257,12 @@ const errors: ErrorTexts = {
   "team.noCohesion": () => "이 팀의 결속력을 읽을 수 없습니다. 이 게임 버전에서 아직 확인되지 않았거나, 구단에 대한 결속력 항목이 있는 선수가 없습니다.",
   "boost.noDate": () =>
     "게임 날짜를 읽을 수 없어 경기일이 언제 끝나는지 알 수 없습니다.",
+  "boost.noMatch": (p) =>
+    p.next
+      ? `이 팀은 오늘 경기가 없습니다. 강화는 경기일에만 쓸 수 있습니다. 다음 경기는 ${dayText(p.next)}입니다.`
+      : "이 팀은 오늘 경기가 없습니다. 강화는 경기일에만 쓸 수 있습니다.",
+  "boost.noFixtures": () =>
+    "이 버전의 게임에서는 경기를 읽을 수 없어 경기일을 알 수 없습니다.",
   "team.noTactics": () => "이 팀이 전술을 얼마나 익혔는지 읽을 수 없습니다. 이 게임 버전에서 아직 확인되지 않았거나, 팀이 직접 고른 전술을 쓰지 않습니다.",
   "guard.unknownBuild": () =>
     "FMLibreEditor는 이 게임 버전에서 아직 확인되지 않아 게임에 쓰지 않습니다. 위쪽 알림의 '그래도 편집'을 누르면 " +
@@ -1524,6 +1530,13 @@ export const ko: Strings = {
       dismiss: "닫기",
     },
 
+    boostInfo: {
+      label: "경기용 강화는 어떻게 작동하나요?",
+      note:
+        "경기일 하루만을 위한 기능입니다. 팀의 경기가 있는 날 체크하면 게임 날짜가 바뀔 때까지 모든 능력치가 최고가 " +
+        "되고, 그 뒤 원래대로 돌아갑니다. 그때까지 앱을 켜 두세요.",
+    },
+
     freezeInfo: {
       label: "고정은 어떻게 작동하나요?",
       note:
@@ -2487,6 +2500,11 @@ export const ko: Strings = {
     unfrozePositions: (count) => `${playerCount(count)}의 포지션 고정을 해제했습니다`,
     boost: "경기용 강화",
     boostTitle: "게임 날짜가 바뀔 때까지 모든 능력치를 최고로 두고, 그 뒤 원래대로 되돌립니다. 앱을 켜 두세요",
+    boostLooking: "이 팀의 오늘 경기를 확인하는 중…",
+    boostNoMatch: (next) =>
+      next === null
+        ? "경기일에만 쓸 수 있습니다. 이 팀에는 잡힌 경기가 없습니다"
+        : `경기일에만 쓸 수 있습니다. 이 팀의 다음 경기는 ${next}입니다`,
     boostDone: (count) =>
       count === 0 ? "이미 강화되어 있습니다" : `${playerCount(count)}의 능력치를 날짜가 바뀔 때까지 강화했습니다`,
     boostPutBack: (count) => `${playerCount(count)}의 능력치를 원래대로 되돌렸습니다`,

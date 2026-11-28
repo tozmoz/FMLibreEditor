@@ -261,6 +261,13 @@ const errors: ErrorTexts = {
     "geprüft, oder keiner ihrer Spieler hat einen Eintrag für den Verein.",
   "boost.noDate": () =>
     "Der Editor kann das Datum im Spiel nicht lesen und weiß daher nicht, wann der Spieltag vorbei ist.",
+  "boost.noMatch": (p) =>
+    p.next
+      ? "Dieses Team spielt heute nicht: Die Stärkung gilt nur für einen Spieltag. " +
+        `Sein nächstes Spiel ist am ${dayText(p.next)}.`
+      : "Dieses Team spielt heute nicht: Die Stärkung gilt nur für einen Spieltag.",
+  "boost.noFixtures": () =>
+    "Der Editor kann die Spiele in dieser Version des Spiels nicht lesen und erkennt daher keinen Spieltag.",
   "team.noTactics": () =>
     "Der Editor kann nicht lesen, wie gut diese Mannschaft ihre Taktik kennt: Diese Version des Spiels wurde dafür " +
     "nicht geprüft, oder die Mannschaft spielt keine Taktik, die Sie wählen.",
@@ -1603,6 +1610,13 @@ export const de: Strings = {
       dismiss: "Ausblenden",
     },
 
+    boostInfo: {
+      label: "Wie funktioniert die Stärkung für das Spiel?",
+      note:
+        "Für einen Spieltag: An einem Tag angehakt, an dem das Team spielt, ist jedes Attribut am besten, bis sich der " +
+        "Tag im Spiel ändert, und dann wieder wie zuvor. Lassen Sie die App bis dahin geöffnet.",
+    },
+
     freezeInfo: {
       label: "Wie funktioniert das Einfrieren?",
       note:
@@ -2647,6 +2661,11 @@ export const de: Strings = {
     unfrozePositions: (count) => `Einfrieren der Positionen bei ${playersDative(count)} aufgehoben`,
     boost: "Für das Spiel stärken",
     boostTitle: "Jedes Attribut am besten, bis sich der Tag im Spiel ändert, dann wieder wie zuvor; App offen lassen",
+    boostLooking: "Suche das heutige Spiel des Teams …",
+    boostNoMatch: (next) =>
+      next === null
+        ? "Nur an einem Spieltag; das Spiel hat diesem Team kein Spiel angesetzt"
+        : `Nur an einem Spieltag: Dieses Team spielt als Nächstes am ${next}`,
     boostDone: (count) =>
       count === 0 ? "Sie waren schon gestärkt" : `Attribute von ${playersDative(count)} bis zum Tageswechsel gestärkt`,
     boostPutBack: (count) => `Attribute von ${playersDative(count)} wieder wie zuvor`,
