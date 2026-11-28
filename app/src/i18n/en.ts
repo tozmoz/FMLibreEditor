@@ -1315,8 +1315,6 @@ export const en = {
     mensTeam: "Men's national team",
     reputationShort: "REP",
     reputationTitle: "Reputation of the senior team, from 0 to 10,000",
-    youthRatingShort: "YTH",
-    youthRatingTitle: "Youth rating of this national team's football, from 0 to 200",
     /**
      * A national team's settings, read from the game and edited for the men's or women's team; the economic factor and
      * the state of development belong to the nation, which both share. The two codes are named as the pre-game editor names them.

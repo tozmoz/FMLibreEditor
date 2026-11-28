@@ -1263,8 +1263,6 @@ export const ko: Strings = {
     mensTeam: "남자 국가대표팀",
     reputationShort: "명성",
     reputationTitle: "1군의 명성, 0~10,000",
-    youthRatingShort: "유스",
-    youthRatingTitle: "이 대표팀 축구의 유소년 평가, 0~200",
     settings: {
       heading: "국가",
       note: "게임에서 읽은 값입니다. 경제 요인과 발전 상태는 국가에 속하므로 남자 국가대표팀과 여자 국가대표팀이 이를 함께 사용합니다.",

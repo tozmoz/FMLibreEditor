@@ -1252,8 +1252,6 @@ export const tr: Strings = {
     mensTeam: "Erkek milli takımı",
     reputationShort: "İTB",
     reputationTitle: "A takımın itibarı, 0 ile 10.000 arası",
-    youthRatingShort: "ALT",
-    youthRatingTitle: "Bu milli takımın futbolunun altyapı derecesi, 0 ile 200 arası",
     settings: {
       heading: "Ülke",
       note: "Oyundan okunur. Ekonomik faktör ve gelişmişlik durumu ülkeye aittir; bu yüzden erkek ve kadın milli takımları bunları paylaşır.",

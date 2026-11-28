@@ -1359,8 +1359,6 @@ export const zhCN: Strings = {
     mensTeam: "男子国家队",
     reputationShort: "声望",
     reputationTitle: "一线队的声望，0 至 10,000",
-    youthRatingShort: "青训",
-    youthRatingTitle: "该国家队足球的青训评级，0 至 200",
     settings: {
       heading: "国家",
       note: "从游戏读取。经济因素和发展状况属于国家，因此男子国家队和女子国家队共用。",

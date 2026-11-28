@@ -1218,8 +1218,6 @@ export const id: Strings = {
     mensTeam: "Tim nasional pria",
     reputationShort: "REP",
     reputationTitle: "Reputasi tim utama, dari 0 sampai 10.000",
-    youthRatingShort: "PMD",
-    youthRatingTitle: "Peringkat pemain muda sepak bola tim nasional ini, dari 0 sampai 200",
     settings: {
       heading: "Negara",
       note: "Dibaca dari game. Faktor ekonomi dan tingkat perkembangan adalah milik negara, sehingga tim pria dan tim wanita sama-sama memakainya.",

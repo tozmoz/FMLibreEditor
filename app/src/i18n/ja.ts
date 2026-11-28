@@ -1240,8 +1240,6 @@ export const ja: Strings = {
     mensTeam: "男子代表チーム",
     reputationShort: "評価",
     reputationTitle: "トップチームの評価（0〜10,000）",
-    youthRatingShort: "ユース",
-    youthRatingTitle: "この代表チームのサッカーのユース評価（0〜200）",
     settings: {
       heading: "国",
       note: "ゲームから読み取った値です。経済要因と発展状況は国に属するため、男子代表チームと女子代表チームで共有されます。",

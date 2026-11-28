@@ -1315,8 +1315,6 @@ export const it: Strings = {
     mensTeam: "Nazionale maschile",
     reputationShort: "REP",
     reputationTitle: "Reputazione della prima squadra, da 0 a 10.000",
-    youthRatingShort: "GIO",
-    youthRatingTitle: "Valutazione giovanile del calcio di questa nazionale, da 0 a 200",
     settings: {
       heading: "Nazione",
       note: "Letto dal gioco. Il fattore economico e lo stato di sviluppo appartengono alla nazione, quindi la nazionale maschile e quella femminile li condividono.",

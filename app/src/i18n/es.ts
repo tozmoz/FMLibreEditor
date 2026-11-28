@@ -1271,8 +1271,6 @@ export const es: Strings = {
     mensTeam: "Selección masculina",
     reputationShort: "REP",
     reputationTitle: "Reputación del primer equipo, de 0 a 10.000",
-    youthRatingShort: "JUV",
-    youthRatingTitle: "Calificación juvenil del fútbol de esta selección, de 0 a 200",
     settings: {
       heading: "País",
       note: "Leído del juego. El factor económico y el estado de desarrollo pertenecen a la nación, así que la selección masculina y la femenina los comparten.",

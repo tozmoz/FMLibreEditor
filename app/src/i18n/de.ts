@@ -1339,8 +1339,6 @@ export const de: Strings = {
     mensTeam: "Männer-Nationalteam",
     reputationShort: "ANS",
     reputationTitle: "Ansehen der ersten Mannschaft, von 0 bis 10.000",
-    youthRatingShort: "JUG",
-    youthRatingTitle: "Jugendbewertung des Fußballs dieses Nationalteams, von 0 bis 200",
     settings: {
       heading: "Nation",
       note: "Aus dem Spiel gelesen. Der Wirtschaftsfaktor und der Entwicklungsstand gehören zur Nation, deshalb nutzen das Männer- und das Frauen-Nationalteam dieselben Werte.",

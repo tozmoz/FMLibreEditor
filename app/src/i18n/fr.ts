@@ -1360,8 +1360,6 @@ export const fr: Strings = {
     mensTeam: "Sélection masculine",
     reputationShort: "RÉP",
     reputationTitle: "Réputation de l'équipe première, de 0 à 10\u00a0000",
-    youthRatingShort: "FOR",
-    youthRatingTitle: "Note de formation du football de cette sélection, de 0 à 200",
     settings: {
       heading: "Nation",
       note: "Lu dans le jeu. Le facteur économique et l'état de développement appartiennent à la nation\u00a0: les sélections masculine et féminine les partagent.",
