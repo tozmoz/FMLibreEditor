@@ -40,6 +40,11 @@ teams' matches by day.
 
 ## Windows
 
-Not read on Windows. The object holds only pointers and numbers, which MSVC lays out as clang does, so the layout file
-places it as on the Mac. The app checks that the first matches it reads point at two teams: where they do not, it
-says it cannot read the game's matches, and the box waits.
+Read on Game Pass 0.9.2562.0 (a save of 18 October 2027) at the same places as on the Mac: 17,477 matches, the objects
+0xB0 bytes apart. Manchester United's first team had 36 matches left, league matches at weekends and European and cup ties
+between them, its second team 19 and its third 15; on that day 18 matches were to be played, Aston Villa against
+Chelsea among them.
+
+There the first matches in memory are national teams' matches: their teams are `db::NATIONAL_TEAM`
+(`.?AVNATIONAL_TEAM@db@@`), not `db::TEAM`. The app checks that the first matches it reads point at two teams, a club's
+or a nation's: where they do not, it says it cannot read the game's matches, and the box waits.

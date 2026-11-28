@@ -17,8 +17,9 @@ use crate::profile::FixtureLayout;
 use crate::rtti;
 use crate::session::Session;
 
-/// The class of the teams a match points at, as written in C++.
-const TEAM_CLASS: &str = "db::TEAM";
+/// The classes of the teams a match points at, as written in C++: a club's team, or a nation's. The Game Pass build
+/// 0.9.2562.0 keeps national teams' matches first in memory, so the first matches read may all be theirs.
+const TEAM_CLASSES: [&str; 2] = ["db::TEAM", "db::NATIONAL_TEAM"];
 
 /// How many matches are checked to point at two teams: where most do not, the layout is not this build's.
 const CHECKED: usize = 16;
@@ -124,8 +125,9 @@ impl Session {
             }
         }
         // A layout that is not this build's reads other words as the teams: they lead to no team.
-        let team = rtti::mangled(TEAM_CLASS);
-        let is_team = |at: u64| rtti::class_of(&self.process, &self.plugin, at).is_some_and(|class| class == team);
+        let teams: Vec<String> = TEAM_CLASSES.iter().map(|class| rtti::mangled(class)).collect();
+        let is_team =
+            |at: u64| rtti::class_of(&self.process, &self.plugin, at).is_some_and(|class| teams.contains(&class));
         let checked: Vec<bool> =
             matches.iter().take(CHECKED).map(|found| is_team(found.home) && is_team(found.away)).collect();
         if checked.is_empty() || checked.iter().filter(|&&teams| teams).count() * 2 <= checked.len() {
