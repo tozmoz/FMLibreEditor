@@ -19,6 +19,7 @@ mod edit;
 mod export;
 mod familiarity;
 mod filter;
+mod fixtures;
 mod game;
 mod graphics;
 mod health;
@@ -86,6 +87,7 @@ pub use filter::{
     AttributeBound, ClubFilter, PlayerFilter, PlayerOrder, PlayerSort, StaffFilter, StaffOrder, StaffSort,
     sort_players, sort_staff,
 };
+pub use fixtures::{FixtureError, Fixtures, Match};
 pub use game::{GAME_EXE, GAME_PLUGIN, GameInfo, Storefront};
 pub use graphics::{GraphicsCounts, GraphicsIndex, Picture};
 pub use health::{Check, CheckResult, DateEvidence, DateFit, Health, Lock, STRUCTURE};
@@ -110,9 +112,9 @@ pub use prize_money::{
     PrizeReadError, PrizeStage, PrizeUnavailable, StagePrizes, competition_prizes,
 };
 pub use profile::{
-    ArrayRvas, BuildProfile, ContractLayout, GameLayout, Layout, LayoutOverrides, PlayerLayout, PluginFingerprint,
-    ProfileNotes, SelectionLayout, StaffLayout, TacticLayout, TacticsLayout, built_in_profiles, layout_for,
-    layout_lender, layout_of, profile_for, profile_text,
+    ArrayRvas, BuildProfile, ContractLayout, FixtureLayout, GameLayout, Layout, LayoutOverrides, PlayerLayout,
+    PluginFingerprint, ProfileNotes, SelectionLayout, StaffLayout, TacticLayout, TacticsLayout, built_in_profiles,
+    layout_for, layout_lender, layout_of, profile_for, profile_text,
 };
 pub use recipes::{Kept, LeftOut, RECIPES, Recipe, RecipeError, RecipePlan, Subject, recipe};
 pub use relations::{HOMEGROWN_RULES, Relation, RelationPlan, RelationSet, Tie, TieTarget};

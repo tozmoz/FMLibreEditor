@@ -206,6 +206,9 @@ pub struct Session {
     /// The vtables of loan contracts, found by their class name the first time they are needed: none when the layout
     /// does not place loans or the game does not name that class.
     pub(crate) loan_class: OnceLock<Vec<u64>>,
+    /// The vtables of the game's matches, found by their class name the first time they are needed: none when the
+    /// layout does not place them or the game does not name that class.
+    pub(crate) fixture_class: OnceLock<Vec<u64>>,
     /// The memory the editor took in the game (see `own_memory.rs`): the region, its length and how much of it is
     /// handed out.
     pub(crate) own_memory: Mutex<Option<(u64, u64, u64)>>,
@@ -281,6 +284,7 @@ impl Session {
             save_vouched: AtomicBool::new(false),
             selection_class: OnceLock::new(),
             loan_class: OnceLock::new(),
+            fixture_class: OnceLock::new(),
             own_memory: Mutex::new(None),
             pools_found: Mutex::new(Vec::new()),
             runtime: OnceLock::new(),
@@ -693,6 +697,7 @@ impl Session {
             save_vouched: AtomicBool::new(false),
             selection_class: OnceLock::new(),
             loan_class: OnceLock::new(),
+            fixture_class: OnceLock::new(),
             own_memory: Mutex::new(None),
             pools_found: Mutex::new(Vec::new()),
             runtime: OnceLock::new(),
