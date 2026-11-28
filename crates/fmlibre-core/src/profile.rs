@@ -267,6 +267,42 @@ pub struct NationalLayout {
     pub nation_code: u64,
     pub nation_men: u64,
     pub nation_women: u64,
+    /// In a container: the `u16` youth rating of the nation's men's or women's football, as the pre-game editor shows
+    /// it, and the second copy the game keeps of it, equal to it at every container read. Unset where nobody has read
+    /// them, and the field is then not offered.
+    #[serde(default)]
+    pub youth_rating: Option<u64>,
+    #[serde(default)]
+    pub youth_rating_copy: Option<u64>,
+    /// In a container, the men's or the women's: the `u8` game importance and the federation's `u8` financial power,
+    /// each with a second copy right after it, equal to it at every container read. Unset where nobody has read them, and
+    /// the fields are then not offered.
+    #[serde(default)]
+    pub game_importance: Option<u64>,
+    #[serde(default)]
+    pub game_importance_copy: Option<u64>,
+    #[serde(default)]
+    pub fa_financial_power: Option<u64>,
+    #[serde(default)]
+    pub fa_financial_power_copy: Option<u64>,
+    /// In a container, the men's or the women's: the `u8` patience of the federation, from 0 to 20.
+    #[serde(default)]
+    pub fa_patience: Option<u64>,
+    /// In a container: the pointer to its own record of its nation's attendance, and in the record the `u32` attendance
+    /// of its matches with the `u32` least and most it may be.
+    #[serde(default)]
+    pub container_record: Option<u64>,
+    #[serde(default)]
+    pub attendance: Option<u64>,
+    #[serde(default)]
+    pub min_attendance: Option<u64>,
+    #[serde(default)]
+    pub max_attendance: Option<u64>,
+    /// In a nation: its `u8` economic factor and its `u8` state of development, which its men's and women's teams share.
+    #[serde(default)]
+    pub economic_factor: Option<u64>,
+    #[serde(default)]
+    pub state_of_development: Option<u64>,
     /// What a national team's profile shows of its nation and federation; unset where nobody has read it, and the
     /// profile then shows none of it.
     #[serde(default)]
@@ -1617,6 +1653,43 @@ mod tests {
         assert_eq!(details.national_contract, 0x10);
     }
 
+    /// A nation's youth rating and settings were read on Windows and on the Mac, where they sit 8 bytes later (see
+    /// `the_mac_layout_follows_the_windows_one`): both layouts place them, and offer their fields. The youth rating is in
+    /// a container of either kind, men's or women's, at the same offsets.
+    #[test]
+    fn both_layouts_place_the_nation_settings() {
+        let windows: Layout = parse(WINDOWS);
+        let macos: Layout = parse(MACOS);
+        let w = windows.national.as_ref().expect("national teams on Windows");
+        assert_eq!((w.youth_rating, w.youth_rating_copy), (Some(0x86A), Some(0x86C)));
+        assert_eq!((w.game_importance, w.game_importance_copy), (Some(0x87C), Some(0x87D)));
+        assert_eq!((w.fa_financial_power, w.fa_financial_power_copy), (Some(0x882), Some(0x883)));
+        assert_eq!(w.fa_patience, Some(0x885));
+        assert_eq!(w.container_record, Some(0xB0));
+        assert_eq!((w.attendance, w.min_attendance, w.max_attendance), (Some(0x68), Some(0x6C), Some(0x70)));
+        assert_eq!((w.economic_factor, w.state_of_development), (Some(0x1F0), Some(0x1EC)));
+        // On the Mac, England, France, Poland and San Marino read there as on Windows.
+        let m = macos.national.as_ref().expect("national teams on the Mac");
+        assert_eq!((m.youth_rating, m.youth_rating_copy), (Some(0x872), Some(0x874)));
+        assert_eq!((m.economic_factor, m.state_of_development), (Some(0x1F8), Some(0x1F4)));
+        let keys = [
+            crate::YOUTH_RATING,
+            "game_importance",
+            "fa_financial_power",
+            "fa_patience",
+            "attendance",
+            "min_attendance",
+            "max_attendance",
+            "economic_factor",
+            "state_of_development",
+        ];
+        let has_fields = |layout: &Layout| {
+            let fields = crate::fields(layout, crate::Entity::NationalTeam);
+            keys.iter().all(|key| fields.iter().any(|field| field.key == *key))
+        };
+        assert!(has_fields(&windows) && has_fields(&macos));
+    }
+
     #[test]
     fn the_mac_layout_follows_the_windows_one() {
         let (windows, mac): (Layout, Layout) = (parse(WINDOWS), parse(MACOS));
@@ -1665,6 +1738,30 @@ mod tests {
             (w.container_uid, w.container_teams, w.container_women, w.container_nation, w.nation_code)
         );
         assert_eq!((m.nation_men, m.nation_women), (w.nation_men + 8, w.nation_women + 8));
+        // So are a nation's youth rating and settings: those in the container and in the nation sit 8 bytes later on
+        // the Mac, and the record of the attendance the container points at is laid out alike.
+        let later = |offset: Option<u64>| offset.map(|offset| offset + 8);
+        assert_eq!(
+            (m.youth_rating, m.youth_rating_copy, m.game_importance, m.game_importance_copy),
+            (
+                later(w.youth_rating),
+                later(w.youth_rating_copy),
+                later(w.game_importance),
+                later(w.game_importance_copy)
+            )
+        );
+        assert_eq!(
+            (m.fa_financial_power, m.fa_financial_power_copy, m.fa_patience),
+            (later(w.fa_financial_power), later(w.fa_financial_power_copy), later(w.fa_patience))
+        );
+        assert_eq!(
+            (m.economic_factor, m.state_of_development),
+            (later(w.economic_factor), later(w.state_of_development))
+        );
+        assert_eq!(
+            (m.container_record, m.attendance, m.min_attendance, m.max_attendance),
+            (w.container_record, w.attendance, w.min_attendance, w.max_attendance)
+        );
 
         // The tables of names are reached and laid out alike.
         assert!(windows.names.is_some());

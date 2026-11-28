@@ -282,6 +282,27 @@ export interface NationalSide {
 }
 
 /**
+ * A nation's settings, as the pre-game editor shows them (see `national_squad`): the codes the game keeps for the game
+ * importance and the state of development, and the numbers of the federation and the attendance.
+ */
+export interface NationSettings {
+  /** 1 Very important, 2 Important, 3 Fairly unimportant, 4 Unimportant; 0 Not set. */
+  gameImportance: number | null;
+  /** 0–20. */
+  faFinancialPower: number | null;
+  /** 0–20. */
+  faPatience: number | null;
+  /** 0–250,000, with the least and most it may be. */
+  attendance: number | null;
+  minAttendance: number | null;
+  maxAttendance: number | null;
+  /** 0–20, of the nation, shared by its men's and women's teams. */
+  economicFactor: number | null;
+  /** 1 Developed state, 2 Developing state, 3 Lower developed state; 0 Not set. Of the nation, shared by its teams. */
+  stateOfDevelopment: number | null;
+}
+
+/**
  * A national team as its profile shows it (see `national_squad`): its list row, its teams, and the one asked for with
  * its players (`squad.kind`).
  */
@@ -291,6 +312,10 @@ export interface NationalProfile {
   squad: ClubTeam;
   /** What the profile shows of the nation and its federation; null where this version of the game has it unplaced. */
   nation: NationDetails | null;
+  /** The youth rating of the national team's football, 0–200; null where this version of the game has it unplaced. */
+  youthRating: number | null;
+  /** The settings of the nation's men's or women's team; null where this version of the game has them unplaced. */
+  settings: NationSettings | null;
 }
 
 /**

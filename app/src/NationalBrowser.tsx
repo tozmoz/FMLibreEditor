@@ -10,8 +10,10 @@ import { Ability } from "./Ability";
 import { EditableValue } from "./EditControls";
 import { changeLog, nationalProfile, nationalStatus, nationalTeamAction, undoBatch } from "./editing";
 import { FilterBar } from "./FilterBar";
-import { describeError } from "./format";
+import { describeError, formatNumber } from "./format";
 import {
+  choiceLabel,
+  fieldLabel,
   jobLabel,
   massEditText,
   nationalTeamLabel,
@@ -32,6 +34,7 @@ import { restored, useSnapshot } from "./restore";
 import { ActionButton, refusalLines, ResultLine, type Result, type Undo } from "./SquadTab";
 import type {
   NationDetails,
+  NationSettings,
   NationalProfile,
   NationalSide,
   NationalStatus,
@@ -168,6 +171,9 @@ function NationalProfileView({ team, version, onClose }: NationalProfileViewProp
   const teams = loaded?.details?.teams;
   const squad = loaded?.details?.squad;
   const shown = teams?.find((side) => side.kind === squad?.kind);
+  const youthRating = loaded?.details?.youthRating ?? null;
+  const settings = loaded?.details?.settings ?? null;
+  const nationBlock = youthRating !== null || settings !== null;
 
   return (
     <ProfileFrame
@@ -192,7 +198,10 @@ function NationalProfileView({ team, version, onClose }: NationalProfileViewProp
     >
       {loaded?.details && teams && (
         <div className="squad-tab">
-          {loaded.details.nation && <NationDetailsBlock nation={loaded.details.nation} />}
+          {nationBlock && (
+            <NationSettingsBlock youthRating={youthRating} settings={settings} nation={loaded.details.nation} />
+          )}
+          {loaded.details.nation && <NationDetailsBlock nation={loaded.details.nation} facts={!nationBlock} />}
           {teams.length === 0 || !shown ? (
             <p className="empty">{text.noTeams}</p>
           ) : (
@@ -223,19 +232,22 @@ function NationalProfileView({ team, version, onClose }: NationalProfileViewProp
 /**
  * What the game shows of the nation and its federation, read only: the year the federation was founded, the continent,
  * and the federation's staff as the game's staff list of the nation's team shows them, team by team, each with his job
- * in the national team (not the one at his club, if he has one).
+ * in the national team (not the one at his club, if he has one). Where the profile also shows the nation's settings,
+ * the year and the continent stand among them instead (`facts` false), above this long list.
  */
-function NationDetailsBlock({ nation }: { nation: NationDetails }) {
+function NationDetailsBlock({ nation, facts }: { nation: NationDetails; facts: boolean }) {
   const none = <span className="muted">{profileText.none}</span>;
   return (
     <div className="nation-details">
-      <section className="profile-group">
-        <h3>{text.details.nation}</h3>
-        <dl className="stats">
-          <Fact label={text.details.founded}>{nation.founded ?? none}</Fact>
-          <Fact label={text.details.continent}>{nation.continent ?? none}</Fact>
-        </dl>
-      </section>
+      {facts && (
+        <section className="profile-group">
+          <h3>{text.details.nation}</h3>
+          <dl className="stats">
+            <Fact label={text.details.founded}>{nation.founded ?? none}</Fact>
+            <Fact label={text.details.continent}>{nation.continent ?? none}</Fact>
+          </dl>
+        </section>
+      )}
       <section className="profile-group">
         <h3>{text.details.staff(nation.staff.length)}</h3>
         {nation.staff.length === 0 ? (
@@ -265,6 +277,77 @@ function NationDetailsBlock({ nation }: { nation: NationDetails }) {
         <p className="note">{text.details.staffNote}</p>
       </section>
     </div>
+  );
+}
+
+/**
+ * A nation's youth rating and settings as the pre-game editor shows them, read from the game: the youth rating of the
+ * men's or women's football, the game importance and the federation's financial power and patience, the attendance of
+ * its matches, and the economic factor and state of development of the nation. Each value is an input while the profile
+ * is edited; the two codes are shown by their names. The rows stand in two columns, as a club's facts do, so that the
+ * squad under them keeps room on a window of ordinary height: the youth rating first, by its full name, as the field
+ * most edited, then the federation's settings, and the nation's year and continent where the profile has its details
+ * (`nation`), read only and so last; beside them the attendance with its least and most, and the nation's two
+ * settings. The federation's staff come after the block: what can be changed is not under a list of thirty.
+ */
+function NationSettingsBlock({
+  youthRating,
+  settings,
+  nation,
+}: {
+  youthRating: number | null;
+  settings: NationSettings | null;
+  nation: NationDetails | null;
+}) {
+  const none = <span className="muted">{profileText.none}</span>;
+  const left: { field: string; value: number | null }[] = [
+    ...(youthRating === null ? [] : [{ field: "youth_rating", value: youthRating }]),
+    ...(settings === null
+      ? []
+      : [
+          { field: "game_importance", value: settings.gameImportance },
+          { field: "fa_financial_power", value: settings.faFinancialPower },
+          { field: "fa_patience", value: settings.faPatience },
+        ]),
+  ];
+  const right: { field: string; value: number | null }[] =
+    settings === null
+      ? []
+      : [
+          { field: "attendance", value: settings.attendance },
+          { field: "min_attendance", value: settings.minAttendance },
+          { field: "max_attendance", value: settings.maxAttendance },
+          { field: "economic_factor", value: settings.economicFactor },
+          { field: "state_of_development", value: settings.stateOfDevelopment },
+        ];
+  const shown = (field: string, value: number) =>
+    field === "game_importance" || field === "state_of_development" ? choiceLabel(field, value) : formatNumber(value);
+  const fact = ({ field, value }: { field: string; value: number | null }) => (
+    <Fact key={field} label={fieldLabel("nationalTeam", field)}>
+      {value === null ? none : (
+        <EditableValue field={field} inFact>
+          {shown(field, value)}
+        </EditableValue>
+      )}
+    </Fact>
+  );
+  return (
+    <section className="profile-group">
+      <h3>{text.settings.heading}</h3>
+      <div className="profile-split">
+        <dl className="stats">
+          {left.map(fact)}
+          {nation && (
+            <>
+              <Fact label={text.details.founded}>{nation.founded ?? none}</Fact>
+              <Fact label={text.details.continent}>{nation.continent ?? none}</Fact>
+            </>
+          )}
+        </dl>
+        <dl className="stats">{right.map(fact)}</dl>
+      </div>
+      <p className="note">{text.settings.note}</p>
+    </section>
   );
 }
 

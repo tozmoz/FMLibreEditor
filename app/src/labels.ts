@@ -94,6 +94,8 @@ export function nameCities(cities: readonly City[]): void {
  */
 const CHOICE_NAMES = new Map<string, (code: number) => string>([
   ["contract.squad_status", profileText.squadStatusName],
+  ["game_importance", (code) => strings.national.settings.gameImportance[code] ?? formatNumber(code)],
+  ["state_of_development", (code) => strings.national.settings.stateOfDevelopment[code] ?? formatNumber(code)],
   ["nation", (address) => NATION_NAMES.get(address) ?? editText.unknownNation],
   ["city_of_birth", (address) => CITY_NAMES.get(address) ?? editText.unknownCity],
 ]);

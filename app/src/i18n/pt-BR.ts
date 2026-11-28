@@ -545,6 +545,15 @@ export const ptBR: Strings = {
     "facilities.youth_coaching": "Treinadores da base",
     "facilities.youth_recruitment": "Captação da base",
     "facilities.corporate": "Camarotes corporativos",
+    youth_rating: "Avaliação da base",
+    game_importance: "Importância do futebol",
+    fa_financial_power: "Poder financeiro da federação",
+    fa_patience: "Paciência da federação",
+    attendance: "Público",
+    min_attendance: "Público mínimo",
+    max_attendance: "Público máximo",
+    economic_factor: "Fator econômico",
+    state_of_development: "Estado de desenvolvimento",
     "finance.balance": "Saldo",
     "finance.transfer_budget": "Orçamento de transferências",
     "finance.wage_budget": "Orçamento salarial",
@@ -1297,6 +1306,23 @@ export const ptBR: Strings = {
     mensTeam: "Seleção masculina",
     reputationShort: "REP",
     reputationTitle: "Reputação da seleção principal, de 0 a 10.000",
+    settings: {
+      heading: "País",
+      note: "Lido do jogo. O fator econômico e o estado de desenvolvimento pertencem ao país, então as seleções masculina e feminina os compartilham.",
+      gameImportance: {
+        0: "Não definido",
+        1: "Muito importante",
+        2: "Importante",
+        3: "Não muito importante",
+        4: "Sem importância",
+      } as Partial<Record<number, string>>,
+      stateOfDevelopment: {
+        0: "Não definido",
+        1: "País desenvolvido",
+        2: "País em desenvolvimento",
+        3: "País menos desenvolvido",
+      } as Partial<Record<number, string>>,
+    },
     /**
      * The game's names of a nation's teams by the code of their kind, as its national team screens name them; a kind
      * missing here is named by `teamType`. Kind 0 is the senior team.

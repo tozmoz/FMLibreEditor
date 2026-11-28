@@ -589,6 +589,25 @@ container_nation = 0x170      # pointer back to its nation, at all 502
 nation_code = 0x28            # an FM string: "ITA"
 nation_men = 0x110
 nation_women = 0x118
+# A nation's youth rating and settings, as the pre-game editor shows them (see layout.toml): in the container and in
+# the nation 8 bytes later than on Windows, and in the attendance record where Windows has them. Read on Steam build
+# 26797085 (Apple silicon, a save of 18 July 2027): the youth ratings of England 135, France 155, Poland 94 and San
+# Marino 29 (their women's 161, 160, 103, 4), and the settings of England, Poland and San Marino, men's and women's,
+# hold what the Windows save of July 2026 does. A year on, the game has moved some second copies a point away from the
+# first (France's youth rating 155 and 156, its women's 160 and 161); the editor writes both.
+youth_rating = 0x872          # u16, after the federation's founding year
+youth_rating_copy = 0x874     # u16
+game_importance = 0x884       # u8, 1 to 4
+game_importance_copy = 0x885  # u8
+fa_financial_power = 0x88A    # u8, 0 to 20
+fa_financial_power_copy = 0x88B  # u8
+fa_patience = 0x88D           # u8, 0 to 20
+container_record = 0xB0       # pointer to the record, as on Windows
+attendance = 0x68             # in the record: u32
+min_attendance = 0x6C         # in the record: u32
+max_attendance = 0x70         # in the record: u32
+economic_factor = 0x1F8       # in the nation: u8, 0 to 20
+state_of_development = 0x1F4  # in the nation: u8, 1 to 3
 
 # What a national team's profile shows of its nation and federation (#210, docs/recon/fm27-national-teams.md), read on
 # Steam build 26620374 (Apple silicon, a save of 28 September 2026) and checked against the game's nation page and

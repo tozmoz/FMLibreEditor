@@ -552,6 +552,17 @@ export const en = {
     "facilities.youth_coaching": "Youth coaching",
     "facilities.youth_recruitment": "Youth recruitment",
     "facilities.corporate": "Corporate facilities",
+    // A nation's youth rating, edited from its national team.
+    youth_rating: "Youth rating",
+    // A nation's settings, edited from its men's or women's national team.
+    game_importance: "Game importance",
+    fa_financial_power: "FA financial power",
+    fa_patience: "FA patience",
+    attendance: "Attendance",
+    min_attendance: "Minimum attendance",
+    max_attendance: "Maximum attendance",
+    economic_factor: "Economic factor",
+    state_of_development: "State of development",
     "finance.balance": "Balance",
     "finance.transfer_budget": "Transfer budget",
     "finance.wage_budget": "Wage budget",
@@ -1304,6 +1315,27 @@ export const en = {
     mensTeam: "Men's national team",
     reputationShort: "REP",
     reputationTitle: "Reputation of the senior team, from 0 to 10,000",
+    /**
+     * A national team's settings, read from the game and edited for the men's or women's team; the economic factor and
+     * the state of development belong to the nation, which both share. The two codes are named as the pre-game editor names them.
+     */
+    settings: {
+      heading: "Nation",
+      note: "Read from the game. The economic factor and the state of development belong to the nation, so the men's and women's teams share them.",
+      gameImportance: {
+        0: "Not set",
+        1: "Very important",
+        2: "Important",
+        3: "Fairly unimportant",
+        4: "Unimportant",
+      } as Partial<Record<number, string>>,
+      stateOfDevelopment: {
+        0: "Not set",
+        1: "Developed state",
+        2: "Developing state",
+        3: "Lower developed state",
+      } as Partial<Record<number, string>>,
+    },
     /**
      * The game's names of a nation's teams by the code of their kind, as its national team screens name them; a kind
      * missing here is named by `teamType`. Kind 0 is the senior team.

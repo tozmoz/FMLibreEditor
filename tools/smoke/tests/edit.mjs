@@ -1,9 +1,9 @@
 // Editing a player: fields written through the app's commands, read back by the probe, and undone from the change
 // log; his city of birth set to another city of his nation and back, and refused a nation in its place; the squad
 // numbers of two players of one team, where the undo that would give both one number is refused; a national team's
-// reputation and one of its youth teams', and Heal all, Inspire all and Refresh all on its senior team's players, where
-// the build has national teams; one amount of a league's prize money, where the build shows it; then one attribute
-// through his profile's Edit mode, undone from the Changes tab.
+// reputation and one of its youth teams', the youth rating and settings of its men's and women's teams, and Heal all,
+// Inspire all and Refresh all on its senior team's players, where the build has national teams; one amount of a league's
+// prize money, where the build shows it; then one attribute through his profile's Edit mode, undone from the Changes tab.
 import { SHOWN, VIS } from "../lib/app.mjs";
 import { clubPlayers, topClubs } from "../lib/witness.mjs";
 import { PROFILE as NATIONAL_PROFILE, ROWS as NATIONAL_ROWS, showTeams } from "./nationals.mjs";
@@ -47,6 +47,8 @@ export async function run({ app, report, probe }) {
   await cityOfBirth({ app, report, probe, club });
   await squadNumbers({ app, report, probe, club });
   await nationalReputation({ app, report, probe });
+  await nationalYouthRating({ app, report, probe });
+  await nationalSettings({ app, report, probe });
   await nationalActions({ app, report, probe });
   await leaguePrizeMoney({ app, report, probe });
 
@@ -249,6 +251,125 @@ async function nationalReputation({ app, report, probe }) {
     JSON.stringify({ entity: youthLogged?.entity, name: youthLogged?.name, field: youthLogged?.field }));
   await app.must("undo_change", { id: done.applied[0].id });
   report.check("the undo puts the youth team's back", readYouth() === was && (await shownYouth()) === was, `${readYouth()}`);
+}
+
+/**
+ * The youth ratings of the best known men's and women's national teams, where the layout places them: each written
+ * through the app's command, read back by the probe and in its profile, and undone.
+ */
+async function nationalYouthRating({ app, report, probe }) {
+  const status = await app.must("national_status");
+  if (!status.available) {
+    report.skip("a nation's youth rating", `this build has no national teams to read (${status.reason})`);
+    return;
+  }
+  const { rows } = await app.must("search_national_teams", { query: "", limit: 1000 });
+  const men = rows.find((row) => !row.women);
+  const women = rows.find((row) => row.women);
+  const field = "youth_rating";
+  const before = men && (await app.must("read_values", { entity: "nationalTeam", uid: men.uid }))[field];
+  if (before === undefined) {
+    report.skip("a nation's youth rating", "this build's layout does not place it");
+    return;
+  }
+  const checkTeam = async (team) => {
+    const label = `${team.name}${team.women ? " (women)" : ""}`;
+    const read = () => probe.get("national-team", team.uid, [field])[field];
+    const shown = async () => (await app.must("national_squad", { uid: team.uid })).youthRating;
+    const was = (await app.must("read_values", { entity: "nationalTeam", uid: team.uid }))[field];
+    report.check(`the probe reads ${label}'s youth rating as the app does`, read() === was && (await shown()) === was,
+      `${was}`);
+    const value = was < 200 ? was + 1 : was - 1;
+    const applied = await app.must("apply_edits", { entity: "nationalTeam", uid: team.uid, edits: [{ field, value }] });
+    report.check(`writes ${label}'s youth rating`, applied.applied.length === 1 && applied.failed.length === 0,
+      JSON.stringify(applied.failed));
+    if (applied.applied.length !== 1) return;
+    report.check(`the probe reads ${label}'s new youth rating, and the profile shows it`,
+      read() === value && (await shown()) === value, `${was} → ${value}`);
+    await app.must("undo_change", { id: applied.applied[0].id });
+    report.check(`the undo puts ${label}'s back`, read() === was && (await shown()) === was, `${read()}`);
+  };
+  await checkTeam(men);
+  if (women) await checkTeam(women);
+}
+
+/**
+ * The settings of the best known men's and women's national teams, where the layout places them: each of the eight
+ * written through the app's command with the next valid value, read back by the probe and in its profile, and undone.
+ * The economic factor and the state of development belong to the nation, so a write on one team shows on the other.
+ */
+async function nationalSettings({ app, report, probe }) {
+  const status = await app.must("national_status");
+  if (!status.available) {
+    report.skip("a nation's settings", `this build has no national teams to read (${status.reason})`);
+    return;
+  }
+  const { rows } = await app.must("search_national_teams", { query: "", limit: 1000 });
+  const fields = [
+    "game_importance",
+    "fa_financial_power",
+    "fa_patience",
+    "attendance",
+    "min_attendance",
+    "max_attendance",
+    "economic_factor",
+    "state_of_development",
+  ];
+  const most = {
+    fa_financial_power: 20,
+    fa_patience: 20,
+    attendance: 250_000,
+    min_attendance: 250_000,
+    max_attendance: 250_000,
+    economic_factor: 20,
+  };
+  const nationFields = ["economic_factor", "state_of_development"];
+  const profileKey = (field) => field.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  const shown = async (uid, field) => (await app.must("national_squad", { uid })).settings?.[profileKey(field)];
+  const read = (uid, field) => probe.get("national-team", uid, [field])[field];
+  const test = async (team) => {
+    const label = `${team.name}${team.women ? " (women)" : ""}`;
+    const before = await app.must("read_values", { entity: "nationalTeam", uid: team.uid });
+    const present = fields.filter((field) => before[field] !== undefined);
+    if (present.length === 0) {
+      report.skip(`${label}'s settings`, "this build's layout does not place them");
+      return;
+    }
+    report.check(`the probe reads ${label}'s settings as the app does`,
+      (await Promise.all(present.map(async (field) =>
+        read(team.uid, field) === before[field] && (await shown(team.uid, field)) === before[field]))).every(Boolean),
+      JSON.stringify(Object.fromEntries(present.map((field) => [field, before[field]]))));
+    // The nation's own fields, which its men's and women's teams share: read them on the other team.
+    const shared = rows.find((row) => row.women !== team.women && row.nationUid === team.nationUid) ?? null;
+    for (const field of present) {
+      const was = before[field];
+      const value = field === "game_importance" ? (was % 4) + 1
+        : field === "state_of_development" ? (was % 3) + 1
+          : was < most[field] ? was + 1
+            : was - 1;
+      const applied = await app.must("apply_edits", { entity: "nationalTeam", uid: team.uid, edits: [{ field, value }] });
+      report.check(`writes ${label}'s ${field}`, applied.applied.length === 1 && applied.failed.length === 0,
+        JSON.stringify(applied.failed));
+      if (applied.applied.length !== 1) continue;
+      report.check(`the probe reads the new ${field}, and the profile shows it`,
+        read(team.uid, field) === value && (await shown(team.uid, field)) === value, `${was} → ${value}`);
+      if (nationFields.includes(field) && shared) {
+        const onShared = (await app.must("read_values", { entity: "nationalTeam", uid: shared.uid }))[field];
+        report.check(`the nation's ${field} is shared with ${shared.name}`, onShared === value, `${onShared}`);
+      }
+      await app.must("undo_change", { id: applied.applied[0].id });
+      report.check(`the undo puts ${label}'s ${field} back`,
+        read(team.uid, field) === was && (await shown(team.uid, field)) === was, `${read(team.uid, field)}`);
+      if (nationFields.includes(field) && shared) {
+        const onShared = (await app.must("read_values", { entity: "nationalTeam", uid: shared.uid }))[field];
+        report.check(`the undo puts the nation's ${field} back on ${shared.name}`, onShared === was, `${onShared}`);
+      }
+    }
+  };
+  const men = rows.find((row) => !row.women);
+  const women = rows.find((row) => row.women);
+  if (men) await test(men);
+  if (women) await test(women);
 }
 
 /** The values Refresh all and Inspire all set on each player of a squad, by field (see `act_on_players`). */

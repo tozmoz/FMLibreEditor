@@ -256,6 +256,84 @@ On Steam build 26577676, on a save of 14 October 2026, the arrays sit at the sam
 Italy's senior team lists 26 players from Donnarumma, Di Lorenzo, Bastoni and Mancini (as on the Mac's save of
 September 2026), with a reputation of 8477.
 
+### The youth rating (Windows)
+
+The youth rating the pre-game editor shows for a nation is not in the nation: it is a `u16` of each container, at
+`+0x86A`, with a second copy at `+0x86C`. The pre-game editor's values for four nations (San Marino 29, Poland 94,
+England 135, France 155) were looked for in the 0x200 bytes of each nation and in the first 0x1000 bytes of every
+object it points at, as a `u8`, `u16` and `u32`: only the men's container, `+0x108`, holds all four, at those two
+places. The two are equal at all 502 containers; values run from 0 to 165 (Brazil's men 163). A women's container has
+a youth rating of its own (England's 161, France's 160, Poland's 103, San Marino's 4). The `i16` at `+0x86E` follows it
+(France 9, England -23, Poland -25, San Marino 7); what it is is not known. `fmlibre-probe set national-team 792
+youth_rating 30 --restore` wrote both copies of San Marino's and put them back, and so did `set national-team
+2000169648 youth_rating 5 --restore` for San Marino's women. The editor writes men's and women's containers alike.
+
+### A nation's settings (Windows)
+
+The pre-game editor's values for England, Poland and San Marino were looked for in the 0x200 bytes of each nation, in the
+first 0x1000 bytes of every object it points at, and in the men's container, as `u8` and `u32`: all eight settings were
+found, and then read on the 251 men's and 251 women's containers alike.
+
+| key | where | kind | second copy | editor writes | plausible | ENG / POL / SMR (men) |
+|---|---|---|---|---|---|---|
+| `game_importance` | container `+0x87C` | `u8` | `+0x87D` | 1, 2, 3, 4 | 0 to 4 | 1 / 2 / 2 |
+| `fa_financial_power` | container `+0x882` | `u8` | `+0x883` | 0 to 20 | 0 to 20 | 18 / 12 / 4 |
+| `fa_patience` | container `+0x885` | `u8` | none | 0 to 20 | 0 to 20 | 8 / 8 / 20 |
+| `attendance` | record `+0x68` | `u32` | none | 0 to 250,000 | 0 to 10,000,000 | 80,000 / 50,000 / 1,750 |
+| `min_attendance` | record `+0x6C` | `u32` | none | 0 to 250,000 | 0 to 10,000,000 | 50,000 / 25,000 / 500 |
+| `max_attendance` | record `+0x70` | `u32` | none | 0 to 250,000 | 0 to 10,000,000 | 100,000 / 55,000 / 4,900 |
+| `economic_factor` | nation `+0x1F0` | `u8` | none | 0 to 20 | 0 to 20 | 19 / 16 / 12 |
+| `state_of_development` | nation `+0x1EC` | `u8` | none | 1, 2, 3 | 0 to 3 | 1 / 1 / 1 |
+
+A women's container holds the same six container and record fields at the same offsets, with values of its own: England
+1 / 18 / 19 and 60,000 / 45,000 / 90,000, Poland 1 / 12 / 15 and 7,000 / 2,000 / 12,000, San Marino 4 / 1 / 0 and
+800 / 200 / 1,600 (game importance, financial power, patience, then attendance, least and most). The two nation fields
+are the nation's alone, so both containers share them: England 19 / 1, Poland 16 / 1, San Marino 12 / 1. A write from
+either team changes what both profiles show.
+
+A container, men's or women's, points at `+0xB0` (0x10 bytes before the women's flag at `+0xB9`) at a record of 0xB0
+bytes of its own: a list at `+0x00`, then string pointers, then the attendance triple at `+0x68`. Every one of the 251
+men's and 251 women's containers has a non-null one, and in the women's records the least is at most the attendance and
+the attendance at most the most (the largest most is 90,000); 4 of the 251 men's records have an attendance outside
+their minimum and maximum, as the game keeps them, so the editor does not require the order. The triple was found with
+`fmlibre-probe find` on the men's attendance numbers, which led to `+0xB0`, and the values read there match the
+pre-game editor's; the women's records were then read at the same offsets. The nation is reached through the pointer at
+`container_nation` (`+0x170`), and it must point back at the container through `nation_men` (`+0x108`) for a men's
+container, or `nation_women` (`+0x110`) for a women's, before the nation's settings are read.
+
+Each field was confirmed on the running game: `fmlibre-probe set national-team 792 <field> <value> --restore` wrote
+and put back all eight of San Marino's men's team; `fmlibre-probe set national-team 2000169648 <field> <value>
+--restore` did the same for the six container and record fields of its women's team; `game_importance`, written to 3
+without `--restore`, dumped `03 03` at `+0x87C` and `+0x87D` and was set back to 2; and `economic_factor`, written to 13
+from the women's team, read 13 on the men's team and was set back to 12.
+
+Game importance and the federation's financial power keep a second copy right after them, equal at all 251 men's and all
+251 women's containers; the editor writes both, as it does the youth rating's, and reads both back. The enum codes are
+the pre-game editor's: game importance 0 "Not set", 1 "Very important", 2 "Important", 3 "Fairly unimportant", 4
+"Unimportant"; state of development 0 "Not set", 1 "Developed state", 2 "Developing state", 3 "Lower developed state".
+Game importance is 0 at 23 men's containers, the defunct ones (USSR, Yugoslavia, GDR and so on), and 1, 2, 3 and 4 at
+82, 57, 42 and 47; state of development is 1 at 56, 2 at 118 and 3 at 77; `fa_patience` is 0 at 86 men's and 218 women's
+containers.
+
+## A nation's youth rating and settings on the Mac
+
+On Steam build 26797085 (Apple silicon, a save of 18 July 2027), the container's fields sit 8 bytes later than on
+Windows, after the federation's founding year at `+0x870`: the youth rating at `+0x872` with its copy at `+0x874`, game
+importance at `+0x884` and `+0x885`, the financial power at `+0x88A` and `+0x88B`, the `u8` that is not known at
+`+0x88C` and `fa_patience` at `+0x88D`. The nation's two settings sit 8 bytes later too, as its pointers to its
+containers do: the state of development at `+0x1F4` and the economic factor at `+0x1F8`. The attendance record is laid
+out as on Windows, at the container's `+0xB0`. England, France, Poland and San Marino, men's and women's, read what the
+Windows save of July 2026 holds: the youth ratings 135, 155, 94 and 29 (their women's 161, 160, 103 and 4), and for
+England, Poland and San Marino every setting in the table above and the women's values under it. `fmlibre-probe set
+national-team 792 <field> <value> --restore` wrote and put back all nine of San Marino's fields, and so did the youth
+rating and four container and record fields tried on its women's team (2000169648).
+
+That save is a year into the game, and the game has moved some second copies a point away from the first: the youth
+rating's at 10 men's and 4 women's containers (France's 155 and 156, its women's 160 and 161), and the financial power's
+at 7 men's and 3 women's; game importance's agree at all 502. Each pair is one apart, either way. The editor writes both
+copies to the new value; it refuses a write only while the second holds a value the field cannot, and an undo puts the
+first copy's old value into both.
+
 ## What a tab could take from this
 
 - A list of nations from the two arrays of containers, each container leading to its nation (name, code, flag by
@@ -274,4 +352,8 @@ September 2026), with a reputation of 8477.
 - The two arrays' places on the Mac's Steam build 26577676 and on the Intel Macs (Windows Game Pass 0.9.2435.0 and
   Steam build 26577676 are read: see [On Windows](#on-windows)).
 - The names of team kinds 3 and 33, and what the numbers from `+0x180` of a nation are.
+- Which of the youth rating's two copies the game reads at its youth intakes, which it moves over a season (a year on,
+  France's first still holds the pre-game editor's 155 and its second 156), and what it makes of a changed one.
+- The `u8` at container `+0x884` (`+0x88C` on the Mac), between the financial power's copy and `fa_patience`: 17 to 21
+  across the nations (England 20, Poland and San Marino 21); what it is is not known.
 - What a national team's 0x50 bytes past a club team's end hold.
