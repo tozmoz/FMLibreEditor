@@ -117,9 +117,11 @@ profile reads them all (`Session::national_sides`) and edits each one's reputati
 `national::OTHER_KINDS`. A kind two teams of a container share is neither shown nor written. The app names the kinds by
 `national.teamKinds` in the languages' files, and a kind missing there as "Type N".
 
-The containers also place, on Windows only, the nation's youth rating and its federation's settings: game importance,
-FA financial power and FA patience. The game keeps the youth rating and the first two settings twice; the editor writes
-both copies and refuses a write while they differ. The attendance of the nation's matches, its least and its most, are
+The containers also place the nation's youth rating and its federation's settings (8 bytes later on the Mac than on
+Windows): game importance, FA financial power and FA patience. The game keeps the youth rating and the first two
+settings twice, and as a save goes on it moves some second copies a point away from the first. The editor writes both
+copies to the new value and refuses a write only while the second holds a value the field cannot; an undo puts the first
+copy's old value into both. The attendance of the nation's matches, its least and its most, are
 in a record the container points at (`container_record`), and the nation's economic factor and state of development are
 in the nation itself, which its men's and women's teams share. See
 [fm27-national-teams.md](recon/fm27-national-teams.md).

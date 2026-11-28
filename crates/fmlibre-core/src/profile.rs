@@ -1653,10 +1653,11 @@ mod tests {
         assert_eq!(details.national_contract, 0x10);
     }
 
-    /// A nation's youth rating and settings were read on Windows only: the Mac layout leaves them unplaced, and offers
-    /// no field for them. The youth rating is in a container of either kind, men's or women's, at the same offsets.
+    /// A nation's youth rating and settings were read on Windows and on the Mac, where they sit 8 bytes later (see
+    /// `the_mac_layout_follows_the_windows_one`): both layouts place them, and offer their fields. The youth rating is in
+    /// a container of either kind, men's or women's, at the same offsets.
     #[test]
-    fn only_the_windows_layout_places_the_nation_settings() {
+    fn both_layouts_place_the_nation_settings() {
         let windows: Layout = parse(WINDOWS);
         let macos: Layout = parse(MACOS);
         let w = windows.national.as_ref().expect("national teams on Windows");
@@ -1667,23 +1668,10 @@ mod tests {
         assert_eq!(w.container_record, Some(0xB0));
         assert_eq!((w.attendance, w.min_attendance, w.max_attendance), (Some(0x68), Some(0x6C), Some(0x70)));
         assert_eq!((w.economic_factor, w.state_of_development), (Some(0x1F0), Some(0x1EC)));
+        // On the Mac, England, France, Poland and San Marino read there as on Windows.
         let m = macos.national.as_ref().expect("national teams on the Mac");
-        let unplaced = [
-            m.youth_rating,
-            m.youth_rating_copy,
-            m.game_importance,
-            m.game_importance_copy,
-            m.fa_financial_power,
-            m.fa_financial_power_copy,
-            m.fa_patience,
-            m.container_record,
-            m.attendance,
-            m.min_attendance,
-            m.max_attendance,
-            m.economic_factor,
-            m.state_of_development,
-        ];
-        assert!(unplaced.iter().all(Option::is_none));
+        assert_eq!((m.youth_rating, m.youth_rating_copy), (Some(0x872), Some(0x874)));
+        assert_eq!((m.economic_factor, m.state_of_development), (Some(0x1F8), Some(0x1F4)));
         let keys = [
             crate::YOUTH_RATING,
             "game_importance",
@@ -1699,7 +1687,7 @@ mod tests {
             let fields = crate::fields(layout, crate::Entity::NationalTeam);
             keys.iter().all(|key| fields.iter().any(|field| field.key == *key))
         };
-        assert!(has_fields(&windows) && !has_fields(&macos));
+        assert!(has_fields(&windows) && has_fields(&macos));
     }
 
     #[test]
@@ -1750,6 +1738,30 @@ mod tests {
             (w.container_uid, w.container_teams, w.container_women, w.container_nation, w.nation_code)
         );
         assert_eq!((m.nation_men, m.nation_women), (w.nation_men + 8, w.nation_women + 8));
+        // So are a nation's youth rating and settings: those in the container and in the nation sit 8 bytes later on
+        // the Mac, and the record of the attendance the container points at is laid out alike.
+        let later = |offset: Option<u64>| offset.map(|offset| offset + 8);
+        assert_eq!(
+            (m.youth_rating, m.youth_rating_copy, m.game_importance, m.game_importance_copy),
+            (
+                later(w.youth_rating),
+                later(w.youth_rating_copy),
+                later(w.game_importance),
+                later(w.game_importance_copy)
+            )
+        );
+        assert_eq!(
+            (m.fa_financial_power, m.fa_financial_power_copy, m.fa_patience),
+            (later(w.fa_financial_power), later(w.fa_financial_power_copy), later(w.fa_patience))
+        );
+        assert_eq!(
+            (m.economic_factor, m.state_of_development),
+            (later(w.economic_factor), later(w.state_of_development))
+        );
+        assert_eq!(
+            (m.container_record, m.attendance, m.min_attendance, m.max_attendance),
+            (w.container_record, w.attendance, w.min_attendance, w.max_attendance)
+        );
 
         // The tables of names are reached and laid out alike.
         assert!(windows.names.is_some());

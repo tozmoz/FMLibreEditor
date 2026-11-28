@@ -315,6 +315,25 @@ Game importance is 0 at 23 men's containers, the defunct ones (USSR, Yugoslavia,
 82, 57, 42 and 47; state of development is 1 at 56, 2 at 118 and 3 at 77; `fa_patience` is 0 at 86 men's and 218 women's
 containers.
 
+## A nation's youth rating and settings on the Mac
+
+On Steam build 26797085 (Apple silicon, a save of 18 July 2027), the container's fields sit 8 bytes later than on
+Windows, after the federation's founding year at `+0x870`: the youth rating at `+0x872` with its copy at `+0x874`, game
+importance at `+0x884` and `+0x885`, the financial power at `+0x88A` and `+0x88B`, the `u8` that is not known at
+`+0x88C` and `fa_patience` at `+0x88D`. The nation's two settings sit 8 bytes later too, as its pointers to its
+containers do: the state of development at `+0x1F4` and the economic factor at `+0x1F8`. The attendance record is laid
+out as on Windows, at the container's `+0xB0`. England, France, Poland and San Marino, men's and women's, read what the
+Windows save of July 2026 holds: the youth ratings 135, 155, 94 and 29 (their women's 161, 160, 103 and 4), and for
+England, Poland and San Marino every setting in the table above and the women's values under it. `fmlibre-probe set
+national-team 792 <field> <value> --restore` wrote and put back all nine of San Marino's fields, and so did the youth
+rating and four container and record fields tried on its women's team (2000169648).
+
+That save is a year into the game, and the game has moved some second copies a point away from the first: the youth
+rating's at 10 men's and 4 women's containers (France's 155 and 156, its women's 160 and 161), and the financial power's
+at 7 men's and 3 women's; game importance's agree at all 502. Each pair is one apart, either way. The editor writes both
+copies to the new value; it refuses a write only while the second holds a value the field cannot, and an undo puts the
+first copy's old value into both.
+
 ## What a tab could take from this
 
 - A list of nations from the two arrays of containers, each container leading to its nation (name, code, flag by
@@ -333,8 +352,8 @@ containers.
 - The two arrays' places on the Mac's Steam build 26577676 and on the Intel Macs (Windows Game Pass 0.9.2435.0 and
   Steam build 26577676 are read: see [On Windows](#on-windows)).
 - The names of team kinds 3 and 33, and what the numbers from `+0x180` of a nation are.
-- Which of the youth rating's two copies the game reads, what it makes of a changed one over a season and at its youth
-  intakes, and where the Mac keeps it.
-- The `u8` at container `+0x884`, between the financial power's copy and `fa_patience`: 17 to 21 across the nations
-  (England 20, Poland and San Marino 21); what it is is not known.
+- Which of the youth rating's two copies the game reads at its youth intakes, which it moves over a season (a year on,
+  France's first still holds the pre-game editor's 155 and its second 156), and what it makes of a changed one.
+- The `u8` at container `+0x884` (`+0x88C` on the Mac), between the financial power's copy and `fa_patience`: 17 to 21
+  across the nations (England 20, Poland and San Marino 21); what it is is not known.
 - What a national team's 0x50 bytes past a club team's end hold.

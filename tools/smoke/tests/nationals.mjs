@@ -146,7 +146,7 @@ export async function run({ app, report, probe }) {
     report.skip("a youth team's squad", `no youth team of ${team.name} lists players`);
   }
   // The youth rating and the settings follow the reputations, where the build's profile places them: a build that does
-  // not place them, the Mac's for one, has none of them.
+  // not place them has none of them.
   const settings = [
     "youth_rating",
     "game_importance",

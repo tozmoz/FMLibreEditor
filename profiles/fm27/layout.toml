@@ -652,15 +652,16 @@ nation_code = 0x28            # an FM string: "ITA"
 nation_men = 0x108            # 0x110 on the Mac
 nation_women = 0x110          # 0x118 on the Mac
 # The youth rating, as the pre-game editor shows it: San Marino 29, Poland 94, England 135, France 155 (their men's
-# containers), from 0 to 165 across all 502. The game keeps it twice, equal at every container read; the editor writes
-# both, at men's and women's containers alike (England's women 161, France's 160, Poland's 103, San Marino's 4). Not
-# read on the Mac yet.
+# containers), from 0 to 165 across all 502. The game keeps it twice, equal at every container of this new save (on a save
+# a year on, a few are a point apart: see edit.rs); the editor writes both, at men's and women's containers alike (England's
+# women 161, France's 160, Poland's 103, San Marino's 4). 8 bytes later on the Mac.
 youth_rating = 0x86A          # u16
 youth_rating_copy = 0x86C     # u16
 # A container's game importance and the federation's financial power and patience, as the pre-game editor shows them:
 # ENG men 1 / 18 / 8 and women 1 / 18 / 19, POL 2 / 12 / 8 and 1 / 12 / 15, SMR 2 / 4 / 20 and 4 / 1 / 0. The first two
-# have a second copy right after them, equal at all 251 containers of either kind; the editor writes both. Game
-# importance is 0 at the defunct nations (USSR, Yugoslavia, GDR...), fa_patience at 86 men's and 218 women's containers.
+# have a second copy right after them, equal at all 251 containers of either kind on this save; the editor writes both.
+# Game importance is 0 at the defunct nations (USSR, Yugoslavia, GDR...), fa_patience at 86 men's and 218 women's
+# containers. 8 bytes later on the Mac, as the youth rating.
 game_importance = 0x87C       # u8, 1 to 4
 game_importance_copy = 0x87D  # u8
 fa_financial_power = 0x882    # u8, 0 to 20
@@ -675,7 +676,8 @@ attendance = 0x68             # in the record: u32
 min_attendance = 0x6C         # in the record: u32
 max_attendance = 0x70         # in the record: u32
 # In the nation: its economic factor and state of development, as the pre-game editor shows them (ENG 19 / 1, POL
-# 16 / 1, SMR 12 / 1), which its men's and women's containers share. Not read on the Mac yet.
+# 16 / 1, SMR 12 / 1), which its men's and women's containers share. 8 bytes later on the Mac, as the nation's
+# pointers to its containers.
 economic_factor = 0x1F0       # u8, 0 to 20
 state_of_development = 0x1EC  # u8, 1 to 3
 
